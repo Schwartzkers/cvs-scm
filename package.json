@@ -10,31 +10,42 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:cvs-ext.start-cvs"
+        "onCommand:cvs-ext.start"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "cvs-ext.start-cvs",
+				"command": "cvs-ext.start",
 				"title": "CVS: Start"
 			},
 			{
-				"command": "cvs-ext.test",
-				"title": "CVS: Test"
+				"command": "cvs-ext.status",
+				"title": "CVS: Status"
+			},
+			{
+				"command": "cvs-ext.compare",
+				"title": "CVS: Compare"
 			}
 		],
 		"menus": {
 			"scm/title":[
 				{
-					"command": "cvs-ext.test",
+					"command": "cvs-ext.status",
 					"group": "navigation",
 					"when": "scmProvider == cvs"
 				},
 				{
-					"command": "cvs-ext.test",
+					"command": "cvs-ext.compare",
+					"group": "navigation",
 					"when": "scmProvider == cvs"
 				}
+			],
+			"scm/resourceState/context": [
+			    {
+			        "command": "cvs-ext.diff",
+			        "when": "scmProvider == cvs && scmResourceState == diffable"
+			    }
 			]
 		}
 	},
