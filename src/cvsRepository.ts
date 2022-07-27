@@ -32,7 +32,8 @@ export class CvsRepository implements QuickDiffProvider {
 
 		const { exec } = require("child_process");
 
-		exec("cvs -Q update -C -p ${path.basename(uri.fsPath) > cvsdiff", {cwd: path.dirname(uri.fsPath)}, (error, stdout, stderr) => {
+		let cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > cvsdiff`;
+		exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: any, stderr: any) => {
 			if (error) {
 				console.log(`error: ${error.message}`);
 				return;
@@ -41,7 +42,7 @@ export class CvsRepository implements QuickDiffProvider {
 			console.log(`stdout:\n ${stdout}`);
 		});
 
-		return Uri.parse(`/home/jon/workspace/code/cvs-sandbox/cvsdiff`);
+		return Uri.parse(`${path.dirname(uri.fsPath)}/cvsdiff`);
 	}
 }
 

@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const { exec } = require("child_process");
 
-		exec("cvs status", {cwd: '/home/jon/workspace/code'}, (error, stdout, stderr) => {
+		exec("cvs status", {cwd: '/home/jon/workspace/code'}, (error: any, stdout: any, stderr: any) => {
 			if (error) {
 				console.log(`error: ${error.message}`);
 				return;
@@ -79,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const { exec } = require("child_process");
 
-		exec("cvs -Q update -C -p README > cvsdiff", {cwd: '/home/jon/workspace/code/cvs-sandbox'}, (error, stdout, stderr) => {
+		exec("cvs -Q update -C -p README > cvsdiff", {cwd: '/home/jon/workspace/code/cvs-sandbox'}, (error: any, stdout: any, stderr: any) => {
 			if (error) {
 				console.log(`error: ${error.message}`);
 				return;
