@@ -61,6 +61,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.changedResources.resourceStates = changedResources;
 	}
 
+	// getResources(): void {
+	// 	let cvsCMd = `cvs -n -q update`;	
+	// }
+
 
     dispose() {
 		this.cvsScm.dispose();
