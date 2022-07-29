@@ -19,44 +19,46 @@ export class CvsSourceControl implements vscode.Disposable {
 		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 		  ? vscode.workspace.workspaceFolders[0].uri
 		  : vscode.Uri.parse('empty');
+
+		console.log(this.rootPath);
 		
         this.cvsRepository = new CvsRepository(this.rootPath);
 		this.cvsScm.quickDiffProvider = this.cvsRepository;
 		this.cvsScm.inputBox.placeholder = 'cvs commit message';
 
 		// start listening
-		const fileWatcher = vscode.workspace.onWillSaveTextDocument(e => this.listen(e), context.subscriptions);
+		//const fileWatcher = vscode.workspace.onWillSaveTextDocument(e => this.listen(e), context.subscriptions);
 
-		//const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "*.*"));
-		// fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
-		// fileSystemWatcher.onDidCreate(uri => this.onResourceChange(uri), context.subscriptions);
-		// fileSystemWatcher.onDidDelete(uri => this.onResourceChange(uri), context.subscriptions);
+		const fileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/*");
+		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
+		fileSystemWatcher.onDidCreate(uri => this.onResourceChange(uri), context.subscriptions);
+		fileSystemWatcher.onDidDelete(uri => this.onResourceChange(uri), context.subscriptions);
 
 		context.subscriptions.push(this.cvsScm);
-		context.subscriptions.push(fileWatcher);
+		context.subscriptions.push(fileSystemWatcher);
 	}
 
 
-	async listen(event: vscode.TextDocumentWillSaveEvent): Promise<void> {
-		console.log(event.document.fileName);
-
-		let left = this.cvsRepository.getHeadVersion(vscode.Uri.parse(event.document.fileName));
-		let right = vscode.Uri.parse(event.document.fileName);
-
-		const command: vscode.Command =
-		{
-			title: "Show changes",
-			command: "vscode.diff",
-			arguments: [left, right],
-			tooltip: "Diff your changes"
-		};
+	async onResourceChange(event: vscode.Uri): Promise<void> {
+		console.log("onResourceChange");
+		console.log(event.fsPath);
 
 		const changedResources: vscode.SourceControlResourceState[] = [];
 		let result = await this.cvsRepository.getResources();
 		this.cvsRepository.parseResources(result);
-
 		
 		this.cvsRepository.getRes().forEach(element => {
+			let left = this.cvsRepository.getHeadVersion(element);
+			let right = element;
+	
+			const command: vscode.Command =
+			{
+				title: "Show changes",
+				command: "vscode.diff",
+				arguments: [left, right],
+				tooltip: "Diff your changes"
+			};
+
 			const resourceState: vscode.SourceControlResourceState = {resourceUri: element, command: command, contextValue: 'diffable'};
 			changedResources.push(resourceState);
 			console.log('push');
