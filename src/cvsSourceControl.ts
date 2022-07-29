@@ -100,6 +100,31 @@ export class CvsSourceControl implements vscode.Disposable {
 		});
 	}
 
+	async commitFile(resource: vscode.Uri): Promise<void> {
+		if (this.cvsScm.inputBox.value.length === 0) {
+			vscode.window.showErrorMessage("Missing commit message.");
+			return;
+		}
+
+		const token = this.rootPath.fsPath.concat("/");
+		const file = resource.fsPath.split(token)[1];
+
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs commit -m "${this.cvsScm.inputBox.value}" ${file}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: this.rootPath.fsPath}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error commiting files.");
+					reject(error);
+				} else {
+					this.cvsScm.inputBox.value = '';
+					resolve();
+				}
+			});
+		});
+	}
+
 	getListOfFIlesToCommit(): String {
 		let files = '';
 		this.changedResources.resourceStates.forEach(element => {

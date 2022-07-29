@@ -24,12 +24,19 @@
 				"title": "CVS: Status"
 			},
 			{
-				"command": "cvs-ext.commit",
-				"title": "CVS: Commit All"
+				"command": "cvs-ext.commit-all",
+				"title": "CVS: Commit All",
+				"icon": "$(cloud-upload)"
+			},
+			{
+				"command": "cvs-ext.commit-file",
+				"title": "CVS: Commit File",
+				"icon": "$(check)"
 			},
 			{
 				"command": "cvs-ext.revert",
-				"title": "CVS: Revert File"
+				"title": "CVS: Revert File",
+				"icon": "$(discard)"
 			},
 			{
 				"command": "cvs-ext.diff",
@@ -43,7 +50,7 @@
 					"when": "scmProvider == cvs"
 				},
 				{
-					"command": "cvs-ext.commit",
+					"command": "cvs-ext.commit-all",
 					"group": "navigation",
 					"when": "scmProvider == cvs"
 				}
@@ -55,6 +62,11 @@
 			    },
 				{
 					"command": "cvs-ext.revert",
+					"group": "inline",
+					"when": "scmProvider == cvs"
+				},
+				{
+					"command": "cvs-ext.commit-file",
 					"group": "inline",
 					"when": "scmProvider == cvs"
 				}
