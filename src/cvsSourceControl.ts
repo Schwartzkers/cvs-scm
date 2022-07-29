@@ -63,7 +63,19 @@ export class CvsSourceControl implements vscode.Disposable {
 				tooltip: "Diff your changes"
 			};
 
-			const resourceState: vscode.SourceControlResourceState = {resourceUri: element, command: command, contextValue: 'diffable'};
+			console.log(vscode.Uri.joinPath(this.rootPath, "resources/icons/dark/modified.svg"));
+			const resourceState: vscode.SourceControlResourceState = {
+				resourceUri: element,
+				command: command,
+				contextValue: 'diffable',			
+				decorations: {
+					dark:{
+						iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
+					},
+					light: {
+						iconPath: "/home/jon/cvs-ext/resources/icons/light/modified.svg",
+					}
+				}};
 			changedResources.push(resourceState);
 			console.log('push');
 		});
