@@ -38,6 +38,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		context.subscriptions.push(fileSystemWatcher);
 	}
 
+	getCvsState(): void 
+	{
+		this.onResourceChange(this.rootPath);
+	}
 
 	async onResourceChange(event: vscode.Uri): Promise<void> {
 		console.log("onResourceChange");
