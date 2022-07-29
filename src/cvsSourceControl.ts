@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CvsRepository } from './cvsRepository';
 import * as path from 'path';
+import { SourceFileState } from './sourceFile';
 
 
 export class CvsSourceControl implements vscode.Disposable {
@@ -51,8 +52,9 @@ export class CvsSourceControl implements vscode.Disposable {
 		let result = await this.cvsRepository.getResources();
 		this.cvsRepository.parseResources(result);
 		
-		this.cvsRepository.getRes().forEach(element => {
-			let left = this.cvsRepository.getHeadVersion(element);
+		//this.cvsRepository.getRes().forEach(element => {
+		this.cvsRepository.getChangesSourceFiles().forEach(element => {
+			let left = this.cvsRepository.getHeadVersion(element.resource);
 			let right = element;
 	
 			const command: vscode.Command =
@@ -63,21 +65,37 @@ export class CvsSourceControl implements vscode.Disposable {
 				tooltip: "Diff your changes"
 			};
 
-			console.log(vscode.Uri.joinPath(this.rootPath, "resources/icons/dark/modified.svg"));
-			const resourceState: vscode.SourceControlResourceState = {
-				resourceUri: element,
-				command: command,
-				contextValue: 'diffable',			
-				decorations: {
-					dark:{
-						iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
-					},
-					light: {
-						iconPath: "/home/jon/cvs-ext/resources/icons/light/modified.svg",
-					}
-				}};
-			changedResources.push(resourceState);
-			console.log('push');
+			if(element.state === SourceFileState.modified)
+			{
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,
+					command: command,
+					contextValue: 'diffable',			
+					decorations: {
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/modified.svg",
+						}
+					}};
+				changedResources.push(resourceState);
+			} else
+			{
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,
+					command: command,
+					contextValue: 'diffable',			
+					decorations: {
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/untracked.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/untracked.svg",
+						}
+					}};
+				changedResources.push(resourceState);
+			}
 		});
 		
 		this.changedResources.resourceStates = changedResources;
