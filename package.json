@@ -24,8 +24,8 @@
 				"title": "CVS: Status"
 			},
 			{
-				"command": "cvs-ext.compare",
-				"title": "CVS: Compare"
+				"command": "cvs-ext.commit",
+				"title": "CVS: Commit All"
 			},
 			{
 				"command": "cvs-ext.diff",
@@ -36,11 +36,11 @@
 			"scm/title":[
 				{
 					"command": "cvs-ext.status",
-					"group": "navigation",
 					"when": "scmProvider == cvs"
 				},
 				{
-					"command": "cvs-ext.compare",
+					"command": "cvs-ext.commit",
+					"group": "navigation",
 					"when": "scmProvider == cvs"
 				}
 			],

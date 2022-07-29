@@ -45,26 +45,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	});
 
-	let compare = vscode.commands.registerCommand('cvs-ext.compare', () => {
+	let commit = vscode.commands.registerCommand('cvs-ext.commit', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Compare');
-
-        const { exec } = require("child_process");
-
-		exec("cvs -Q update -C -p README > cvsdiff", {cwd: '/home/jon/workspace/code/cvs-sandbox'}, (error: any, stdout: any, stderr: any) => {
-			if (error) {
-				console.log(`error: ${error.message}`);
-				return;
-			}
-			console.log(`stderr:\n ${stderr}`);
-			console.log(`stdout:\n ${stdout}`);
-		});
-
-		let left = vscode.Uri.file('/home/jon/workspace/code/cvs-sandbox/cvsdiff');
-		let right = vscode.Uri.file('/home/jon/workspace/code/cvs-sandbox/README');
-
-		vscode.commands.executeCommand('vscode.diff', left, right);
+		vscode.window.showInformationMessage('Commit');
+		cvsSCM.commitAll();
 
 	});
 
@@ -78,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(start);
 	context.subscriptions.push(diff);
 	context.subscriptions.push(status);
-	context.subscriptions.push(compare);
+	context.subscriptions.push(commit);
 }
 
 // this method is called when your extension is deactivated
