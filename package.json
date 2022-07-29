@@ -26,7 +26,7 @@
 			{
 				"command": "cvs-ext.commit-all",
 				"title": "CVS: Commit All",
-				"icon": "$(cloud-upload)"
+				"icon": "$(check-all)"
 			},
 			{
 				"command": "cvs-ext.commit-file",
@@ -37,10 +37,6 @@
 				"command": "cvs-ext.revert",
 				"title": "CVS: Revert File",
 				"icon": "$(discard)"
-			},
-			{
-				"command": "cvs-ext.diff",
-				"title": "CVS: Diff"
 			}
 		],
 		"menus": {
@@ -56,10 +52,6 @@
 				}
 			],
 			"scm/resourceState/context": [
-			    {
-			        "command": "cvs-ext.diff",
-			        "when": "scmProvider == cvs && scmResourceState == diffable"
-			    },
 				{
 					"command": "cvs-ext.revert",
 					"group": "inline",
