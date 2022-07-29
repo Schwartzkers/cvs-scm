@@ -109,6 +109,22 @@ export class CvsSourceControl implements vscode.Disposable {
 		return files;
 	}
 
+	async revertFile(uri: vscode.Uri): Promise<void> {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs update -C ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error commiting files.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
 
     dispose() {
 		this.cvsScm.dispose();

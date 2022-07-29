@@ -45,14 +45,23 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 
 	});
-
+//vscode.commands.registerCommand("bla", (arg1: any, arg2: any) => {});
 	let commit = vscode.commands.registerCommand('cvs-ext.commit', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Commit');
 		cvsSCM.commitAll();
-
 	});
+
+	let revert = vscode.commands.registerCommand('cvs-ext.revert', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.revertFile(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Revert');
+	});
+
 
 	let diff = vscode.commands.registerCommand('cvs-ext.diff', () => {
 		// The code you place here will be executed every time your command is executed
