@@ -26,6 +26,10 @@
 			{
 				"command": "cvs-ext.compare",
 				"title": "CVS: Compare"
+			},
+			{
+				"command": "cvs-ext.diff",
+				"title": "CVS: Diff"
 			}
 		],
 		"menus": {
@@ -37,7 +41,6 @@
 				},
 				{
 					"command": "cvs-ext.compare",
-					"group": "navigation",
 					"when": "scmProvider == cvs"
 				}
 			],

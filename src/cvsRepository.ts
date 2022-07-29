@@ -45,8 +45,10 @@ export class CvsRepository implements QuickDiffProvider {
 		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
 	}
 
-	async getResources(): Promise<String> {		
+	async getResources(): Promise<String> {
+		this.resources = [];		
 		const { exec } = require("child_process");
+
 
 		const result = await new Promise<String>((resolve, reject) => {
 			let cvsCmd = `cvs -n -q update`;
