@@ -28,6 +28,10 @@
 				"title": "CVS: Commit All"
 			},
 			{
+				"command": "cvs-ext.revert",
+				"title": "CVS: Revert File"
+			},
+			{
 				"command": "cvs-ext.diff",
 				"title": "CVS: Diff"
 			}
@@ -48,7 +52,12 @@
 			    {
 			        "command": "cvs-ext.diff",
 			        "when": "scmProvider == cvs && scmResourceState == diffable"
-			    }
+			    },
+				{
+					"command": "cvs-ext.revert",
+					"group": "inline",
+					"when": "scmProvider == cvs"
+				}
 			]
 		}
 	},
