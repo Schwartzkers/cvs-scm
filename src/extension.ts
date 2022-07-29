@@ -45,12 +45,19 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 
 	});
-//vscode.commands.registerCommand("bla", (arg1: any, arg2: any) => {});
-	let commit = vscode.commands.registerCommand('cvs-ext.commit', () => {
+
+	let commitAll = vscode.commands.registerCommand('cvs-ext.commit-all', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Commit');
+		vscode.window.showInformationMessage('Commit All');
 		cvsSCM.commitAll();
+	});
+
+	let commitFile = vscode.commands.registerCommand('cvs-ext.commit-file', (resource: vscode.SourceControlResourceState) => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Commit File');
+		cvsSCM.commitFile(resource.resourceUri);
 	});
 
 	let revert = vscode.commands.registerCommand('cvs-ext.revert', (resource: vscode.SourceControlResourceState) => {
@@ -73,7 +80,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(start);
 	context.subscriptions.push(diff);
 	context.subscriptions.push(status);
-	context.subscriptions.push(commit);
+	context.subscriptions.push(revert);
+	context.subscriptions.push(commitAll);
+	context.subscriptions.push(commitFile);
 }
 
 // this method is called when your extension is deactivated
