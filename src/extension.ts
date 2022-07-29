@@ -106,8 +106,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(diff);
 	context.subscriptions.push(status);
 	context.subscriptions.push(compare);
-	//context.subscriptions.push(subscription1);
-	//context.subscriptions.push(subscription2);
 }
 
 // this method is called when your extension is deactivated

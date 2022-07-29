@@ -7,16 +7,20 @@ export class CvsSourceControl implements vscode.Disposable {
 	private cvsScm: vscode.SourceControl;
 	private changedResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
-	//private latestFiddleVersion: number = Number.POSITIVE_INFINITY; // until actual value is established
-	//private _onRepositoryChange = new vscode.EventEmitter<Fiddle>();
+	private rootPath: vscode.Uri;
 	private timeout?: NodeJS.Timer;
 
 	//constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder) {
     constructor(context: vscode.ExtensionContext) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS');
 		this.changedResources = this.cvsScm.createResourceGroup('workingTree', 'Changes');
-		//this.cvsRepository = new CvsRepository(workspaceFolder);
-        this.cvsRepository = new CvsRepository();
+
+		this.rootPath =
+		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+		  ? vscode.workspace.workspaceFolders[0].uri
+		  : vscode.Uri.parse('empty');
+		
+        this.cvsRepository = new CvsRepository(this.rootPath);
 		this.cvsScm.quickDiffProvider = this.cvsRepository;
 		this.cvsScm.inputBox.placeholder = 'cvs commit message';
 
@@ -30,41 +34,36 @@ export class CvsSourceControl implements vscode.Disposable {
 
 		context.subscriptions.push(this.cvsScm);
 		context.subscriptions.push(fileWatcher);
-
 	}
 
 
-	listen(event: vscode.TextDocumentWillSaveEvent): void {
+	async listen(event: vscode.TextDocumentWillSaveEvent): Promise<void> {
 		console.log(event.document.fileName);
-		const changedResources: vscode.SourceControlResourceState[] = [];
 
-		//let oldfile = vscode.Uri.file('/home/jon/workspace/code/cvs-sandbox/cvsdiff');
 		let left = this.cvsRepository.getHeadVersion(vscode.Uri.parse(event.document.fileName));
-		//let left = vscode.Uri.file('/home/jon/workspace/code/cvs-sandbox/cvsdiff');
-
-		//let left = this.cvsRepository.provideOriginalResource(uri ,null);//('/home/jon/workspace/code/cvs-sandbox/cvsdiff');
-		//let right = vscode.Uri.file('/home/jon/workspace/code/cvs-sandbox/README');
 		let right = vscode.Uri.parse(event.document.fileName);
 
 		const command: vscode.Command =
 		{
 			title: "Show changes",
-			//command: "cvs-ext.compare",
 			command: "vscode.diff",
 			arguments: [left, right],
 			tooltip: "Diff your changes"
 		};
 
-		const resourceState: vscode.SourceControlResourceState = {resourceUri: vscode.Uri.parse(event.document.fileName), command: command, contextValue: 'diffable'};
-		changedResources.push(resourceState);
-		//this.changedResources.resourceStates = this.changedResources.resourceStates.concat(changedResources);
+		const changedResources: vscode.SourceControlResourceState[] = [];
+		let result = await this.cvsRepository.getResources();
+		this.cvsRepository.parseResources(result);
+
+		
+		this.cvsRepository.getRes().forEach(element => {
+			const resourceState: vscode.SourceControlResourceState = {resourceUri: element, command: command, contextValue: 'diffable'};
+			changedResources.push(resourceState);
+			console.log('push');
+		});
+		
 		this.changedResources.resourceStates = changedResources;
 	}
-
-	// getResources(): void {
-	// 	let cvsCMd = `cvs -n -q update`;	
-	// }
-
 
     dispose() {
 		this.cvsScm.dispose();
