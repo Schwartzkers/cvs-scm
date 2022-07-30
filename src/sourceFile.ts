@@ -4,11 +4,13 @@ export enum SourceFileState {
     unknown,
     modified,
     untracked,
+    added,
 }
 
 const myMap = new Map<string, SourceFileState>([
     ["M", SourceFileState.modified],
-    ["?", SourceFileState.untracked]
+    ["?", SourceFileState.untracked],
+    ["A", SourceFileState.added]
 ]);
 
 export class SourceFile {

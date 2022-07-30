@@ -7,6 +7,7 @@ import { SourceFileState } from './sourceFile';
 export class CvsSourceControl implements vscode.Disposable {
 	private cvsScm: vscode.SourceControl;
 	private changedResources: vscode.SourceControlResourceGroup;
+	private unknownResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
 	private rootPath: vscode.Uri;
 	private timeout?: NodeJS.Timer;
@@ -15,6 +16,7 @@ export class CvsSourceControl implements vscode.Disposable {
     constructor(context: vscode.ExtensionContext) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS');
 		this.changedResources = this.cvsScm.createResourceGroup('workingTree', 'Changes');
+		this.unknownResources = this.cvsScm.createResourceGroup('unknownTree', 'Untracked');
 
 		this.rootPath =
 		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
@@ -49,28 +51,29 @@ export class CvsSourceControl implements vscode.Disposable {
 		console.log(event.fsPath);
 
 		const changedResources: vscode.SourceControlResourceState[] = [];
+		const unknownResources: vscode.SourceControlResourceState[] = [];
 		let result = await this.cvsRepository.getResources();
 		this.cvsRepository.parseResources(result);
 		
-		//this.cvsRepository.getRes().forEach(element => {
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
-			let left = this.cvsRepository.getHeadVersion(element.resource);
-			let right = element;
-	
-			const command: vscode.Command =
-			{
-				title: "Show changes",
-				command: "vscode.diff",
-				arguments: [left, right],
-				tooltip: "Diff your changes"
-			};
 
 			if(element.state === SourceFileState.modified)
 			{
+				let left = this.cvsRepository.getHeadVersion(element.resource);
+				let right = element;
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right],
+					tooltip: "Diff your changes"
+				};
+
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,
 					command: command,
-					contextValue: 'diffable',			
+					contextValue: 'revertable',
 					decorations: {
 						dark:{
 							iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
@@ -80,12 +83,10 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 				changedResources.push(resourceState);
-			} else
+			} else if (element.state === SourceFileState.untracked)
 			{
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,
-					command: command,
-					contextValue: 'diffable',			
+					resourceUri: element.resource,	
 					decorations: {
 						dark:{
 							iconPath: "/home/jon/cvs-ext/resources/icons/dark/untracked.svg",
@@ -94,11 +95,25 @@ export class CvsSourceControl implements vscode.Disposable {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/untracked.svg",
 						}
 					}};
+				unknownResources.push(resourceState);
+			} else if (element.state === SourceFileState.added) {
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,
+					contextValue: "undoable",
+					decorations: {
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/added.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/added.svg",
+						}
+					}};
 				changedResources.push(resourceState);
 			}
 		});
 		
 		this.changedResources.resourceStates = changedResources;
+		this.unknownResources.resourceStates = unknownResources;
 	}
 
 	async commitAll(): Promise<void> {
@@ -171,7 +186,56 @@ export class CvsSourceControl implements vscode.Disposable {
 			console.log(cvsCmd);
 			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
-					vscode.window.showErrorMessage("Error commiting files.");
+					vscode.window.showErrorMessage("Error reverting files.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
+	async addFile(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs add ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error adding file.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
+	async deleteFile(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `rm -f ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error deleting file.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
+	// can only do this if file was untracked
+	async undoAdd(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs remove ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error deleting file.");
 					reject(error);
 				} else {
 					resolve();

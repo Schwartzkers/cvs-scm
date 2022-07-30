@@ -7,11 +7,9 @@ export interface CvsResources {
 }
 
 export class CvsRepository implements QuickDiffProvider {
-	private resources: Uri[];
 	private sourceFiles: SourceFile[];
 
 	constructor(private workspaceUri: Uri) {
-		this.resources = []; 
 		this.sourceFiles = []; 
 	}
 
@@ -48,9 +46,7 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	async getResources(): Promise<String> {
-		this.resources = [];		
 		const { exec } = require("child_process");
-
 
 		const result = await new Promise<String>((resolve, reject) => {
 			let cvsCmd = `cvs -n -q update`;
@@ -69,6 +65,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	parseResources(stdout: String): void{
 		console.log('parseResources');
+		this.sourceFiles = [];
 
 		stdout.split('\n').forEach(element => {
 			let line = element.substring(element.indexOf(' ')+1, element.length);
@@ -76,16 +73,11 @@ export class CvsRepository implements QuickDiffProvider {
 			console.log(state);
 			if (line.length !== 0) {
 				const uri = Uri.joinPath(this.workspaceUri, element.substring(element.indexOf(' ')+1, element.length));
-				this.resources.push(uri);
 				this.sourceFiles.push(new SourceFile(uri, state));
 			}
 		});
 
 		console.log(this.sourceFiles);
-	}
-
-	getRes(): Uri[] {
-		return this.resources;
 	}
 
 	getChangesSourceFiles(): SourceFile[] {

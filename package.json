@@ -37,6 +37,21 @@
 				"command": "cvs-ext.revert",
 				"title": "CVS: Revert File",
 				"icon": "$(discard)"
+			},
+			{
+				"command": "cvs-ext.add",
+				"title": "CVS: Add File",
+				"icon": "$(add)"
+			},
+			{
+				"command": "cvs-ext.delete-file",
+				"title": "CVS: Delete file",
+				"icon": "$(remove)"
+			},
+			{
+				"command": "cvs-ext.undo-add",
+				"title": "CVS: Undo add of file",
+				"icon": "$(remove)"
 			}
 		],
 		"menus": {
@@ -55,12 +70,27 @@
 				{
 					"command": "cvs-ext.revert",
 					"group": "inline",
-					"when": "scmProvider == cvs"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == revertable"
 				},
 				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
-					"when": "scmProvider == cvs"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree"
+				},
+				{
+					"command": "cvs-ext.add",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
+				},
+				{
+					"command": "cvs-ext.delete-file",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
+				},
+				{
+					"command": "cvs-ext.undo-add",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == undoable"					
 				}
 			]
 		}

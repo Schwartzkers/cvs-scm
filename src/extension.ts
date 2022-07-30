@@ -69,6 +69,35 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Revert');
 	});
 
+	let add = vscode.commands.registerCommand('cvs-ext.add', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.addFile(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Add');
+	});
+
+	let deleteFile = vscode.commands.registerCommand('cvs-ext.delete-file', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.deleteFile(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Delete FIle');
+	});
+
+	let undoAdd = vscode.commands.registerCommand('cvs-ext.undo-add', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.undoAdd(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Delete FIle');
+	});
+
+
+
 
 	let diff = vscode.commands.registerCommand('cvs-ext.diff', () => {
 		// The code you place here will be executed every time your command is executed
@@ -83,6 +112,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(revert);
 	context.subscriptions.push(commitAll);
 	context.subscriptions.push(commitFile);
+	context.subscriptions.push(add);
+	context.subscriptions.push(deleteFile);
+	context.subscriptions.push(undoAdd);	
 }
 
 // this method is called when your extension is deactivated
