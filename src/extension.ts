@@ -96,7 +96,24 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Undo Addition of file');
 	});
 
+	let removeFile = vscode.commands.registerCommand('cvs-ext.remove-file', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.removeFileFromCvs(resource.resourceUri);
 
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Remove file from repository');
+	});
+
+
+	let undoRemoveFile = vscode.commands.registerCommand('cvs-ext.undo-remove', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.undoRemoval(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Remove file from repository');
+	});
 
 
 	let diff = vscode.commands.registerCommand('cvs-ext.diff', () => {

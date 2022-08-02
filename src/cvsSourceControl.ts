@@ -110,7 +110,22 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.removed) {
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,					
+					contextValue: "removed",
+					decorations: {
+						strikeThrough: true,						
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/deleted.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/deleted.svg",
+						}
+					}};
+				changedResources.push(resourceState);
 			}
+			
 		});
 		
 		this.changedResources.resourceStates = changedResources;
@@ -210,6 +225,38 @@ export class CvsSourceControl implements vscode.Disposable {
 				}
 			});
 		});
+	}	
+
+	async removeFileFromCvs(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs remove -f ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error removing file.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
+	async undoRemoval(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs add ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error undoing removal.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
 	}
 
 	async deleteFile(uri: vscode.Uri): Promise<void>  {
@@ -228,22 +275,19 @@ export class CvsSourceControl implements vscode.Disposable {
 		});
 	}
 
-	// can only do this if file was untracked
+	// can only do this if file was untracked by repository
 	async undoAdd(uri: vscode.Uri): Promise<void>  {
-		const fs = require('fs');
+		//const fs = require('fs');
+		const fs = require('fs/promises');
 
 		// remove temp CVS file (e.g. 'test.txt,t')
-		await fs.readdir(path.dirname(uri.fsPath) + '/CVS', (err: string, files: string[]) => {
-			if (err) {
-				throw err;
-			}
+		const files = await this.readDir(path.dirname(uri.fsPath) + '/CVS');
 		
-			files.forEach(file => {
-				if(file.includes(path.basename(uri.fsPath))) {
-					fsPromises.rm(path.dirname(uri.fsPath) + '/CVS/' + file);
-					console.log('remove file');
-				}
-			});
+		files.forEach(async file => {
+			if(file.includes(path.basename(uri.fsPath))) {
+				await this.removeFile(path.dirname(uri.fsPath) + '/CVS/' + file);
+				console.log('remove file');
+			}
 		});
 
 		const entries = await this.readCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries');
@@ -255,15 +299,37 @@ export class CvsSourceControl implements vscode.Disposable {
 			}
 		});
 
-		//remove last new line char
-
 		console.log(newEntries);
-		await this.writeCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries.out', newEntries);		
-
+		await this.writeCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries.out', newEntries);
 		 
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries', path.dirname(uri.fsPath) + '/CVS/Entries.bak');
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries.out', path.dirname(uri.fsPath) + '/CVS/Entries');		
 	}
+
+	async removeFile(path: string) : Promise<void> {
+		const fs = require('fs/promises');
+
+		try {
+			await fsPromises.rm(path);
+		} catch (err: any) {
+			console.log(err);
+		}		
+	}
+
+	async readDir(path: string): Promise<string[]> {
+		const fs = require('fs/promises');
+
+		let result = [];
+
+		try {
+			result = await fs.readdir(path);
+		} catch (err: any) {
+			console.log(err);
+		}
+
+		return result;
+	}
+
 
 	async readCvsEntries(path: string): Promise<string> {
 		const fs = require('fs/promises');

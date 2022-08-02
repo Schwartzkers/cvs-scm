@@ -52,6 +52,16 @@
 				"command": "cvs-ext.undo-add",
 				"title": "CVS: Undo add of file",
 				"icon": "$(remove)"
+			},
+			{
+				"command": "cvs-ext.remove-file",
+				"title": "CVS: Remove file from CVS",
+				"icon": "$(remove)"
+			},
+			{
+			"command": "cvs-ext.undo-remove",
+			"title": "CVS: Recover removd file",
+			"icon": "$(discard)"
 			}
 		],
 		"menus": {
@@ -91,6 +101,16 @@
 					"command": "cvs-ext.undo-add",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == undoable"					
+				},
+				{
+					"command": "cvs-ext.remove-file",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != removed"
+				},
+				{
+					"command": "cvs-ext.undo-remove",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
 				}
 			]
 		}
