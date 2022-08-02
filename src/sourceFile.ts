@@ -5,14 +5,16 @@ export enum SourceFileState {
     modified,
     untracked,
     added,
-    removed
+    removed,
+    lost
 }
 
 const myMap = new Map<string, SourceFileState>([
     ["M", SourceFileState.modified],
     ["?", SourceFileState.untracked],
     ["A", SourceFileState.added],
-    ["R", SourceFileState.removed]
+    ["R", SourceFileState.removed],
+    ["U", SourceFileState.lost]
 ]);
 
 export class SourceFile {

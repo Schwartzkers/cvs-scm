@@ -60,8 +60,13 @@
 			},
 			{
 			"command": "cvs-ext.undo-remove",
-			"title": "CVS: Recover removd file",
+			"title": "CVS: Recover removed file",
 			"icon": "$(discard)"
+			},
+			{
+				"command": "cvs-ext.undo-remove2",
+				"title": "CVS: Recover lost file",
+				"icon": "$(discard)"
 			}
 		],
 		"menus": {
@@ -85,7 +90,7 @@
 				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost"
 				},
 				{
 					"command": "cvs-ext.add",
@@ -111,6 +116,11 @@
 					"command": "cvs-ext.undo-remove",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
+				},
+				{
+					"command": "cvs-ext.undo-remove2",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"					
 				}
 			]
 		}

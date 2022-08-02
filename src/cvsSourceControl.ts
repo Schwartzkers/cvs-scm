@@ -56,7 +56,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		let result = await this.cvsRepository.getResources();
 		this.cvsRepository.parseResources(result);
 		
-		this.cvsRepository.getChangesSourceFiles().forEach(element => {
+		this.cvsRepository.getChangesSourceFiles().forEach(async element => {
 
 			if(element.state === SourceFileState.modified)
 			{
@@ -76,6 +76,7 @@ export class CvsSourceControl implements vscode.Disposable {
 					command: command,
 					contextValue: 'revertable',
 					decorations: {
+						strikeThrough: false,
 						dark:{
 							iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
 						},
@@ -111,6 +112,8 @@ export class CvsSourceControl implements vscode.Disposable {
 					}};
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.removed) {
+				console.log(element.resource);
+				console.log('removed');
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,					
 					contextValue: "removed",
@@ -124,7 +127,24 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.lost) {
+				console.log(element.resource);
+				console.log('lost');
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,					
+					contextValue: "lost",
+					decorations: {
+						strikeThrough: true,						
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/deleted.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/deleted.svg",
+						}
+					}};
+				changedResources.push(resourceState);
 			}
+
 			
 		});
 		
@@ -259,6 +279,22 @@ export class CvsSourceControl implements vscode.Disposable {
 		});
 	}
 
+	async resurrectLostFile(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		const result = await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error removing file.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
+	}
+
 	async deleteFile(uri: vscode.Uri): Promise<void>  {
 		const { exec } = require("child_process");
 		const result = await new Promise<void>((resolve, reject) => {
@@ -354,34 +390,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		} catch(err: any) {
 			console.log(err);
 		}
-	}
-
-	// async getEntries(uri: vscode.Uri): Promise<void> {	
-	// 	const fs = require('fs');
-	// 	const readline = require('readline');
-
-	// 	// update Entires to remove line with added file name included 
-	// 	const inStream = fs.createReadStream(path.dirname(uri.fsPath) + '/CVS/Entries');
-	// 	const outStream = fs.createWriteStream(path.dirname(uri.fsPath) + '/CVS/Entries.out');
-
-	// 	const rl = readline.createInterface({
-	// 	input: inStream,
-	// 	output: outStream,
-	// 	crlfDelay: Infinity
-	// 	});
-
-	// 	const it = rl[Symbol.asyncIterator]();
-	// 	while (it !== undefined)
-	// 	{
-	// 		const line = await it.next();
-	// 		if (line.includes(path.basename(uri.fsPath)) === false) {
-	// 			outStream.write(line + '\n');
-	// 			console.log(line);
-	// 		}
-	// 	}
-	// 	console.log('done');
-	// }
-
+	}	
 
     dispose() {
 		this.cvsScm.dispose();
