@@ -1,6 +1,6 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace, window, env } from "vscode";
 import * as path from 'path';
-import { SourceFile } from './sourceFile';
+import { SourceFile, SourceFileState } from './sourceFile';
 
 export interface CvsResources {
 	readonly resourceUri: Uri;
@@ -54,7 +54,7 @@ export class CvsRepository implements QuickDiffProvider {
 			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
 					reject(error);
-				} else {
+				} else {					
 					resolve(stdout);
 				}
 			});
@@ -63,8 +63,9 @@ export class CvsRepository implements QuickDiffProvider {
 		return result;
 	}
 
-	parseResources(stdout: String): void{
+	parseResources(stdout: String): void {
 		console.log('parseResources');
+		const fs = require('fs/promises');
 		this.sourceFiles = [];
 
 		stdout.split('\n').forEach(element => {
@@ -74,11 +75,12 @@ export class CvsRepository implements QuickDiffProvider {
 			if (line.length !== 0) {
 				const uri = Uri.joinPath(this.workspaceUri, element.substring(element.indexOf(' ')+1, element.length));
 				this.sourceFiles.push(new SourceFile(uri, state));
-			}
+			}			
 		});
 
 		console.log(this.sourceFiles);
 	}
+
 
 	getChangesSourceFiles(): SourceFile[] {
 		return this.sourceFiles;
