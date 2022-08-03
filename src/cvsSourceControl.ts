@@ -136,10 +136,10 @@ export class CvsSourceControl implements vscode.Disposable {
 					decorations: {
 						strikeThrough: true,						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/deleted.svg",
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/lost.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/deleted.svg",
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/lost.svg",
 						}
 					}};
 				changedResources.push(resourceState);
