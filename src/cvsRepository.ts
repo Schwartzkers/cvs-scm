@@ -15,20 +15,19 @@ export class CvsRepository implements QuickDiffProvider {
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		
-		//const relativePath = workspace.asRelativePath(uri.fsPath);
+		// const { exec } = require("child_process");
 
-        const { exec } = require("child_process");
-		
-		exec("cvs -Q update -C -p README > cvsdiff", {cwd: '/home/jon/workspace/code/cvs-sandbox'/*uri.fsPath*/}, (error: any, stdout: any, stderr: any) => {
-			if (error) {
-				console.log(`error: ${error.message}`);
-				return;
-			}
-			console.log(`stderr:\n ${stderr}`);
-			console.log(`stdout:\n ${stdout}`);
-		});
+		// let cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > /tmp/${path.basename(uri.fsPath)}.HEAD`;
+		// exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: any, stderr: any) => {
+		// 	if (error) {
+		// 		console.log(`error: ${error.message}`);
+		// 		return;
+		// 	}
+		// });
 
-		return Uri.parse(`cvsdiff`);
+		// return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+
+		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
 	}
 
 	getHeadVersion(uri: Uri): Uri {

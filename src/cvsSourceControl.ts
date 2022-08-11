@@ -56,12 +56,15 @@ export class CvsSourceControl implements vscode.Disposable {
 		let result = await this.cvsRepository.getResources();
 		this.cvsRepository.parseResources(result);
 		
-		this.cvsRepository.getChangesSourceFiles().forEach(async element => {
+		this.cvsRepository.getChangesSourceFiles().forEach(element => {
 
 			if(element.state === SourceFileState.modified)
 			{
 				let left = this.cvsRepository.getHeadVersion(element.resource);
-				let right = element;
+				// const token = new vscode.CancellationTokenSource();
+				// const left = this.cvsRepository.provideOriginalResource(element.resource, token.token);
+
+				let right = element.resource;
 
 				const command: vscode.Command =
 				{
@@ -140,6 +143,21 @@ export class CvsSourceControl implements vscode.Disposable {
 						},
 						light: {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/lost.svg",
+						}
+					}};
+				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.conflict) {
+				console.log(element.resource);
+				console.log('conflict');
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,					
+					contextValue: "conflict",
+					decorations: {						
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/conflict.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/conflict.svg",
 						}
 					}};
 				changedResources.push(resourceState);
