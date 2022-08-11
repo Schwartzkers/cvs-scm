@@ -51,7 +51,7 @@
 			{
 				"command": "cvs-ext.undo-add",
 				"title": "CVS: Undo add of file",
-				"icon": "$(remove)"
+				"icon": "$(discard)"
 			},
 			{
 				"command": "cvs-ext.remove-file",
@@ -67,6 +67,11 @@
 				"command": "cvs-ext.undo-remove2",
 				"title": "CVS: Recover lost file",
 				"icon": "$(discard)"
+			},
+			{
+				"command": "cvs-ext.merge-latest",
+				"title": "CVS: Merge latest changes from server",
+				"icon": "$(cloud-download)"
 			}
 		],
 		"menus": {
@@ -90,7 +95,7 @@
 				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost && scmResourceState != conflict"
 				},
 				{
 					"command": "cvs-ext.add",
@@ -110,7 +115,7 @@
 				{
 					"command": "cvs-ext.remove-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != removed"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"
 				},
 				{
 					"command": "cvs-ext.undo-remove",
@@ -121,6 +126,11 @@
 					"command": "cvs-ext.undo-remove2",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"					
+				},
+				{
+					"command": "cvs-ext.merge-latest",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"					
 				}
 			]
 		}
