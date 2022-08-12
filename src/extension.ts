@@ -124,6 +124,15 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Remove file from repository');
 	});
 
+	let mergeLatest = vscode.commands.registerCommand('cvs-ext.merge-latest', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.mergeLatest(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Remove file from repository');
+	});
+
 
 	let diff = vscode.commands.registerCommand('cvs-ext.diff', () => {
 		// The code you place here will be executed every time your command is executed

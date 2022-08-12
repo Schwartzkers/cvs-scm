@@ -95,7 +95,7 @@
 				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost && scmResourceState != conflict"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost && scmResourceState != conflict && scmResourceState != merge && scmResourceState != patch"
 				},
 				{
 					"command": "cvs-ext.add",
@@ -130,7 +130,12 @@
 				{
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"					
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == merge"					
+				},
+				{
+					"command": "cvs-ext.merge-latest",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == patch"					
 				}
 			]
 		}

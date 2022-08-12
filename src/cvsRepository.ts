@@ -51,35 +51,86 @@ export class CvsRepository implements QuickDiffProvider {
 			let cvsCmd = `cvs -n -q update`;
 			console.log(this.workspaceUri.fsPath);
 			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					reject(error);
-				} else {					
-					resolve(stdout);
-				}
+				// if (error) {
+				// 	reject(error);
+				// } else {					
+				// 	resolve(stdout);
+				// }
+				resolve(stdout);
 			});
 		});
 
 		return result;
 	}
 
-	parseResources(stdout: String): void {
+	async parseResources(stdout: String): Promise<void> {
 		console.log('parseResources');
 		const fs = require('fs/promises');
 		this.sourceFiles = [];
 
-		stdout.split('\n').forEach(element => {
+		for (const element of stdout.split('\n')) {
+		//await stdout.split('\n').forEach(async element => { should do promise all
 			let line = element.substring(element.indexOf(' ')+1, element.length);
 			let state = element.substring(0, element.indexOf(' '));
 			console.log(state);
 			if (line.length !== 0) {
-				const uri = Uri.joinPath(this.workspaceUri, element.substring(element.indexOf(' ')+1, element.length));
+				const resource = element.substring(element.indexOf(' ')+1, element.length);
+				const uri = Uri.joinPath(this.workspaceUri, resource);
+
+				if(state === 'C' || state === 'U') {
+					console.log(line);
+					state = await this.getTypeOfConflict(resource);
+				}
+				
+				console.log('state = ' + state);
 				this.sourceFiles.push(new SourceFile(uri, state));
 			}			
-		});
+		};
 
 		console.log(this.sourceFiles);
 	}
 
+	async getTypeOfConflict(resource: string): Promise<string> {
+		const { exec } = require("child_process");
+		const status = await new Promise<string>((resolve, reject) => {
+			let result = '?';
+			const cvsCmd = `cvs status ${resource}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					reject(error);
+				} else {
+					console.log(stdout);
+					for (const element of stdout.split('\n')) {
+						if (element.includes('Status:')) {
+							result = element.split('Status: ')[1];
+							console.log(result);
+							resolve(result);
+						}
+					}
+					resolve(result);
+				}
+			});
+		});
+
+		// Promise.
+		// all([1, 2, 3].map(async() => {
+		// 	await new Promise(resolve => setTimeout(resolve, 10));
+		// 	throw new Error('Oops!');
+		// })).
+		// catch(err => {
+		// 	err.message; // Oops!
+		// });
+
+		// for (const element of result.split('\n')) {
+		// 	if (element.includes('Status:')) {
+		// 		status = element.split('Status:')[1];
+		// 		console.log(status);
+		// 	}
+		// }
+
+		return status;
+	}
 
 	getChangesSourceFiles(): SourceFile[] {
 		return this.sourceFiles;

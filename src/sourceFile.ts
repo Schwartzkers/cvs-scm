@@ -7,7 +7,9 @@ export enum SourceFileState {
     added,
     removed,
     lost,
-    conflict
+    conflict,
+    patch,
+    merge
 }
 
 const myMap = new Map<string, SourceFileState>([
@@ -15,8 +17,10 @@ const myMap = new Map<string, SourceFileState>([
     ["?", SourceFileState.untracked],
     ["A", SourceFileState.added],
     ["R", SourceFileState.removed],
-    ["U", SourceFileState.lost],
-    ["C", SourceFileState.conflict]
+    ["Needs Checkout", SourceFileState.lost],
+    ["Unresolved Conflict", SourceFileState.conflict],
+    ["Needs Patch", SourceFileState.patch],
+    ["Needs Merge", SourceFileState.merge],    
 ]);
 
 export class SourceFile {
