@@ -54,7 +54,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		const changedResources: vscode.SourceControlResourceState[] = [];
 		const unknownResources: vscode.SourceControlResourceState[] = [];
 		let result = await this.cvsRepository.getResources();
-		this.cvsRepository.parseResources(result);
+		await this.cvsRepository.parseResources(result);
 		
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
 
@@ -158,6 +158,36 @@ export class CvsSourceControl implements vscode.Disposable {
 						},
 						light: {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/conflict.svg",
+						}
+					}};
+				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.patch) {
+				console.log(element.resource);
+				console.log('patch');
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,					
+					contextValue: "patch",
+					decorations: {						
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/patch.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/patch.svg",
+						}
+					}};
+				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.merge) {
+				console.log(element.resource);
+				console.log('merge');
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: element.resource,					
+					contextValue: "merge",
+					decorations: {						
+						dark:{
+							iconPath: "/home/jon/cvs-ext/resources/icons/dark/merge.svg",
+						},
+						light: {
+							iconPath: "/home/jon/cvs-ext/resources/icons/light/merge.svg",
 						}
 					}};
 				changedResources.push(resourceState);
@@ -358,6 +388,22 @@ export class CvsSourceControl implements vscode.Disposable {
 		 
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries', path.dirname(uri.fsPath) + '/CVS/Entries.bak');
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries.out', path.dirname(uri.fsPath) + '/CVS/Entries');		
+	}
+
+	async mergeLatest(uri: vscode.Uri): Promise<void>  {
+		const { exec } = require("child_process");
+		await new Promise<void>((resolve, reject) => {
+			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
+			console.log(cvsCmd);
+			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+				if (error) {
+					vscode.window.showErrorMessage("Error merging file.");
+					reject(error);
+				} else {
+					resolve();
+				}
+			});
+		});
 	}
 
 	async removeFile(path: string) : Promise<void> {
