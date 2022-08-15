@@ -10,7 +10,8 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:cvs-ext.start"
+        "onCommand:cvs-ext.start",
+		"workspaceContains:**/CVS/Root"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -59,9 +60,9 @@
 				"icon": "$(remove)"
 			},
 			{
-			"command": "cvs-ext.undo-remove",
-			"title": "CVS: Recover removed file",
-			"icon": "$(discard)"
+				"command": "cvs-ext.undo-remove",
+				"title": "CVS: Recover removed file",
+				"icon": "$(discard)"
 			},
 			{
 				"command": "cvs-ext.undo-remove2",

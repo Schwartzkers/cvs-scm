@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 	//cvsSCM.inputBox.placeholder = 'cvs commit message';
 	//var workingTree = cvsSCM.createResourceGroup('working-tree','Changes');
 	const cvsSCM = new CvsSourceControl(context);
+	cvsSCM.getCvsState();
 
 
 	// The command has been defined in the package.json file
