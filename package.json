@@ -72,7 +72,13 @@
 				"command": "cvs-ext.merge-latest",
 				"title": "CVS: Merge latest changes from server",
 				"icon": "$(cloud-download)"
+			},
+			{
+				"command": "cvs-ext.force-revert",
+				"title": "CVS: Abandon conflicts and revert to HEAD",
+				"icon": "$(discard)"
 			}
+
 		],
 		"menus": {
 			"scm/title":[
@@ -91,11 +97,6 @@
 					"command": "cvs-ext.revert",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == revertable"
-				},
-				{
-					"command": "cvs-ext.revert",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"
 				},
 				{
 					"command": "cvs-ext.commit-file",
@@ -141,6 +142,11 @@
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == patch"					
+				},
+				{
+					"command": "cvs-ext.force-revert",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"				
 				}
 			]
 		}
