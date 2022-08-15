@@ -48,7 +48,8 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async onResourceChange(event: vscode.Uri): Promise<void> {
-		// need a debounce
+		// TODO need a debounce
+		
 		console.log("onResourceChange");
 		console.log(event.fsPath);
 
