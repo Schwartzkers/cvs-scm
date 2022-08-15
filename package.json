@@ -93,6 +93,11 @@
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == revertable"
 				},
 				{
+					"command": "cvs-ext.revert",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"
+				},
+				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost && scmResourceState != conflict && scmResourceState != merge && scmResourceState != patch"

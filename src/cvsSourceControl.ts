@@ -48,11 +48,15 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async onResourceChange(event: vscode.Uri): Promise<void> {
+		// need a debounce
 		console.log("onResourceChange");
 		console.log(event.fsPath);
 
 		const changedResources: vscode.SourceControlResourceState[] = [];
 		const unknownResources: vscode.SourceControlResourceState[] = [];
+		this.changedResources.resourceStates = changedResources;
+		this.unknownResources.resourceStates = unknownResources;
+
 		let result = await this.cvsRepository.getResources();
 		await this.cvsRepository.parseResources(result);
 		
@@ -149,9 +153,22 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.conflict) {
 				console.log(element.resource);
 				console.log('conflict');
+				
+				let left = this.cvsRepository.getTmpVersion(element.resource);
+				let right = element.resource;
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right],
+					tooltip: "Diff your changes"
+				};
+
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,					
 					contextValue: "conflict",
+					command: command,
 					decorations: {						
 						dark:{
 							iconPath: "/home/jon/cvs-ext/resources/icons/dark/conflict.svg",
@@ -164,8 +181,21 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.patch) {
 				console.log(element.resource);
 				console.log('patch');
+
+				let left = this.cvsRepository.getHeadVersion(element.resource);
+				let right = element.resource;
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right],
+					tooltip: "Diff your changes"
+				};
+
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,					
+					resourceUri: element.resource,
+					command: command,				
 					contextValue: "patch",
 					decorations: {						
 						dark:{
@@ -178,9 +208,22 @@ export class CvsSourceControl implements vscode.Disposable {
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.merge) {
 				console.log(element.resource);
+
+				let left = this.cvsRepository.getHeadVersion(element.resource);
+				let right = element.resource;
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right],
+					tooltip: "Diff your changes"
+				};
+
 				console.log('merge');
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,					
+					resourceUri: element.resource,
+					command: command,
 					contextValue: "merge",
 					decorations: {						
 						dark:{
@@ -391,6 +434,9 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
+		// todo need to get latets version in tmp, cvs update fails if conflicts occur
+		this.cvsRepository.getHeadVersion(uri);
+
 		const { exec } = require("child_process");
 		await new Promise<void>((resolve, reject) => {
 			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
