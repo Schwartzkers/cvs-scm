@@ -69,6 +69,16 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Revert');
 	});
 
+	let forceRevert = vscode.commands.registerCommand('cvs-ext.force-revert', (resource: vscode.SourceControlResourceState) => {
+		console.log(resource.resourceUri);
+		cvsSCM.deleteFile(resource.resourceUri),
+		cvsSCM.revertFile(resource.resourceUri);
+
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Force Revert');
+	});
+
 	let add = vscode.commands.registerCommand('cvs-ext.add', (resource: vscode.SourceControlResourceState) => {
 		console.log(resource.resourceUri);
 		cvsSCM.addFile(resource.resourceUri);
