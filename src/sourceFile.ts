@@ -13,7 +13,7 @@ export enum SourceFileState {
 }
 
 const myMap = new Map<string, SourceFileState>([
-    ["M", SourceFileState.modified],
+    ["Locally Modified", SourceFileState.modified],
     ["?", SourceFileState.untracked],
     ["A", SourceFileState.added],
     ["R", SourceFileState.removed],
