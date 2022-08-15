@@ -74,19 +74,18 @@ export class CvsRepository implements QuickDiffProvider {
 
 		for (const element of stdout.split('\n')) {
 		//await stdout.split('\n').forEach(async element => { should do promise all
-			let line = element.substring(element.indexOf(' ')+1, element.length);
 			let state = element.substring(0, element.indexOf(' '));
 			console.log(state);
-			if (line.length !== 0) {
+			if (state.length === 1) {				
 				const resource = element.substring(element.indexOf(' ')+1, element.length);
 				const uri = Uri.joinPath(this.workspaceUri, resource);
 
-				if(state === 'C' || state === 'U') {
-					console.log(line);
-					state = await this.getTypeOfConflict(resource);
+				if(state === 'C' || state === 'U' || state === 'M') {
+					
+					state = await this.getStatusOfFile(resource);
 				}
 				
-				console.log('state = ' + state);
+				console.log('state: ' + state + ' => resource: ' + resource);
 				this.sourceFiles.push(new SourceFile(uri, state));
 			}			
 		};
@@ -94,7 +93,7 @@ export class CvsRepository implements QuickDiffProvider {
 		console.log(this.sourceFiles);
 	}
 
-	async getTypeOfConflict(resource: string): Promise<string> {
+	async getStatusOfFile(resource: string): Promise<string> {
 		const { exec } = require("child_process");
 		const status = await new Promise<string>((resolve, reject) => {
 			let result = '?';

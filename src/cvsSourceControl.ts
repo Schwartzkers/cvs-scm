@@ -47,9 +47,12 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.onResourceChange(this.rootPath);
 	}
 
-	async onResourceChange(event: vscode.Uri): Promise<void> {
-		// TODO need a debounce
-		
+	onResourceChange(_uri: vscode.Uri): void {
+		if (this.timeout) { clearTimeout(this.timeout); }
+		this.timeout = setTimeout(() => this.getResourceChanges(_uri), 500);
+	}
+
+	async getResourceChanges(event: vscode.Uri): Promise<void> {
 		console.log("onResourceChange");
 		console.log(event.fsPath);
 
@@ -323,6 +326,16 @@ export class CvsSourceControl implements vscode.Disposable {
 		});
 	}
 
+	async forceRevert(uri: vscode.Uri): Promise<void> {
+		try {
+			//await this.deleteFile(uri);
+			await fsPromises.unlink(uri.fsPath);
+			await this.revertFile(uri);
+		} catch(e) {
+			vscode.window.showErrorMessage("Error reverting file.");
+		}
+	}
+
 	async addFile(uri: vscode.Uri): Promise<void>  {
 		const { exec } = require("child_process");
 		const result = await new Promise<void>((resolve, reject) => {
@@ -402,6 +415,15 @@ export class CvsSourceControl implements vscode.Disposable {
 			});
 		});
 	}
+
+	async removeFile2(uri: vscode.Uri): Promise<void> {
+		await fsPromises.unlink(uri.fsPath);
+	}
+
+	// unlink('path/file.txt', (err) => {
+	// 	if (err) throw err;
+	// 	console.log('path/file.txt was deleted');
+	//   });
 
 	// can only do this if file was untracked by repository
 	async undoAdd(uri: vscode.Uri): Promise<void>  {
