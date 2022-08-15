@@ -44,6 +44,10 @@ export class CvsRepository implements QuickDiffProvider {
 		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
 	}
 
+	getTmpVersion(uri: Uri): Uri {
+		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+	}
+
 	async getResources(): Promise<String> {
 		const { exec } = require("child_process");
 
