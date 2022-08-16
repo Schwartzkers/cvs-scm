@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
 import { promises as fsPromises } from 'fs';
-import { CvsRepository } from './cvsRepository';
+import { CvsFile, CvsRepository } from './cvsRepository';
 import * as path from 'path';
 import { SourceFileState } from './sourceFile';
+import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 
 
 export class CvsSourceControl implements vscode.Disposable {
 	private cvsScm: vscode.SourceControl;
+	private cvsDocumentContentProvider: CvsDocumentContentProvider;
 	private changedResources: vscode.SourceControlResourceGroup;
 	private unknownResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
@@ -14,8 +16,9 @@ export class CvsSourceControl implements vscode.Disposable {
 	private timeout?: NodeJS.Timer;
 
 	//constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder) {
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, cvsDocumentContentProvider: CvsDocumentContentProvider) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS');
+		this.cvsDocumentContentProvider = cvsDocumentContentProvider;
 		this.changedResources = this.cvsScm.createResourceGroup('workingTree', 'Changes');
 		this.unknownResources = this.cvsScm.createResourceGroup('unknownTree', 'Untracked');
 
@@ -245,6 +248,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		
 		this.changedResources.resourceStates = changedResources;
 		this.unknownResources.resourceStates = unknownResources;
+
+		this.changedResources.resourceStates.forEach(element => {
+			this.cvsDocumentContentProvider.updated(new CvsFile(element.resourceUri));
+		});
 	}
 
 	async commitAll(): Promise<void> {
@@ -384,7 +391,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		});
 	}
 
-	async resurrectLostFile(uri: vscode.Uri): Promise<void>  {
+	async recoverLostFile(uri: vscode.Uri): Promise<void>  {
 		const { exec } = require("child_process");
 		const result = await new Promise<void>((resolve, reject) => {
 			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
@@ -457,7 +464,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
-		// todo need to get latets version in tmp, cvs update fails if conflicts occur
+		// need to get latets version in tmp, cvs update fails if conflicts occur
 		this.cvsRepository.getHeadVersion(uri);
 
 		const { exec } = require("child_process");

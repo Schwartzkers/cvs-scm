@@ -2,9 +2,16 @@ import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFol
 import * as path from 'path';
 import { SourceFile, SourceFileState } from './sourceFile';
 
-export interface CvsResources {
-	readonly resourceUri: Uri;
+// export interface CvsResources {
+// 	readonly resourceUri: Uri;
+// }
+
+
+export class CvsFile {
+	constructor(public uri: Uri, public version?: number, public text?: string) { }
 }
+
+export const CVS_SCHEME = 'cvs';
 
 export class CvsRepository implements QuickDiffProvider {
 	private sourceFiles: SourceFile[];
@@ -14,6 +21,7 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
+		console.log('provideOriginalResource');
 		
 		// const { exec } = require("child_process");
 
@@ -27,7 +35,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 		// return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
 
-		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+		return Uri.parse(`${CVS_SCHEME}:${path.basename(uri.fsPath)}`);
 	}
 
 	getHeadVersion(uri: Uri): Uri {
