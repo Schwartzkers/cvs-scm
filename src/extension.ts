@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.undo-remove', (resource: vscode.SourceControlResourceState) => {
 		vscode.window.showInformationMessage('Undo remove of file');
-		cvsSCM.undoRemoval(resource.resourceUri);		
+		cvsSCM.addFile(resource.resourceUri);		
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.merge-latest', (resource: vscode.SourceControlResourceState) => {
