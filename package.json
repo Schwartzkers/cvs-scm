@@ -10,19 +10,16 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:cvs-ext.start",
-		"workspaceContains:**/CVS/Root"
+        "onCommand:cvs-ext.refresh",
+		"workspaceContains:CVS/Root"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "cvs-ext.start",
-				"title": "CVS: Start"
-			},
-			{
-				"command": "cvs-ext.status",
-				"title": "CVS: Status"
+				"command": "cvs-ext.refresh",
+				"title": "CVS: Refresh Repository",
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "cvs-ext.commit-all",
@@ -65,7 +62,7 @@
 				"icon": "$(discard)"
 			},
 			{
-				"command": "cvs-ext.undo-remove2",
+				"command": "cvs-ext.recover",
 				"title": "CVS: Recover lost file",
 				"icon": "$(discard)"
 			},
@@ -84,7 +81,8 @@
 		"menus": {
 			"scm/title":[
 				{
-					"command": "cvs-ext.status",
+					"command": "cvs-ext.refresh",
+					"group": "navigation",
 					"when": "scmProvider == cvs"
 				},
 				{
@@ -130,7 +128,7 @@
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
 				},
 				{
-					"command": "cvs-ext.undo-remove2",
+					"command": "cvs-ext.recover",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"					
 				},
