@@ -292,6 +292,8 @@ export class CvsSourceControl implements vscode.Disposable {
 		const token = this.rootPath.fsPath.concat("/");
 		const file = resource.fsPath.split(token)[1];
 
+		//await this.runCvsCommand(`cvs add ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
+
 		const { exec } = require("child_process");
 		const result = await new Promise<void>((resolve, reject) => {
 			const cvsCmd = `cvs commit -m "${this.cvsScm.inputBox.value}" ${file}`;
@@ -317,133 +319,50 @@ export class CvsSourceControl implements vscode.Disposable {
 		return files;
 	}
 
-	async revertFile(uri: vscode.Uri): Promise<void> {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs update -C ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error reverting files.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
-	}
-
-	async forceRevert(uri: vscode.Uri): Promise<void> {
+	async forceRevert(_uri: vscode.Uri): Promise<void> {
 		try {
-			//await this.deleteFile(uri);
-			await fsPromises.unlink(uri.fsPath);
-			await this.revertFile(uri);
+			await this.deleteFile(_uri);
+			await this.revertFile(_uri);
 		} catch(e) {
-			vscode.window.showErrorMessage("Error reverting file.");
+			vscode.window.showErrorMessage("Error reverting file");
 		}
 	}
 
-	async addFile(uri: vscode.Uri): Promise<void>  {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs add ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error adding file.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
-	}	
-
-	async removeFileFromCvs(uri: vscode.Uri): Promise<void>  {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs remove -f ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error removing file.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
+	async addFile(_uri: vscode.Uri): Promise<void>  {
+		await this.runCvsCommand(`cvs add ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
-	async undoRemoval(uri: vscode.Uri): Promise<void>  {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs add ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error undoing removal.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
+	async removeFileFromCvs(_uri: vscode.Uri): Promise<void>  {
+		await this.runCvsCommand(`cvs remove -f ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
-	async recoverLostFile(uri: vscode.Uri): Promise<void>  {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error removing file.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
+	async recoverLostFile(_uri: vscode.Uri): Promise<void>  {
+		await this.runCvsCommand(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
-	async deleteFile(uri: vscode.Uri): Promise<void>  {
-		const { exec } = require("child_process");
-		const result = await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `rm -f ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("Error deleting file.");
-					reject(error);
-				} else {
-					resolve();
-				}
-			});
-		});
+	async deleteFile(_uri: vscode.Uri): Promise<void>  {
+		await fsPromises.unlink(_uri.fsPath);
 	}
 
-	async removeFile2(uri: vscode.Uri): Promise<void> {
-		await fsPromises.unlink(uri.fsPath);
+	async revertFile(uri: vscode.Uri): Promise<void> {
+		await this.runCvsCommand(`cvs update -C ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
 	}
 
-	// unlink('path/file.txt', (err) => {
-	// 	if (err) throw err;
-	// 	console.log('path/file.txt was deleted');
-	//   });
+	async mergeLatest(uri: vscode.Uri): Promise<void>  {
+		// need to get latest version in tmp, cvs update will fail if conflicts occur
+		this.cvsRepository.getHeadVersion(uri);
+
+		await this.runCvsCommand(`cvs update ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
+	}
 
 	// can only do this if file was untracked by repository
 	async undoAdd(uri: vscode.Uri): Promise<void>  {
-		//const fs = require('fs');
-		const fs = require('fs/promises');
-
-		// remove temp CVS file (e.g. 'test.txt,t')
+		// 1. remove temp CVS file (e.g. 'test.txt,t')
 		const files = await this.readDir(path.dirname(uri.fsPath) + '/CVS');
 		
 		files.forEach(async file => {
 			if(file.includes(path.basename(uri.fsPath))) {
-				await this.removeFile(path.dirname(uri.fsPath) + '/CVS/' + file);
-				console.log('remove file');
+				await this.deleteFile(vscode.Uri.parse(path.dirname(uri.fsPath) + '/CVS/' + file));
 			}
 		});
 
@@ -463,33 +382,20 @@ export class CvsSourceControl implements vscode.Disposable {
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries.out', path.dirname(uri.fsPath) + '/CVS/Entries');		
 	}
 
-	async mergeLatest(uri: vscode.Uri): Promise<void>  {
-		// need to get latets version in tmp, cvs update fails if conflicts occur
-		this.cvsRepository.getHeadVersion(uri);
-
+	async runCvsCommand(cvsCommand: string, path: string): Promise<boolean>  {
 		const { exec } = require("child_process");
-		await new Promise<void>((resolve, reject) => {
-			const cvsCmd = `cvs update ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+		return await new Promise<boolean>((resolve, reject) => {
+			console.log('runCvsCommand: '+ cvsCommand);
+			exec(cvsCommand, {cwd: path}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
-					vscode.window.showErrorMessage("Error merging file.");
-					reject(error);
+					vscode.window.showErrorMessage("CVS repository error");
+					console.log(error);
+					reject(false);
 				} else {
-					resolve();
+					resolve(true);
 				}
 			});
 		});
-	}
-
-	async removeFile(path: string) : Promise<void> {
-		const fs = require('fs/promises');
-
-		try {
-			await fsPromises.rm(path);
-		} catch (err: any) {
-			console.log(err);
-		}		
 	}
 
 	async readDir(path: string): Promise<string[]> {
