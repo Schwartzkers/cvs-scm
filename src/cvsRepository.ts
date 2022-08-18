@@ -2,16 +2,12 @@ import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFol
 import * as path from 'path';
 import { SourceFile, SourceFileState } from './sourceFile';
 
-// export interface CvsResources {
-// 	readonly resourceUri: Uri;
-// }
-
 
 export class CvsFile {
 	constructor(public uri: Uri, public version?: number, public text?: string) { }
 }
 
-export const CVS_SCHEME = 'cvs';
+export const CVS_SCHEME = 'jon';
 
 export class CvsRepository implements QuickDiffProvider {
 	private sourceFiles: SourceFile[];
@@ -21,35 +17,13 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
-		console.log('provideOriginalResource');
-		
-		// const { exec } = require("child_process");
+		if (token.isCancellationRequested) { return undefined; }
 
-		// let cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > /tmp/${path.basename(uri.fsPath)}.HEAD`;
-		// exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: any, stderr: any) => {
-		// 	if (error) {
-		// 		console.log(`error: ${error.message}`);
-		// 		return;
-		// 	}
-		// });
+		const relativePath = workspace.asRelativePath(uri.fsPath);
 
-		// return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+		console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${relativePath}`));
 
-		return Uri.parse(`${CVS_SCHEME}:${path.basename(uri.fsPath)}`);
-	}
-
-	getHeadVersion(uri: Uri): Uri {
-		const { exec } = require("child_process");
-
-		let cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > /tmp/${path.basename(uri.fsPath)}.HEAD`;
-		exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: any, stderr: any) => {
-			if (error) {
-				console.log(`error: ${error.message}`);
-				return;
-			}
-		});
-
-		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+		return Uri.parse(`${CVS_SCHEME}:${relativePath}`);
 	}
 
 	getTmpVersion(uri: Uri): Uri {
@@ -76,14 +50,12 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	async parseResources(stdout: String): Promise<void> {
-		console.log('parseResources');
 		const fs = require('fs/promises');
 		this.sourceFiles = [];
 
 		for (const element of stdout.split('\n')) {
 		//await stdout.split('\n').forEach(async element => { should do promise all
 			let state = element.substring(0, element.indexOf(' '));
-			console.log(state);
 			if (state.length === 1) {				
 				const resource = element.substring(element.indexOf(' ')+1, element.length);
 				const uri = Uri.joinPath(this.workspaceUri, resource);
@@ -92,8 +64,6 @@ export class CvsRepository implements QuickDiffProvider {
 					
 					state = await this.getStatusOfFile(resource);
 				}
-				
-				console.log('state: ' + state + ' => resource: ' + resource);
 				this.sourceFiles.push(new SourceFile(uri, state));
 			}			
 		};
@@ -111,11 +81,9 @@ export class CvsRepository implements QuickDiffProvider {
 				if (error) {
 					reject(error);
 				} else {
-					console.log(stdout);
 					for (const element of stdout.split('\n')) {
 						if (element.includes('Status:')) {
 							result = element.split('Status: ')[1];
-							console.log(result);
 							resolve(result);
 						}
 					}
@@ -123,22 +91,6 @@ export class CvsRepository implements QuickDiffProvider {
 				}
 			});
 		});
-
-		// Promise.
-		// all([1, 2, 3].map(async() => {
-		// 	await new Promise(resolve => setTimeout(resolve, 10));
-		// 	throw new Error('Oops!');
-		// })).
-		// catch(err => {
-		// 	err.message; // Oops!
-		// });
-
-		// for (const element of result.split('\n')) {
-		// 	if (element.includes('Status:')) {
-		// 		status = element.split('Status:')[1];
-		// 		console.log(status);
-		// 	}
-		// }
 
 		return status;
 	}

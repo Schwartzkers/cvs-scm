@@ -10,8 +10,15 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	console.log('"cvs-ext" is now active');
 
+	const rootPath =
+	vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+	  ? vscode.workspace.workspaceFolders[0].uri
+	  : vscode.Uri.parse('empty');
+
+	console.log(rootPath);
+
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
-	const cvsSCM = new CvsSourceControl(context, cvsDocumentContentProvider);
+	const cvsSCM = new CvsSourceControl(context, rootPath, cvsDocumentContentProvider);
 	cvsSCM.getCvsState();
 
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
