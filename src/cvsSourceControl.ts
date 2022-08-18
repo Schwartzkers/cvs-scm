@@ -11,6 +11,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	private workspacefolder: vscode.Uri;
 	private cvsDocumentContentProvider: CvsDocumentContentProvider;
 	private changedResources: vscode.SourceControlResourceGroup;
+	private conflictResources: vscode.SourceControlResourceGroup;
 	private unknownResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
 	private timeout?: NodeJS.Timer;
@@ -21,6 +22,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.workspacefolder = worspacefolder;
 		this.cvsDocumentContentProvider = cvsDocumentContentProvider;
 		this.changedResources = this.cvsScm.createResourceGroup('workingTree', 'Changes');
+		this.conflictResources = this.cvsScm.createResourceGroup('conflictTree', 'Conflicts');
 		this.unknownResources = this.cvsScm.createResourceGroup('unknownTree', 'Untracked');
 		
         this.cvsRepository = new CvsRepository(this.workspacefolder);
@@ -51,8 +53,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		console.log(event.fsPath);
 
 		const changedResources: vscode.SourceControlResourceState[] = [];
+		const conflictResources: vscode.SourceControlResourceState[] = [];
 		const unknownResources: vscode.SourceControlResourceState[] = [];
 		this.changedResources.resourceStates = changedResources;
+		this.conflictResources.resourceStates = changedResources;
 		this.unknownResources.resourceStates = unknownResources;
 
 		const result = await this.cvsRepository.getResources();
@@ -175,7 +179,7 @@ export class CvsSourceControl implements vscode.Disposable {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/conflict.svg",
 						}
 					}};
-				changedResources.push(resourceState);
+				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.patch) {
 				console.log(element.resource);
 				console.log('patch');
@@ -204,7 +208,7 @@ export class CvsSourceControl implements vscode.Disposable {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/patch.svg",
 						}
 					}};
-				changedResources.push(resourceState);
+				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.merge) {
 				console.log(element.resource);
 
@@ -233,16 +237,17 @@ export class CvsSourceControl implements vscode.Disposable {
 							iconPath: "/home/jon/cvs-ext/resources/icons/light/merge.svg",
 						}
 					}};
-				changedResources.push(resourceState);
+				conflictResources.push(resourceState);
 			}
 
 			
 		});
 		
 		this.changedResources.resourceStates = changedResources;
+		this.conflictResources.resourceStates = conflictResources;
 		this.unknownResources.resourceStates = unknownResources;
 
-		this.cvsDocumentContentProvider.updated(this.changedResources.resourceStates);
+		this.cvsDocumentContentProvider.updated(changedResources.concat(conflictResources));
 	}
 
 	async commitAll(): Promise<void> {
