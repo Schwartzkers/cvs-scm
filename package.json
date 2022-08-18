@@ -135,17 +135,17 @@
 				{
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == merge"					
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == merge"					
 				},
 				{
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == patch"					
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == patch"					
 				},
 				{
 					"command": "cvs-ext.force-revert",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == conflict"				
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == conflict"				
 				}
 			]
 		}

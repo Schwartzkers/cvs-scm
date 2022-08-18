@@ -48,6 +48,8 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
         console.log('provideTextDocumentContent: ' + uri);
 
+		// todo hande filw with no changes
+
         if (token.isCancellationRequested) { return "Canceled"; }
 
 		const resource = this.sourceControlFiles.get(uri.fsPath);
