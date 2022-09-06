@@ -4,7 +4,7 @@ import { SourceFile, SourceFileState } from './sourceFile';
 
 
 export class CvsFile {
-	constructor(public uri: Uri, public version?: number, public text?: string) { }
+	constructor(public uri: Uri, public version?: number, public text?: string, public state?: SourceFileState) { }
 }
 
 export const CVS_SCHEME = 'jon';
@@ -19,16 +19,28 @@ export class CvsRepository implements QuickDiffProvider {
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		if (token.isCancellationRequested) { return undefined; }
 
-		const relativePath = workspace.asRelativePath(uri.fsPath);
+		console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`));
 
-		console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${relativePath}`));
-
-		return Uri.parse(`${CVS_SCHEME}:${relativePath}`);
+		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
 
-	getTmpVersion(uri: Uri): Uri {
-		return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
-	}
+	// async createTmpVersion(uri: Uri): Promise<void> {
+	// 	const { exec } = require("child_process");
+
+	// 	await new Promise<void>((reject) => {
+	// 		const cmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > /tmp/${path.basename(uri.fsPath)}.HEAD`;
+	// 		console.log(cmd);
+	// 		exec(cmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
+	// 			if (error) {
+	// 				reject(error);
+	// 			}
+	// 		});
+	// 	});
+	// }
+
+	// getTmpVersion(uri: Uri): Uri {
+	// 	return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
+	// }
 
 	async getResources(): Promise<String> {
 		const { exec } = require("child_process");
