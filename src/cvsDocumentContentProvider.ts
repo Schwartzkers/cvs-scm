@@ -1,5 +1,6 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, window, workspace, SourceControlResourceState } from "vscode";
 import { CvsFile, CvsRepository, CVS_SCHEME } from './cvsRepository';
+import { SourceFile, SourceFileState } from './sourceFile';
 import * as path from 'path';
 
 /**
@@ -24,11 +25,12 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 		console.log('resourceStates.length = ' + resourceStates.length);
 
 		if (resourceStates.length > 0) {
-			console.log('inside if');
 			for (let i:number=0; i < resourceStates.length; i++) {
-				console.log('inside if i=: ' + i);
+
 				let cvsFIle = new CvsFile(resourceStates[i].resourceUri);
-				cvsFIle.text = await this.getRepositoryRevision(resourceStates[i].resourceUri);
+				if (resourceStates[i].contextValue !== 'conflict') { // cannot get repo revision if conflicts exist
+					cvsFIle.text = await this.getRepositoryRevision(resourceStates[i].resourceUri);
+				}
 
 				const relativePath = workspace.asRelativePath(resourceStates[i].resourceUri.fsPath);
 				this.sourceControlFiles.set(Uri.parse(`${CVS_SCHEME}:${relativePath}`).fsPath, cvsFIle);
@@ -39,26 +41,24 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 			}
 		}
 
-		this.sourceControlFiles.forEach(element => {
-			console.log(element.uri);
-			console.log(element.text);
-		});
+		// this.sourceControlFiles.forEach(element => {
+		// 	console.log(element.uri);
+		// 	console.log(element.text);
+		// });
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
         console.log('provideTextDocumentContent: ' + uri);
 
-		// todo hande filw with no changes
-
         if (token.isCancellationRequested) { return "Canceled"; }
 
 		const resource = this.sourceControlFiles.get(uri.fsPath);
 		if (!resource) {
-			console.log('provideTextDocumentContent failed');
-			return "Resource not found: " + uri.toString();
+			return new Promise((resolve) => {
+					resolve(this.getRepositoryRevision(uri));
+			});
 		}
 
-		console.log(resource.text);
 		return resource.text;
 	}
 
@@ -70,8 +70,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 			console.log(cvsCmd);
 			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
-					window.showErrorMessage("Error reverting files.");
-					reject(error);
+					reject("Failed to get repository revision: " + uri.fsPath);
 				} else {
 					resolve(stdout);
 				}

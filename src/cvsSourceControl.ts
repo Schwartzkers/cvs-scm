@@ -156,15 +156,12 @@ export class CvsSourceControl implements vscode.Disposable {
 				console.log(element.resource);
 				console.log('conflict');
 				
-				let left = this.cvsRepository.getTmpVersion(element.resource);
-				let right = element.resource;
-
 				const command: vscode.Command =
 				{
-					title: "Show changes",
-					command: "vscode.diff",
-					arguments: [left, right],
-					tooltip: "Diff your changes"
+					title: "View conflicts",
+					command: "vscode.open",
+					arguments: [element.resource],
+					tooltip: "Open file"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
@@ -315,8 +312,8 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
-		// need to get latest version in tmp, cvs update will fail file contains conflicts??
-		//this.cvsRepository.getHeadVersion(uri);
+		// need to get latest version in tmp, cvs update will fail if file contains conflicts??
+		//this.cvsRepository.createTmpVersion(uri);
 
 		await this.runCvsCommand(`cvs update ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
 	}
