@@ -38,6 +38,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		context.subscriptions.push(fileSystemWatcher);
 	}
 
+	getWorkspaceFolder(): vscode.Uri {
+		return this.workspacefolder;
+	}
+
 	getCvsState(): void 
 	{
 		this.onResourceChange(this.workspacefolder);
@@ -399,7 +403,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		} catch(err: any) {
 			console.log(err);
 		}
-	}	
+	}
 
     dispose() {
 		this.cvsScm.dispose();
