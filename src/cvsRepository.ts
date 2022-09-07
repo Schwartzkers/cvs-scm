@@ -7,7 +7,7 @@ export class CvsFile {
 	constructor(public uri: Uri, public version?: number, public text?: string, public state?: SourceFileState) { }
 }
 
-export const CVS_SCHEME = 'jon';
+export const CVS_SCHEME = 'cvs-scm';
 
 export class CvsRepository implements QuickDiffProvider {
 	private sourceFiles: SourceFile[];
@@ -23,24 +23,6 @@ export class CvsRepository implements QuickDiffProvider {
 
 		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
-
-	// async createTmpVersion(uri: Uri): Promise<void> {
-	// 	const { exec } = require("child_process");
-
-	// 	await new Promise<void>((reject) => {
-	// 		const cmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)} > /tmp/${path.basename(uri.fsPath)}.HEAD`;
-	// 		console.log(cmd);
-	// 		exec(cmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-	// 			if (error) {
-	// 				reject(error);
-	// 			}
-	// 		});
-	// 	});
-	// }
-
-	// getTmpVersion(uri: Uri): Uri {
-	// 	return Uri.parse(`/tmp/${path.basename(uri.fsPath)}.HEAD`);
-	// }
 
 	async getResources(): Promise<String> {
 		const { exec } = require("child_process");
