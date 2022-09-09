@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
-		console.log(sourceControl.getWorkspaceFolder());
+		//console.log(sourceControl.getWorkspaceFolder());
 	});
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.refresh', async (sourceControlPane: vscode.SourceControl) => {
@@ -73,7 +73,6 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Recover deleted file');
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.recoverLostFile(resource.resourceUri); }
-		else { console.log('failed to find sourceControl'); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.remove-file', async (resource: vscode.SourceControlResourceState) => {
@@ -104,7 +103,6 @@ export function activate(context: vscode.ExtensionContext) {
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
 	for (const uri of cvsSourceControlRegister.keys()) {
 		if (resource.fsPath.includes(uri.fsPath)) {
-			console.log('found source control: ' + uri);
 			return cvsSourceControlRegister.get(uri);
 		}	
 	}

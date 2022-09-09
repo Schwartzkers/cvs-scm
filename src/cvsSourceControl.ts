@@ -16,7 +16,6 @@ export class CvsSourceControl implements vscode.Disposable {
 	private cvsRepository: CvsRepository;
 	private timeout?: NodeJS.Timer;
 
-	//constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder) {
     constructor(context: vscode.ExtensionContext, worspacefolder: vscode.Uri, cvsDocumentContentProvider: CvsDocumentContentProvider) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS', worspacefolder);
 		this.workspacefolder = worspacefolder;
@@ -53,9 +52,6 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async getResourceChanges(event: vscode.Uri): Promise<void> {
-		console.log("onResourceChange");
-		console.log(event.fsPath);
-
 		const changedResources: vscode.SourceControlResourceState[] = [];
 		const conflictResources: vscode.SourceControlResourceState[] = [];
 		const unknownResources: vscode.SourceControlResourceState[] = [];
@@ -72,31 +68,30 @@ export class CvsSourceControl implements vscode.Disposable {
 			{
 				const token = new vscode.CancellationTokenSource();
 				const left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
-				console.log(left);
-
 				let right = element.resource;
 
 				const command: vscode.Command =
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right],
+					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.changedResources.label})`],
 					tooltip: "Diff your changes"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,
 					command: command,
-					contextValue: 'revertable',
+					contextValue: 'modified',
 					decorations: {
 						strikeThrough: false,
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/modified.svg",
+							iconPath: __dirname + "/../resources/icons/dark/modified.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/modified.svg",
+							iconPath: __dirname + "/../resources/icons/light/modified.svg",
 						}
 					}};
+
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.untracked)
 			{
@@ -104,12 +99,13 @@ export class CvsSourceControl implements vscode.Disposable {
 					resourceUri: element.resource,	
 					decorations: {
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/untracked.svg",
+							iconPath: __dirname + "/../resources/icons/dark/untracked.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/untracked.svg",
+							iconPath: __dirname + "/../resources/icons/light/untracked.svg",
 						}
 					}};
+
 				unknownResources.push(resourceState);
 			} else if (element.state === SourceFileState.added) {
 				const resourceState: vscode.SourceControlResourceState = {
@@ -117,49 +113,45 @@ export class CvsSourceControl implements vscode.Disposable {
 					contextValue: "undoable",
 					decorations: {
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/added.svg",
+							iconPath: __dirname + "/../resources/icons/dark/added.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/added.svg",
+							iconPath: __dirname + "/../resources/icons/light/added.svg",
 						}
 					}};
+
 				changedResources.push(resourceState);
-			} else if (element.state === SourceFileState.removed) {
-				console.log(element.resource);
-				console.log('removed');
+			} else if (element.state === SourceFileState.removed) {	
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,					
 					contextValue: "removed",
 					decorations: {
 						strikeThrough: true,						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/deleted.svg",
+							iconPath: __dirname + "/../resources/icons/dark/deleted.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/deleted.svg",
+							iconPath: __dirname + "/../resources/icons/light/deleted.svg",
 						}
 					}};
+
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.lost) {
-				console.log(element.resource);
-				console.log('lost');
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,					
 					contextValue: "lost",
 					decorations: {
 						strikeThrough: true,						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/lost.svg",
+							iconPath: __dirname + "/../resources/icons/dark/lost.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/lost.svg",
+							iconPath: __dirname + "/../resources/icons/light/lost.svg",
 						}
 					}};
+
 				changedResources.push(resourceState);
-			} else if (element.state === SourceFileState.conflict) {
-				console.log(element.resource);
-				console.log('conflict');
-				
+			} else if (element.state === SourceFileState.conflict) {		
 				const command: vscode.Command =
 				{
 					title: "View conflicts",
@@ -174,17 +166,15 @@ export class CvsSourceControl implements vscode.Disposable {
 					command: command,
 					decorations: {						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/conflict.svg",
+							iconPath: __dirname + "/../resources/icons/dark/conflict.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/conflict.svg",
+							iconPath: __dirname + "/../resources/icons/light/conflict.svg",
 						}
 					}};
+
 				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.patch) {
-				console.log(element.resource);
-				console.log('patch');
-
 				const token = new vscode.CancellationTokenSource();
 				let left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
 				let right = element.resource;
@@ -193,8 +183,8 @@ export class CvsSourceControl implements vscode.Disposable {
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right],
-					tooltip: "Diff your changes"
+					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.conflictResources.label})`],
+					tooltip: "View remote changes"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
@@ -203,16 +193,15 @@ export class CvsSourceControl implements vscode.Disposable {
 					contextValue: "patch",
 					decorations: {						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/patch.svg",
+							iconPath: __dirname + "/../resources/icons/dark/patch.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/patch.svg",
+							iconPath: __dirname + "/../resources/icons/light/patch.svg",
 						}
 					}};
+
 				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.merge) {
-				console.log(element.resource);
-
 				const token = new vscode.CancellationTokenSource();
 				let left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
 				let right = element.resource;
@@ -221,27 +210,25 @@ export class CvsSourceControl implements vscode.Disposable {
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right],
-					tooltip: "Diff your changes"
+					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.conflictResources.label})`],
+					tooltip: "View remote changes"
 				};
-
-				console.log('merge');
+	
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: element.resource,
 					command: command,
 					contextValue: "merge",
 					decorations: {						
 						dark:{
-							iconPath: "/home/jon/cvs-ext/resources/icons/dark/merge.svg",
+							iconPath: __dirname + "/../resources/icons/dark/merge.svg",
 						},
 						light: {
-							iconPath: "/home/jon/cvs-ext/resources/icons/light/merge.svg",
+							iconPath: __dirname + "/../resources/icons/light/merge.svg",
 						}
 					}};
-				conflictResources.push(resourceState);
-			}
 
-			
+				conflictResources.push(resourceState);
+			}			
 		});
 		
 		this.changedResources.resourceStates = changedResources;
@@ -267,7 +254,6 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.changedResources.resourceStates.forEach(element => {			
 			files = files.concat(element.resourceUri.fsPath.split(token)[1], ' ');
 		});
-
 
 		await this.runCvsCommand(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath);
 		this.cvsScm.inputBox.value = '';
@@ -316,8 +302,8 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
-		// need to get latest version in tmp, cvs update will fail if file contains conflicts??
-		//this.cvsRepository.createTmpVersion(uri);
+		// FIX ME need to get latest version in tmp, cvs update will fail if file contains conflicts??
+		
 
 		await this.runCvsCommand(`cvs update ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
 	}
@@ -342,7 +328,6 @@ export class CvsSourceControl implements vscode.Disposable {
 			}
 		});
 
-		console.log(newEntries);
 		await this.writeCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries.out', newEntries);
 		 
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries', path.dirname(uri.fsPath) + '/CVS/Entries.bak');
@@ -352,7 +337,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	async runCvsCommand(cvsCommand: string, path: string): Promise<boolean>  {
 		const { exec } = require("child_process");
 		return await new Promise<boolean>((resolve, reject) => {
-			console.log('runCvsCommand: '+ cvsCommand);
+			//console.log('runCvsCommand: '+ cvsCommand);
 			exec(cvsCommand, {cwd: path}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
 					vscode.window.showErrorMessage("CVS repository error");

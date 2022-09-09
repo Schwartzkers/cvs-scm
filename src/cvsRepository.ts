@@ -19,7 +19,7 @@ export class CvsRepository implements QuickDiffProvider {
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		if (token.isCancellationRequested) { return undefined; }
 
-		console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`));
+		//console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`));
 
 		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
@@ -29,7 +29,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 		const result = await new Promise<String>((resolve, reject) => {
 			let cvsCmd = `cvs -n -q update`;
-			console.log(this.workspaceUri.fsPath);
+			//console.log(this.workspaceUri.fsPath);
 			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
 				// if (error) {
 				// 	reject(error);
@@ -62,7 +62,7 @@ export class CvsRepository implements QuickDiffProvider {
 			}			
 		};
 
-		console.log(this.sourceFiles);
+		//console.log(this.sourceFiles);
 	}
 
 	async getStatusOfFile(resource: string): Promise<string> {
@@ -70,7 +70,6 @@ export class CvsRepository implements QuickDiffProvider {
 		const status = await new Promise<string>((resolve, reject) => {
 			let result = '?';
 			const cvsCmd = `cvs status ${resource}`;
-			console.log(cvsCmd);
 			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
 					reject(error);
