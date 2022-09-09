@@ -22,8 +22,6 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	async updated(resourceStates: SourceControlResourceState[]): Promise<void> {
 		this.sourceControlFiles.clear();
 
-		console.log('resourceStates.length = ' + resourceStates.length);
-
 		if (resourceStates.length > 0) {
 			for (let i:number=0; i < resourceStates.length; i++) {
 
@@ -35,20 +33,15 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 				const relativePath = workspace.asRelativePath(resourceStates[i].resourceUri.fsPath);
 				this.sourceControlFiles.set(Uri.parse(`${CVS_SCHEME}:${relativePath}`).fsPath, cvsFIle);
 
-				console.log('added to content provider: ' + Uri.parse(`${CVS_SCHEME}:${relativePath}`));			
+				//console.log('added to content provider: ' + Uri.parse(`${CVS_SCHEME}:${relativePath}`));			
 
 				this._onDidChange.fire(Uri.parse(`${CVS_SCHEME}:${relativePath}`));
 			}
 		}
-
-		// this.sourceControlFiles.forEach(element => {
-		// 	console.log(element.uri);
-		// 	console.log(element.text);
-		// });
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
-        console.log('provideTextDocumentContent: ' + uri);
+        //console.log('provideTextDocumentContent: ' + uri);
 
         if (token.isCancellationRequested) { return "Canceled"; }
 
@@ -67,7 +60,6 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 
 		return await new Promise<string>((resolve, reject) => {
 			const cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)}`;
-			console.log(cvsCmd);
 			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
 				if (error) {
 					reject("Failed to get repository revision: " + uri.fsPath);
