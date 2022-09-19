@@ -1,7 +1,7 @@
-import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, window, workspace, SourceControlResourceState } from "vscode";
-import { CvsFile, CvsRepository, CVS_SCHEME } from './cvsRepository';
-import { SourceFile, SourceFileState } from './sourceFile';
+import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, workspace, SourceControlResourceState } from "vscode";
+import { CvsFile, CVS_SCHEME } from './cvsRepository';
 import * as path from 'path';
+import { runCvsStrCmd } from './utility';
 
 /**
  * Provides the content of the CVS files per the server version i.e.  without the local edits.
@@ -32,17 +32,12 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 
 				const relativePath = workspace.asRelativePath(resourceStates[i].resourceUri.fsPath);
 				this.sourceControlFiles.set(Uri.parse(`${CVS_SCHEME}:${relativePath}`).fsPath, cvsFIle);
-
-				//console.log('added to content provider: ' + Uri.parse(`${CVS_SCHEME}:${relativePath}`));			
-
 				this._onDidChange.fire(Uri.parse(`${CVS_SCHEME}:${relativePath}`));
 			}
 		}
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
-        //console.log('provideTextDocumentContent: ' + uri);
-
         if (token.isCancellationRequested) { return "Canceled"; }
 
 		const resource = this.sourceControlFiles.get(uri.fsPath);
@@ -56,17 +51,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
     async getRepositoryRevision(uri: Uri): Promise<string> {
-		const { exec } = require("child_process");
-
-		return await new Promise<string>((resolve, reject) => {
-			const cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)}`;
-			exec(cvsCmd, {cwd: path.dirname(uri.fsPath)}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					reject("Failed to get repository revision: " + uri.fsPath);
-				} else {
-					resolve(stdout);
-				}
-			});
-		});
+		const cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)}`;
+		return await runCvsStrCmd(cvsCmd, path.dirname(uri.fsPath), true);
 	}
 }

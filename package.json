@@ -78,7 +78,7 @@
 			},
 			{
 				"command": "cvs-ext.openFile",
-				"title": "%command.openFile%",
+				"title": "OpenFile",
 				"icon": "$(go-to-file)"
 			}
 		],

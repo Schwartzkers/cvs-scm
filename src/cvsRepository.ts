@@ -24,7 +24,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getResources(): Promise<string> {
 		let cvsCmd = `cvs -n -q update`;
-		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath);
+		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true);
 	}
 
 	async parseResources(stdout: string): Promise<void> {
