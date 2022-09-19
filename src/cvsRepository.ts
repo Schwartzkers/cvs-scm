@@ -1,6 +1,6 @@
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace, window, env } from "vscode";
-import * as path from 'path';
+import { QuickDiffProvider, Uri, CancellationToken, ProviderResult } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
+import { runCvsStrCmd } from './utility';
 
 
 export class CvsFile {
@@ -19,31 +19,15 @@ export class CvsRepository implements QuickDiffProvider {
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		if (token.isCancellationRequested) { return undefined; }
 
-		//console.log('provideOriginalResource: ' + Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`));
-
 		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
 
-	async getResources(): Promise<String> {
-		const { exec } = require("child_process");
-
-		const result = await new Promise<String>((resolve, reject) => {
-			let cvsCmd = `cvs -n -q update`;
-			//console.log(this.workspaceUri.fsPath);
-			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
-				// if (error) {
-				// 	reject(error);
-				// } else {					
-				// 	resolve(stdout);
-				// }
-				resolve(stdout);
-			});
-		});
-
-		return result;
+	async getResources(): Promise<string> {
+		let cvsCmd = `cvs -n -q update`;
+		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath);
 	}
 
-	async parseResources(stdout: String): Promise<void> {
+	async parseResources(stdout: string): Promise<void> {
 		const fs = require('fs/promises');
 		this.sourceFiles = [];
 
@@ -51,41 +35,47 @@ export class CvsRepository implements QuickDiffProvider {
 		//await stdout.split('\n').forEach(async element => { should do promise all
 			let state = element.substring(0, element.indexOf(' '));
 			if (state.length === 1) {				
-				const resource = element.substring(element.indexOf(' ')+1, element.length);
-				const uri = Uri.joinPath(this.workspaceUri, resource);
-
-				if(state === 'C' || state === 'U' || state === 'M') {
-					
-					state = await this.getStatusOfFile(resource);
+				const path = element.substring(element.indexOf(' ')+1, element.length);
+				let sourceFile = new SourceFile(path);
+				if ( state !== '?') {
+					 await this.getStatusOfFile(sourceFile);
 				}
-				this.sourceFiles.push(new SourceFile(uri, state));
+				else {
+					sourceFile.setState("Unknown");
+				}
+				this.sourceFiles.push(sourceFile);				
 			}			
 		};
-
-		//console.log(this.sourceFiles);
 	}
 
-	async getStatusOfFile(resource: string): Promise<string> {
-		const { exec } = require("child_process");
-		const status = await new Promise<string>((resolve, reject) => {
-			let result = '?';
-			const cvsCmd = `cvs status ${resource}`;
-			exec(cvsCmd, {cwd: this.workspaceUri.fsPath}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					reject(error);
-				} else {
-					for (const element of stdout.split('\n')) {
-						if (element.includes('Status:')) {
-							result = element.split('Status: ')[1];
-							resolve(result);
-						}
-					}
-					resolve(result);
-				}
-			});
-		});
+	async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
+		const cvsCmd = `cvs status ${sourceFile.path}`;
+		const status = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath);
 
-		return status;
+		for (const element of status.split('\n')) {
+			if (element.includes('Status:')) {
+				const state = element.trim().split('Status: ')[1];
+				console.log(state);
+				sourceFile.setState(state);
+				console.log(sourceFile.state);
+			}
+			else if (element.includes('Working revision:')) {
+				sourceFile.workingRevision = element.trim().split(/\s+/)[2];
+				console.log(sourceFile.workingRevision);
+			}
+			else if (element.includes('Repository revision:')) {
+				sourceFile.repoRevision = element.trim().split(/\s+/)[2];
+				console.log(sourceFile.repoRevision);
+			}
+			else if (element.includes('Sticky Tag:')) {
+				let branch = element.trim().split(/\s+/)[2];
+				if (branch === '(none)') {
+					branch = 'trunk';
+				}
+				sourceFile.branch = branch;
+				console.log(sourceFile.branch);
+			}
+		}
 	}
 
 	getChangesSourceFiles(): SourceFile[] {

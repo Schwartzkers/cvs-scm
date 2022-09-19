@@ -4,6 +4,7 @@ import { CvsFile, CvsRepository } from './cvsRepository';
 import * as path from 'path';
 import { SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
+import { runCvsBoolCmd } from './utility';
 
 
 export class CvsSourceControl implements vscode.Disposable {
@@ -67,19 +68,19 @@ export class CvsSourceControl implements vscode.Disposable {
 			if(element.state === SourceFileState.modified)
 			{
 				const token = new vscode.CancellationTokenSource();
-				const left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
-				let right = element.resource;
+				const left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
+				let right = element.path;
 
 				const command: vscode.Command =
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.changedResources.label})`],
+					arguments: [left, right, `${path.basename(element.path)} (${this.changedResources.label})`],
 					tooltip: "Diff your changes"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					command: command,
 					contextValue: 'modified',
 					decorations: {
@@ -96,7 +97,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.untracked)
 			{
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,	
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					decorations: {
 						dark:{
 							iconPath: __dirname + "/../resources/icons/dark/untracked.svg",
@@ -109,7 +110,7 @@ export class CvsSourceControl implements vscode.Disposable {
 				unknownResources.push(resourceState);
 			} else if (element.state === SourceFileState.added) {
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					contextValue: "undoable",
 					decorations: {
 						dark:{
@@ -123,7 +124,7 @@ export class CvsSourceControl implements vscode.Disposable {
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.removed) {	
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,					
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
 					contextValue: "removed",
 					decorations: {
 						strikeThrough: true,						
@@ -138,7 +139,7 @@ export class CvsSourceControl implements vscode.Disposable {
 				changedResources.push(resourceState);
 			} else if (element.state === SourceFileState.lost) {
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,					
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
 					contextValue: "lost",
 					decorations: {
 						strikeThrough: true,						
@@ -156,12 +157,12 @@ export class CvsSourceControl implements vscode.Disposable {
 				{
 					title: "View conflicts",
 					command: "vscode.open",
-					arguments: [element.resource],
+					arguments: [element.path],
 					tooltip: "Open file"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,					
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
 					contextValue: "conflict",
 					command: command,
 					decorations: {						
@@ -176,19 +177,19 @@ export class CvsSourceControl implements vscode.Disposable {
 				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.patch) {
 				const token = new vscode.CancellationTokenSource();
-				let left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
-				let right = element.resource;
+				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
+				let right = element.path;
 
 				const command: vscode.Command =
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.conflictResources.label})`],
+					arguments: [left, right, `${path.basename(element.path)} (${this.conflictResources.label})`],
 					tooltip: "View remote changes"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					command: command,				
 					contextValue: "patch",
 					decorations: {						
@@ -203,19 +204,19 @@ export class CvsSourceControl implements vscode.Disposable {
 				conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.merge) {
 				const token = new vscode.CancellationTokenSource();
-				let left = this.cvsRepository.provideOriginalResource!(element.resource, token.token);
-				let right = element.resource;
+				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
+				let right = element.path;
 
 				const command: vscode.Command =
 				{
 					title: "Show changes",
 					command: "vscode.diff",
-					arguments: [left, right, `${path.basename(element.resource.fsPath)} (${this.conflictResources.label})`],
+					arguments: [left, right, `${path.basename(element.path)} (${this.conflictResources.label})`],
 					tooltip: "View remote changes"
 				};
 	
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: element.resource,
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					command: command,
 					contextValue: "merge",
 					decorations: {						
@@ -255,7 +256,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			files = files.concat(element.resourceUri.fsPath.split(token)[1], ' ');
 		});
 
-		await this.runCvsCommand(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath);
+		await runCvsBoolCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath);
 		this.cvsScm.inputBox.value = '';
 	}
 
@@ -268,7 +269,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		const token = this.workspacefolder.fsPath.concat("/");
 		const file = _uri.fsPath.split(token)[1];
 
-		await this.runCvsCommand(`cvs commit -m "${this.cvsScm.inputBox.value}" ${file}`, this.workspacefolder.fsPath);
+		await runCvsBoolCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${file}`, this.workspacefolder.fsPath);
 		this.cvsScm.inputBox.value = '';
 	}
 
@@ -282,15 +283,15 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async addFile(_uri: vscode.Uri): Promise<void>  {
-		await this.runCvsCommand(`cvs add ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
+		await runCvsBoolCmd(`cvs add ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
 	async removeFileFromCvs(_uri: vscode.Uri): Promise<void>  {
-		await this.runCvsCommand(`cvs remove -f ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
+		await runCvsBoolCmd(`cvs remove -f ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
 	async recoverLostFile(_uri: vscode.Uri): Promise<void>  {
-		await this.runCvsCommand(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
+		await runCvsBoolCmd(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
 	async deleteFile(_uri: vscode.Uri): Promise<void>  {
@@ -298,14 +299,12 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async revertFile(uri: vscode.Uri): Promise<void> {
-		await this.runCvsCommand(`cvs update -C ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
+		await runCvsBoolCmd(`cvs update -C ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
 		// FIX ME need to get latest version in tmp, cvs update will fail if file contains conflicts??
-		
-
-		await this.runCvsCommand(`cvs update ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
+		await runCvsBoolCmd(`cvs update ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
 	}
 
 	// can only do this if file was untracked by repository
@@ -332,22 +331,6 @@ export class CvsSourceControl implements vscode.Disposable {
 		 
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries', path.dirname(uri.fsPath) + '/CVS/Entries.bak');
 		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries.out', path.dirname(uri.fsPath) + '/CVS/Entries');		
-	}
-
-	async runCvsCommand(cvsCommand: string, path: string): Promise<boolean>  {
-		const { exec } = require("child_process");
-		return await new Promise<boolean>((resolve, reject) => {
-			//console.log('runCvsCommand: '+ cvsCommand);
-			exec(cvsCommand, {cwd: path}, (error: any, stdout: string, stderr: any) => {
-				if (error) {
-					vscode.window.showErrorMessage("CVS repository error");
-					console.log(error);
-					reject(false);
-				} else {
-					resolve(true);
-				}
-			});
-		});
 	}
 
 	async readDir(path: string): Promise<string[]> {
