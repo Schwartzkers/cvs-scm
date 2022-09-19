@@ -55,17 +55,13 @@ export class CvsRepository implements QuickDiffProvider {
 		for (const element of status.split('\n')) {
 			if (element.includes('Status:')) {
 				const state = element.trim().split('Status: ')[1];
-				console.log(state);
 				sourceFile.setState(state);
-				console.log(sourceFile.state);
 			}
 			else if (element.includes('Working revision:')) {
 				sourceFile.workingRevision = element.trim().split(/\s+/)[2];
-				console.log(sourceFile.workingRevision);
 			}
 			else if (element.includes('Repository revision:')) {
 				sourceFile.repoRevision = element.trim().split(/\s+/)[2];
-				console.log(sourceFile.repoRevision);
 			}
 			else if (element.includes('Sticky Tag:')) {
 				let branch = element.trim().split(/\s+/)[2];
@@ -73,7 +69,6 @@ export class CvsRepository implements QuickDiffProvider {
 					branch = 'trunk';
 				}
 				sourceFile.branch = branch;
-				console.log(sourceFile.branch);
 			}
 		}
 	}

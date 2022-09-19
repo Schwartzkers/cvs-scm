@@ -10,7 +10,7 @@ export enum SourceFileState {
     merge
 }
 
-const myMap = new Map<string, SourceFileState>([
+const stateMap = new Map<string, SourceFileState>([
     ["Locally Modified", SourceFileState.modified],
     ["Unknown", SourceFileState.untracked],
     ["Locally Added", SourceFileState.added],
@@ -35,9 +35,9 @@ export class SourceFile {
     }
 
     setState(state: string): void {
-        if(myMap.has(state))
+        if(stateMap.has(state))
         {
-            this.state = myMap.get(state);
+            this.state = stateMap.get(state);
         }
     }
 }
