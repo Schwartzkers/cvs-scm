@@ -15,11 +15,11 @@ export async function runCvsBoolCmd(cvsCommand: string, path: string): Promise<b
     });
 }
 
-export async function runCvsStrCmd(cvsCommand: string, path: string): Promise<string>  {
+export async function runCvsStrCmd(cvsCommand: string, path: string, ignoreErr: boolean = false): Promise<string>  {
     const { exec } = require("child_process");
     return await new Promise<string>((resolve, reject) => {
         exec(cvsCommand, {cwd: path}, (error: any, stdout: string, stderr: any) => {
-            if (error) {
+            if (!ignoreErr && error) {
                 window.showErrorMessage("CVS repository error");
                 console.log(error);
                 reject(false);
