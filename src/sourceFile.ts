@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-
 export enum SourceFileState {
     unknown,
     modified,
@@ -14,26 +12,32 @@ export enum SourceFileState {
 
 const myMap = new Map<string, SourceFileState>([
     ["Locally Modified", SourceFileState.modified],
-    ["?", SourceFileState.untracked],
-    ["A", SourceFileState.added],
-    ["R", SourceFileState.removed],
+    ["Unknown", SourceFileState.untracked],
+    ["Locally Added", SourceFileState.added],
+    ["Locally Removed", SourceFileState.removed],
     ["Needs Checkout", SourceFileState.lost],
     ["Unresolved Conflict", SourceFileState.conflict],
     ["Needs Patch", SourceFileState.patch],
-    ["Needs Merge", SourceFileState.merge],    
+    ["Needs Merge", SourceFileState.merge],
+    ["File had conflicts on merge", SourceFileState.conflict],
+    ["Needs Checkout", SourceFileState.patch]
 ]);
 
 export class SourceFile {
-	public resource: vscode.Uri;
+	public path: string;
     public state: SourceFileState | undefined;
+    public branch: string | undefined;
+    public workingRevision: string | undefined;
+    public repoRevision: string | undefined;
 
-	constructor(resource: vscode.Uri, state: string) {
-		this.resource = resource;
+	constructor(path: string) {
+		this.path = path;
+    }
 
+    setState(state: string): void {
         if(myMap.has(state))
         {
             this.state = myMap.get(state);
         }
-    
-	}
+    }
 }
