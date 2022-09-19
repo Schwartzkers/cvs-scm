@@ -75,8 +75,12 @@
 				"command": "cvs-ext.force-revert",
 				"title": "CVS: Abandon conflicts and revert to HEAD",
 				"icon": "$(discard)"
+			},
+			{
+				"command": "cvs-ext.openFile",
+				"title": "%command.openFile%",
+				"icon": "$(go-to-file)"
 			}
-
 		],
 		"menus": {
 			"scm/title":[
@@ -92,6 +96,11 @@
 				}
 			],
 			"scm/resourceState/context": [
+				{
+					"command": "cvs-ext.openFile",
+					"group": "inline",
+					"when": "scmProvider == cvs"
+				},
 				{
 					"command": "cvs-ext.revert",
 					"group": "inline",

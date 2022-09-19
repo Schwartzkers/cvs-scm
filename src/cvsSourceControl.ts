@@ -69,7 +69,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			{
 				const token = new vscode.CancellationTokenSource();
 				const left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
-				let right = element.path;
+				let right = vscode.Uri.joinPath(this.workspacefolder, element.path);
 
 				const command: vscode.Command =
 				{
@@ -152,17 +152,19 @@ export class CvsSourceControl implements vscode.Disposable {
 					}};
 
 				changedResources.push(resourceState);
-			} else if (element.state === SourceFileState.conflict) {		
+			} else if (element.state === SourceFileState.conflict) {	
+				let _uri = vscode.Uri.joinPath(this.workspacefolder, element.path);
+				
 				const command: vscode.Command =
 				{
 					title: "View conflicts",
 					command: "vscode.open",
-					arguments: [element.path],
+					arguments: [_uri],
 					tooltip: "Open file"
 				};
 
 				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
+					resourceUri: _uri,
 					contextValue: "conflict",
 					command: command,
 					decorations: {						
@@ -178,7 +180,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.patch) {
 				const token = new vscode.CancellationTokenSource();
 				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
-				let right = element.path;
+				let right = vscode.Uri.joinPath(this.workspacefolder, element.path);
 
 				const command: vscode.Command =
 				{
@@ -205,7 +207,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.merge) {
 				const token = new vscode.CancellationTokenSource();
 				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
-				let right = element.path;
+				let right = vscode.Uri.joinPath(this.workspacefolder, element.path);
 
 				const command: vscode.Command =
 				{

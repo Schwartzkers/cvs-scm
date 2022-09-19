@@ -93,6 +93,11 @@ export function activate(context: vscode.ExtensionContext) {
 		if (sourceControl) { sourceControl.mergeLatest(resource.resourceUri); }
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.openFile', async (resource: vscode.SourceControlResourceState) => {
+		const sourceControl = findSourceControl(resource.resourceUri);
+		if (sourceControl) { vscode.commands.executeCommand("vscode.open", resource.resourceUri); }		
+	}));
+
 	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(e => {
 		e.added.forEach(wf => {
 			initializeFolder(wf, context);
