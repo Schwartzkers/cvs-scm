@@ -18,68 +18,81 @@
 		"commands": [
 			{
 				"command": "cvs-ext.refresh",
-				"title": "CVS: Refresh Repository",
-				"icon": "$(refresh)"
+				"title": "Refresh Repository",
+				"icon": "$(refresh)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.commit-all",
-				"title": "CVS: Commit All",
-				"icon": "$(check-all)"
+				"title": "Commit All",
+				"icon": "$(check-all)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.commit-file",
-				"title": "CVS: Commit File",
-				"icon": "$(check)"
+				"title": "Commit File",
+				"icon": "$(check)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.revert",
-				"title": "CVS: Revert File",
-				"icon": "$(discard)"
+				"title": "Revert File",
+				"icon": "$(discard)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.add",
-				"title": "CVS: Add File",
-				"icon": "$(add)"
+				"title": "Add File",
+				"icon": "$(add)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.delete-file",
-				"title": "CVS: Delete file",
-				"icon": "$(remove)"
+				"title": "Delete file",
+				"icon": "$(remove)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.undo-add",
-				"title": "CVS: Undo add of file",
-				"icon": "$(discard)"
+				"title": "Undo add of file",
+				"icon": "$(discard)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.remove-file",
-				"title": "CVS: Remove file from CVS",
-				"icon": "$(remove)"
+				"title": "Remove file from CVS",
+				"icon": "$(remove)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.undo-remove",
-				"title": "CVS: Recover removed file",
-				"icon": "$(discard)"
+				"title": "Recover removed file",
+				"icon": "$(discard)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.recover",
-				"title": "CVS: Recover lost file",
-				"icon": "$(discard)"
+				"title": "Recover lost file",
+				"icon": "$(discard)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.merge-latest",
-				"title": "CVS: Merge latest changes from server",
-				"icon": "$(cloud-download)"
+				"title": "Merge latest changes from server",
+				"icon": "$(cloud-download)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.force-revert",
-				"title": "CVS: Abandon conflicts and revert to HEAD",
-				"icon": "$(discard)"
+				"title": "Abandon conflicts and revert to HEAD",
+				"icon": "$(discard)",
+				"category": "cvs-ext"
 			},
 			{
 				"command": "cvs-ext.openFile",
 				"title": "OpenFile",
-				"icon": "$(go-to-file)"
+				"icon": "$(go-to-file)",
+				"category": "cvs-ext"
 			}
 		],
 		"menus": {
