@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { promises as fsPromises } from 'fs';
-import { CvsFile, CvsRepository } from './cvsRepository';
+import { CvsRepository } from './cvsRepository';
 import * as path from 'path';
 import { SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
