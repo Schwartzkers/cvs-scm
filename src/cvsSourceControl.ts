@@ -231,6 +231,33 @@ export class CvsSourceControl implements vscode.Disposable {
 					}};
 
 				conflictResources.push(resourceState);
+			} else if (element.state === SourceFileState.checkout) {
+				const token = new vscode.CancellationTokenSource();
+				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
+				let right = "";
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right, `${path.basename(element.path)} (${this.conflictResources.label})`],
+					tooltip: "View remote changes"
+				};
+	
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
+					command: command,
+					contextValue: "merge",
+					decorations: {						
+						dark:{
+							iconPath: __dirname + "/../resources/icons/dark/patch.svg",
+						},
+						light: {
+							iconPath: __dirname + "/../resources/icons/light/patch.svg",
+						}
+					}};
+
+				conflictResources.push(resourceState);
 			}			
 		});
 		
