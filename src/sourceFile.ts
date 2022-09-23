@@ -7,7 +7,8 @@ export enum SourceFileState {
     lost,
     conflict,
     patch,
-    merge
+    merge,
+    checkout
 }
 
 const stateMap = new Map<string, SourceFileState>([
@@ -20,7 +21,7 @@ const stateMap = new Map<string, SourceFileState>([
     ["Needs Patch", SourceFileState.patch],
     ["Needs Merge", SourceFileState.merge],
     ["File had conflicts on merge", SourceFileState.conflict],
-    ["Needs Checkout", SourceFileState.patch]
+    ["Needs Checkout", SourceFileState.checkout]
 ]);
 
 export class SourceFile {
