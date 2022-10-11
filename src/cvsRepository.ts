@@ -24,7 +24,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getResources(): Promise<string> {
 		let cvsCmd = `cvs -n -q update`;
-		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true);
+		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true, true);
 	}
 
 	async parseResources(stdout: string): Promise<void> {
@@ -44,7 +44,13 @@ export class CvsRepository implements QuickDiffProvider {
 					sourceFile.setState("Unknown");
 				}
 				this.sourceFiles.push(sourceFile);				
-			}			
+			} else if (element.includes('is no longer in the repository')) {
+				// file has been remotely removed
+				const path = element.substring(element.indexOf('`')+1, element.indexOf('\''));
+				let sourceFile = new SourceFile(path);
+				await this.getStatusOfFile(sourceFile);
+				this.sourceFiles.push(sourceFile);
+			}
 		};
 	}
 
@@ -70,6 +76,12 @@ export class CvsRepository implements QuickDiffProvider {
 				}
 				sourceFile.branch = branch;
 			}
+		}
+
+		// handle special case for locally deleted files
+		if (sourceFile.state === SourceFileState.checkout &&
+			sourceFile.workingRevision !== 'No') {
+			sourceFile.setState("Locally Deleted");
 		}
 	}
 

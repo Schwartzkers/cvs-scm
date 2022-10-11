@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.recover', async (resource: vscode.SourceControlResourceState) => {
 		vscode.window.showInformationMessage('Recover deleted file');
 		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.recoverLostFile(resource.resourceUri); }
+	 	if (sourceControl) { sourceControl.recoverDeletedFile(resource.resourceUri); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-ext.remove-file', async (resource: vscode.SourceControlResourceState) => {

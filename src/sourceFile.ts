@@ -4,11 +4,12 @@ export enum SourceFileState {
     untracked,
     added,
     removed,
-    lost,
+    checkout,
     conflict,
     patch,
     merge,
-    checkout
+    deleted,
+    invalid
 }
 
 const stateMap = new Map<string, SourceFileState>([
@@ -16,12 +17,13 @@ const stateMap = new Map<string, SourceFileState>([
     ["Unknown", SourceFileState.untracked],
     ["Locally Added", SourceFileState.added],
     ["Locally Removed", SourceFileState.removed],
-    ["Needs Checkout", SourceFileState.lost],
+    ["Needs Checkout", SourceFileState.checkout],
     ["Unresolved Conflict", SourceFileState.conflict],
     ["Needs Patch", SourceFileState.patch],
     ["Needs Merge", SourceFileState.merge],
     ["File had conflicts on merge", SourceFileState.conflict],
-    ["Needs Checkout", SourceFileState.checkout]
+    ["Locally Deleted", SourceFileState.deleted],
+    ["Entry Invalid", SourceFileState.invalid],
 ]);
 
 export class SourceFile {
