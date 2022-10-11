@@ -1,181 +1,192 @@
 {
-  "name": "cvs-ext",
-	"displayName": "CVS Ext",
-	"description": "",
-	"version": "0.0.1",
+  "name": "cvs-scm",
+	"displayName": "CVS",
+	"description": "Integrates CVS support into VS Code's SCM Interface",
+	"version": "1.0.0",
 	"engines": {
 		"vscode": "^1.69.0"
 	},
 	"categories": [
-		"Other"
+		"Other",
+		"SCM Providers"
 	],
+	"keywords": [
+        "multi-root ready",
+        "scm",
+        "cvs"
+    ],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Schwartzkers/cvs-scm"
+	  },
 	"activationEvents": [
-        "onCommand:cvs-ext.refresh",
+        "onCommand:cvs-scm.refresh",
 		"workspaceContains:CVS/Root"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "cvs-ext.refresh",
+				"command": "cvs-scm.refresh",
 				"title": "Refresh Repository",
 				"icon": "$(refresh)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.commit-all",
+				"command": "cvs-scm.commit-all",
 				"title": "Commit All",
 				"icon": "$(check-all)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.commit-file",
+				"command": "cvs-scm.commit-file",
 				"title": "Commit File",
 				"icon": "$(check)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.revert",
+				"command": "cvs-scm.revert",
 				"title": "Revert File",
 				"icon": "$(discard)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.add",
+				"command": "cvs-scm.add",
 				"title": "Add File",
 				"icon": "$(add)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.delete-file",
+				"command": "cvs-scm.delete-file",
 				"title": "Delete file",
 				"icon": "$(remove)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.undo-add",
+				"command": "cvs-scm.undo-add",
 				"title": "Undo add of file",
 				"icon": "$(discard)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.remove-file",
+				"command": "cvs-scm.remove-file",
 				"title": "Remove file from CVS",
 				"icon": "$(remove)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.undo-remove",
+				"command": "cvs-scm.undo-remove",
 				"title": "Recover removed file",
 				"icon": "$(discard)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.recover",
+				"command": "cvs-scm.recover",
 				"title": "Recover deleted file",
 				"icon": "$(discard)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.merge-latest",
+				"command": "cvs-scm.merge-latest",
 				"title": "Merge latest changes from server",
 				"icon": "$(cloud-download)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.force-revert",
+				"command": "cvs-scm.force-revert",
 				"title": "Abandon conflicts and revert to HEAD",
 				"icon": "$(discard)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-ext.openFile",
+				"command": "cvs-scm.openFile",
 				"title": "OpenFile",
 				"icon": "$(go-to-file)",
-				"category": "cvs-ext"
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
 			"scm/title":[
 				{
-					"command": "cvs-ext.refresh",
+					"command": "cvs-scm.refresh",
 					"group": "navigation",
 					"when": "scmProvider == cvs"
 				},
 				{
-					"command": "cvs-ext.commit-all",
+					"command": "cvs-scm.commit-all",
 					"group": "navigation",
 					"when": "scmProvider == cvs"
 				}
 			],
 			"scm/resourceState/context": [
 				{
-					"command": "cvs-ext.openFile",
+					"command": "cvs-scm.openFile",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed"
 				},
 				{
-					"command": "cvs-ext.revert",
+					"command": "cvs-scm.revert",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == modified"
 				},
 				{
-					"command": "cvs-ext.commit-file",
+					"command": "cvs-scm.commit-file",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree"
 				},
 				{
-					"command": "cvs-ext.add",
+					"command": "cvs-scm.add",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
 				},
 				{
-					"command": "cvs-ext.delete-file",
+					"command": "cvs-scm.delete-file",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
 				},
 				{
-					"command": "cvs-ext.undo-add",
+					"command": "cvs-scm.undo-add",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == undoable"					
 				},
 				{
-					"command": "cvs-ext.remove-file",
+					"command": "cvs-scm.remove-file",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"
 				},
 				{
-					"command": "cvs-ext.recover",
+					"command": "cvs-scm.recover",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"					
 				},
 				{
-					"command": "cvs-ext.undo-remove",
+					"command": "cvs-scm.undo-remove",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
 				},
 				{
-					"command": "cvs-ext.merge-latest",
+					"command": "cvs-scm.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == merge"
 				},
 				{
-					"command": "cvs-ext.merge-latest",
+					"command": "cvs-scm.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == patch"					
 				},
 				{
-					"command": "cvs-ext.merge-latest",
+					"command": "cvs-scm.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == checkout"					
 				},
 				{
-					"command": "cvs-ext.merge-latest",
+					"command": "cvs-scm.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == invalid"					
 				},
 				{
-					"command": "cvs-ext.force-revert",
+					"command": "cvs-scm.force-revert",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == conflict"				
 				}
