@@ -72,7 +72,7 @@
 			},
 			{
 				"command": "cvs-ext.recover",
-				"title": "Recover lost file",
+				"title": "Recover deleted file",
 				"icon": "$(discard)",
 				"category": "cvs-ext"
 			},
@@ -112,7 +112,7 @@
 				{
 					"command": "cvs-ext.openFile",
 					"group": "inline",
-					"when": "scmProvider == cvs"
+					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed"
 				},
 				{
 					"command": "cvs-ext.revert",
@@ -122,7 +122,7 @@
 				{
 					"command": "cvs-ext.commit-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState != lost && scmResourceState != conflict && scmResourceState != merge && scmResourceState != patch"
+					"when": "scmProvider == cvs && scmResourceGroup == workingTree"
 				},
 				{
 					"command": "cvs-ext.add",
@@ -142,7 +142,12 @@
 				{
 					"command": "cvs-ext.remove-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"
+				},
+				{
+					"command": "cvs-ext.recover",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"					
 				},
 				{
 					"command": "cvs-ext.undo-remove",
@@ -150,19 +155,24 @@
 					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
 				},
 				{
-					"command": "cvs-ext.recover",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == lost"					
-				},
-				{
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == merge"					
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == merge"
 				},
 				{
 					"command": "cvs-ext.merge-latest",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == patch"					
+				},
+				{
+					"command": "cvs-ext.merge-latest",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == checkout"					
+				},
+				{
+					"command": "cvs-ext.merge-latest",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == invalid"					
 				},
 				{
 					"command": "cvs-ext.force-revert",

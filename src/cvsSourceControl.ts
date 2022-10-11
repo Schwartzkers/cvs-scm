@@ -122,10 +122,38 @@ export class CvsSourceControl implements vscode.Disposable {
 					}};
 
 				changedResources.push(resourceState);
-			} else if (element.state === SourceFileState.removed) {	
+			} else if (element.state === SourceFileState.removed) {
+				// cannot provide diff once "cvs remove" executed
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
 					contextValue: "removed",
+					decorations: {
+						strikeThrough: true,						
+						dark:{
+							iconPath: __dirname + "/../resources/icons/dark/removed.svg",
+						},
+						light: {
+							iconPath: __dirname + "/../resources/icons/light/removed.svg",
+						}
+					}};
+
+				changedResources.push(resourceState);
+			} else if (element.state === SourceFileState.deleted) {
+				const token = new vscode.CancellationTokenSource();
+				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
+				let right = "";
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right, `${path.basename(element.path)} (${this.conflictResources.label})`],
+					tooltip: "View remote changes"
+				};
+
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
+					contextValue: "deleted",
 					decorations: {
 						strikeThrough: true,						
 						dark:{
@@ -136,22 +164,7 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 
-				changedResources.push(resourceState);
-			} else if (element.state === SourceFileState.lost) {
-				const resourceState: vscode.SourceControlResourceState = {
-					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),					
-					contextValue: "lost",
-					decorations: {
-						strikeThrough: true,						
-						dark:{
-							iconPath: __dirname + "/../resources/icons/dark/lost.svg",
-						},
-						light: {
-							iconPath: __dirname + "/../resources/icons/light/lost.svg",
-						}
-					}};
-
-				changedResources.push(resourceState);
+					conflictResources.push(resourceState);
 			} else if (element.state === SourceFileState.conflict) {	
 				let _uri = vscode.Uri.joinPath(this.workspacefolder, element.path);
 				
@@ -247,13 +260,42 @@ export class CvsSourceControl implements vscode.Disposable {
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
 					command: command,
-					contextValue: "merge",
+					contextValue: "checkout",
 					decorations: {						
 						dark:{
-							iconPath: __dirname + "/../resources/icons/dark/patch.svg",
+							iconPath: __dirname + "/../resources/icons/dark/checkout.svg",
 						},
 						light: {
-							iconPath: __dirname + "/../resources/icons/light/patch.svg",
+							iconPath: __dirname + "/../resources/icons/light/checkout.svg",
+						}
+					}};
+
+				conflictResources.push(resourceState);
+			}
+			else if (element.state === SourceFileState.invalid) {
+				const token = new vscode.CancellationTokenSource();
+				let left = "";
+				let right = vscode.Uri.joinPath(this.workspacefolder, element.path);
+
+				const command: vscode.Command =
+				{
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [left, right, `${path.basename(element.path)} (${this.conflictResources.label})`],
+					tooltip: "View remote changes"
+				};
+	
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
+					command: command,
+					contextValue: "invalid",
+					decorations: {			
+						strikeThrough: true,			
+						dark:{
+							iconPath: __dirname + "/../resources/icons/dark/conflict.svg",
+						},
+						light: {
+							iconPath: __dirname + "/../resources/icons/light/conflict.svg",
 						}
 					}};
 
@@ -319,7 +361,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		await runCvsBoolCmd(`cvs remove -f ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
-	async recoverLostFile(_uri: vscode.Uri): Promise<void>  {
+	async recoverDeletedFile(_uri: vscode.Uri): Promise<void>  {
 		await runCvsBoolCmd(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
