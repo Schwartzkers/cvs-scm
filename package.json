@@ -1,7 +1,7 @@
 {
   "name": "cvs-scm",
 	"displayName": "CVS",
-	"description": "Integrates CVS support into VS Code's SCM Interface",
+	"description": "Integrates CVS support into VS Code's SCM interface",
 	"version": "1.0.0",
 	"engines": {
 		"vscode": "^1.69.0"
@@ -15,7 +15,9 @@
         "scm",
         "cvs"
     ],
+	"publisher": "Schwartzkers",
 	"license": "MIT",
+	"icon": "resources/icons/cvs-scm.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Schwartzkers/cvs-scm"
