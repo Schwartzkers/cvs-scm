@@ -72,7 +72,7 @@ export class CvsRepository implements QuickDiffProvider {
 			else if (element.includes('Sticky Tag:')) {
 				let branch = element.trim().split(/\s+/)[2];
 				if (branch === '(none)') {
-					branch = 'trunk';
+					branch = 'main';
 				}
 				sourceFile.branch = branch;
 			}

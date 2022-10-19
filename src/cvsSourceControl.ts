@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import * as path from 'path';
-import { SourceFileState } from './sourceFile';
+import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { runCvsBoolCmd } from './utility';
 
@@ -16,6 +16,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	private unknownResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
 	private timeout?: NodeJS.Timer;
+	private myStatusBarItem: vscode.StatusBarItem;
 
     constructor(context: vscode.ExtensionContext, worspacefolder: vscode.Uri, cvsDocumentContentProvider: CvsDocumentContentProvider) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS', worspacefolder);
@@ -34,8 +35,34 @@ export class CvsSourceControl implements vscode.Disposable {
 		fileSystemWatcher.onDidCreate(uri => this.onResourceChange(uri), context.subscriptions);
 		fileSystemWatcher.onDidDelete(uri => this.onResourceChange(uri), context.subscriptions);
 
+		this.myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+		context.subscriptions.push(this.myStatusBarItem);
+		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => this.updateStatusBarItem(textEditor), context.subscriptions));
+
 		context.subscriptions.push(this.cvsScm);
 		context.subscriptions.push(fileSystemWatcher);
+
+		this.updateStatusBarItem(vscode.window.activeTextEditor);
+	}
+
+	async updateStatusBarItem(textEditor: vscode.TextEditor | undefined): Promise<void> {
+		if (textEditor) {
+			let path = textEditor.document.uri.fsPath.split(this.workspacefolder.fsPath)[1];
+			path = path.substring(1);
+			let sourceFile = new SourceFile(path);
+			await this.cvsRepository.getStatusOfFile(sourceFile);
+			if (sourceFile.branch && sourceFile.workingRevision) {
+				this.myStatusBarItem.text = `$(source-control-view-icon) ${sourceFile.branch}: ${sourceFile.workingRevision}`;
+				this.myStatusBarItem.show();
+			}
+			else {
+				this.myStatusBarItem.hide();	
+			}
+		}
+		else
+		{
+			this.myStatusBarItem.hide();
+		}
 	}
 
 	getWorkspaceFolder(): vscode.Uri {
