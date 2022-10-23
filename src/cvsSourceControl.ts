@@ -11,20 +11,24 @@ export class CvsSourceControl implements vscode.Disposable {
 	private cvsScm: vscode.SourceControl;
 	private workspacefolder: vscode.Uri;
 	private cvsDocumentContentProvider: CvsDocumentContentProvider;
+	private stagedResources: vscode.SourceControlResourceGroup;
 	private changedResources: vscode.SourceControlResourceGroup;
 	private conflictResources: vscode.SourceControlResourceGroup;
 	private unknownResources: vscode.SourceControlResourceGroup;
 	private cvsRepository: CvsRepository;
 	private timeout?: NodeJS.Timer;
 	private myStatusBarItem: vscode.StatusBarItem;
+	private stagedFiles: string[]; //temp array
 
     constructor(context: vscode.ExtensionContext, worspacefolder: vscode.Uri, cvsDocumentContentProvider: CvsDocumentContentProvider) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS', worspacefolder);
 		this.workspacefolder = worspacefolder;
 		this.cvsDocumentContentProvider = cvsDocumentContentProvider;
-		this.changedResources = this.cvsScm.createResourceGroup('workingTree', 'Changes');
+		this.stagedResources = this.cvsScm.createResourceGroup('stagingTree', 'Changes to Commit');
+		this.changedResources = this.cvsScm.createResourceGroup('changeTree', 'Changes');
 		this.conflictResources = this.cvsScm.createResourceGroup('conflictTree', 'Conflicts');
-		this.unknownResources = this.cvsScm.createResourceGroup('unknownTree', 'Untracked');
+		this.unknownResources = this.cvsScm.createResourceGroup('untrackedTree', 'Untracked');
+		this.stagedFiles = [];
 		
         this.cvsRepository = new CvsRepository(this.workspacefolder);
 		this.cvsScm.quickDiffProvider = this.cvsRepository;
@@ -80,9 +84,11 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async getResourceChanges(event: vscode.Uri): Promise<void> {
+		const stagedResources: vscode.SourceControlResourceState[] = [];
 		const changedResources: vscode.SourceControlResourceState[] = [];
 		const conflictResources: vscode.SourceControlResourceState[] = [];
 		const unknownResources: vscode.SourceControlResourceState[] = [];
+		this.stagedResources.resourceStates = stagedResources;
 		this.changedResources.resourceStates = changedResources;
 		this.conflictResources.resourceStates = changedResources;
 		this.unknownResources.resourceStates = unknownResources;
@@ -119,8 +125,12 @@ export class CvsSourceControl implements vscode.Disposable {
 							iconPath: __dirname + "/../resources/icons/light/modified.svg",
 						}
 					}};
-
-				changedResources.push(resourceState);
+				
+				if (element.isStaged || this.stagedFiles.includes(element.path)) {
+					stagedResources.push(resourceState);
+				} else {
+					changedResources.push(resourceState);
+				}
 			} else if (element.state === SourceFileState.untracked)
 			{
 				const resourceState: vscode.SourceControlResourceState = {
@@ -148,7 +158,11 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 
-				changedResources.push(resourceState);
+				if (element.isStaged || this.stagedFiles.includes(element.path)) {
+					stagedResources.push(resourceState);
+				} else {
+					changedResources.push(resourceState);
+				}
 			} else if (element.state === SourceFileState.removed) {
 				// cannot provide diff once "cvs remove" executed
 				const resourceState: vscode.SourceControlResourceState = {
@@ -164,7 +178,11 @@ export class CvsSourceControl implements vscode.Disposable {
 						}
 					}};
 
-				changedResources.push(resourceState);
+				if (element.isStaged || this.stagedFiles.includes(element.path)) {
+					stagedResources.push(resourceState);
+				} else {
+					changedResources.push(resourceState);
+				}
 			} else if (element.state === SourceFileState.deleted) {
 				const token = new vscode.CancellationTokenSource();
 				let left = this.cvsRepository.provideOriginalResource!(vscode.Uri.joinPath(this.workspacefolder, element.path), token.token);
@@ -330,6 +348,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			}			
 		});
 		
+		this.stagedResources.resourceStates = stagedResources;
 		this.changedResources.resourceStates = changedResources;
 		this.conflictResources.resourceStates = conflictResources;
 		this.unknownResources.resourceStates = unknownResources;
@@ -338,7 +357,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async commitAll(): Promise<void> {
-		if (!this.changedResources.resourceStates.length) {
+		if (!this.stagedResources.resourceStates.length) {
 			vscode.window.showErrorMessage("There is nothing to commit.");
 			return;
 		}
@@ -358,18 +377,73 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.cvsScm.inputBox.value = '';
 	}
 
-	async commitFile(_uri: vscode.Uri): Promise<void> {
-		if (this.cvsScm.inputBox.value.length === 0) {
-			vscode.window.showErrorMessage("Missing commit message.");
+	async stageFile(_uri: vscode.Uri, refreshScm: boolean=true): Promise<void> {
+		this.cvsRepository.getChangesSourceFiles().forEach(element => {
+			if (_uri.fsPath.includes(element.path))
+			{
+				console.log('stage');
+				element.isStaged = true;
+
+				//temp array until all stats are cached
+				this.stagedFiles.push(element.path);
+
+				if (refreshScm) {
+					this.getResourceChanges(_uri);
+				}
+				return;
+			}
+		});
+	}
+
+	async unstageFile(_uri: vscode.Uri, refreshScm: boolean=true): Promise<void> {
+		this.cvsRepository.getChangesSourceFiles().forEach(element => {
+			if (_uri.fsPath.includes(element.path))
+			{
+				console.log('unstage');
+				element.isStaged = false;
+
+				//temp array until all stats are cached
+				const index = this.stagedFiles.indexOf(element.path, 0);
+				if (index > -1) {
+					this.stagedFiles.splice(index, 1);
+				}
+
+				if (refreshScm) {
+					this.getResourceChanges(_uri);
+				}
+				return;
+			}
+		});
+	}
+
+	async stageAll(): Promise<void> {
+		if (!this.changedResources.resourceStates.length) {
+			vscode.window.showErrorMessage("There are no changes to stage.");
 			return;
 		}
 
-		const token = this.workspacefolder.fsPath.concat("/");
-		const file = _uri.fsPath.split(token)[1];
+		this.changedResources.resourceStates.forEach(element => {			
+			this.stageFile(element.resourceUri, false);
+		});
 
-		await runCvsBoolCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${file}`, this.workspacefolder.fsPath);
-		this.cvsScm.inputBox.value = '';
+		this.getResourceChanges(this.workspacefolder);
+		return;
 	}
+
+	async unstageAll(): Promise<void> {
+		if (!this.stagedResources.resourceStates.length) {
+			vscode.window.showErrorMessage("There are no changes to unstage.");
+			return;
+		}
+
+		this.stagedResources.resourceStates.forEach(element => {			
+			this.unstageFile(element.resourceUri, false);
+		});
+
+		this.getResourceChanges(this.workspacefolder);
+		return;
+	}
+
 
 	async forceRevert(_uri: vscode.Uri): Promise<void> {
 		try {
@@ -389,6 +463,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async recoverDeletedFile(_uri: vscode.Uri): Promise<void>  {
+		this.unstageFile(_uri); // in case staged
 		await runCvsBoolCmd(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
@@ -396,8 +471,9 @@ export class CvsSourceControl implements vscode.Disposable {
 		await fsPromises.unlink(_uri.fsPath);
 	}
 
-	async revertFile(uri: vscode.Uri): Promise<void> {
-		await runCvsBoolCmd(`cvs update -C ${path.basename(uri.fsPath)}`, path.dirname(uri.fsPath));
+	async revertFile(_uri: vscode.Uri): Promise<void> {
+		this.unstageFile(_uri); // in case staged
+		await runCvsBoolCmd(`cvs update -C ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
 	async mergeLatest(uri: vscode.Uri): Promise<void>  {
@@ -406,29 +482,33 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	// can only do this if file was untracked by repository
-	async undoAdd(uri: vscode.Uri): Promise<void>  {
+	async undoAdd(_uri: vscode.Uri): Promise<void>  {
+		this.unstageFile(_uri); // in case staged
+
 		// 1. remove temp CVS file (e.g. 'test.txt,t')
-		const files = await this.readDir(path.dirname(uri.fsPath) + '/CVS');
+		const files = await this.readDir(path.dirname(_uri.fsPath) + '/CVS');
 		
 		files.forEach(async file => {
-			if(file.includes(path.basename(uri.fsPath))) {
-				await this.deleteFile(vscode.Uri.parse(path.dirname(uri.fsPath) + '/CVS/' + file));
+			if(file.includes(path.basename(_uri.fsPath))) {
+				await this.deleteFile(vscode.Uri.parse(path.dirname(_uri.fsPath) + '/CVS/' + file));
 			}
 		});
 
-		const entries = await this.readCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries');
+		const entries = await this.readCvsEntries(path.dirname(_uri.fsPath) + '/CVS/Entries');
 
 		let newEntries = '';
 		entries.split(/\r?\n/).forEach(element => {
-			if (element.includes(path.basename(uri.fsPath)) === false) {
+			if (element.includes(path.basename(_uri.fsPath)) === false) {
 				newEntries = newEntries.concat(element + '\n');
 			}
 		});
 
-		await this.writeCvsEntries(path.dirname(uri.fsPath) + '/CVS/Entries.out', newEntries);
+		await this.writeCvsEntries(path.dirname(_uri.fsPath) + '/CVS/Entries.out', newEntries);
 		 
-		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries', path.dirname(uri.fsPath) + '/CVS/Entries.bak');
-		await fsPromises.rename(path.dirname(uri.fsPath) + '/CVS/Entries.out', path.dirname(uri.fsPath) + '/CVS/Entries');		
+		await fsPromises.rename(path.dirname(_uri.fsPath) + '/CVS/Entries', path.dirname(_uri.fsPath) + '/CVS/Entries.bak');
+		await fsPromises.rename(path.dirname(_uri.fsPath) + '/CVS/Entries.out', path.dirname(_uri.fsPath) + '/CVS/Entries');
+		
+		//TODO remove Entries.bak
 	}
 
 	async readDir(path: string): Promise<string[]> {

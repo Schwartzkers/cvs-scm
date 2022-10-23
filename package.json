@@ -36,20 +36,14 @@
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.commit-all",
-				"title": "Commit All",
-				"icon": "$(check-all)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.commit-file",
-				"title": "Commit File",
+				"command": "cvs-scm.commit",
+				"title": "Commit Changes",
 				"icon": "$(check)",
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.revert",
-				"title": "Revert File",
+				"command": "cvs-scm.discard",
+				"title": "Discard Changes",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
@@ -60,6 +54,30 @@
 				"category": "cvs-scm"
 			},
 			{
+				"command": "cvs-scm.stage",
+				"title": "Add Changes to Commit",
+				"icon": "$(add)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.unstage",
+				"title": "Remove Changes from Commit",
+				"icon": "$(remove)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.stage-all",
+				"title": "Add all Changes to Commit",
+				"icon": "$(add)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.unstage-all",
+				"title": "Remove all Changes from Commit",
+				"icon": "$(remove)",
+				"category": "cvs-scm"
+			},
+			{
 				"command": "cvs-scm.delete-file",
 				"title": "Delete file",
 				"icon": "$(remove)",
@@ -67,7 +85,7 @@
 			},
 			{
 				"command": "cvs-scm.undo-add",
-				"title": "Undo add of file",
+				"title": "Undo add",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
@@ -114,11 +132,23 @@
 					"command": "cvs-scm.refresh",
 					"group": "navigation",
 					"when": "scmProvider == cvs"
+				}
+			],
+			"scm/resourceGroup/context":[
+				{
+					"command": "cvs-scm.stage-all",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
 				},
 				{
-					"command": "cvs-scm.commit-all",
-					"group": "navigation",
-					"when": "scmProvider == cvs"
+					"command": "cvs-scm.unstage-all",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+				},
+				{
+					"command": "cvs-scm.commit",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
 				}
 			],
 			"scm/resourceState/context": [
@@ -128,29 +158,34 @@
 					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed"
 				},
 				{
-					"command": "cvs-scm.revert",
+					"command": "cvs-scm.discard",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == modified"
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == modified"
 				},
 				{
-					"command": "cvs-scm.commit-file",
+					"command": "cvs-scm.discard",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree"
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == modified"
 				},
 				{
 					"command": "cvs-scm.add",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
+					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
 				},
 				{
 					"command": "cvs-scm.delete-file",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == unknownTree"
+					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
 				},
 				{
 					"command": "cvs-scm.undo-add",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == undoable"					
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == undoable"					
+				},
+				{
+					"command": "cvs-scm.undo-add",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == undoable"					
 				},
 				{
 					"command": "cvs-scm.remove-file",
@@ -165,7 +200,12 @@
 				{
 					"command": "cvs-scm.undo-remove",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == workingTree && scmResourceState == removed"					
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == removed"					
+				},
+				{
+					"command": "cvs-scm.undo-remove",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == removed"					
 				},
 				{
 					"command": "cvs-scm.merge-latest",
@@ -191,6 +231,16 @@
 					"command": "cvs-scm.force-revert",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == conflict"				
+				},
+				{
+					"command": "cvs-scm.stage",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree"				
+				},
+				{
+					"command": "cvs-scm.unstage",
+					"group": "inline",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"				
 				}
 			]
 		}
