@@ -32,9 +32,11 @@ export class SourceFile {
     public branch: string | undefined;
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
+    public isStaged: boolean;
 
 	constructor(path: string) {
 		this.path = path;
+        this.isStaged = false;
     }
 
     setState(state: string): void {

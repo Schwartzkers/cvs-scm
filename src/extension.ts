@@ -27,19 +27,37 @@ export function activate(context: vscode.ExtensionContext) {
 		if (sourceControl) { sourceControl.getCvsState(); }
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.commit-all', async (sourceControlPane: vscode.SourceControl) => {
-		vscode.window.showInformationMessage('Commit all changed files');
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.commit', async (sourceControlPane: vscode.SourceControl) => {
+		vscode.window.showInformationMessage('Commit Changes');
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.commitAll(); }
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.commit-file', async (resource: vscode.SourceControlResourceState) => {
-		vscode.window.showInformationMessage('Commit file');
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.stage', async (resource: vscode.SourceControlResourceState) => {
+		vscode.window.showInformationMessage('Add Changes');
 		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.commitFile(resource.resourceUri); }
+	 	if (sourceControl) { sourceControl.stageFile(resource.resourceUri); }
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.revert', async (resource: vscode.SourceControlResourceState) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.unstage', async (resource: vscode.SourceControlResourceState) => {
+		vscode.window.showInformationMessage('Remove Changes');
+		const sourceControl = findSourceControl(resource.resourceUri);
+	 	if (sourceControl) { sourceControl.unstageFile(resource.resourceUri); }
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.stage-all', async (sourceControlPane: vscode.SourceControl) => {
+		vscode.window.showInformationMessage('Add all Changes');
+		const sourceControl = await pickSourceControl(sourceControlPane);
+		if (sourceControl) { sourceControl.stageAll(); }
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.unstage-all', async (sourceControlPane: vscode.SourceControl) => {
+		vscode.window.showInformationMessage('Remove all Changes');
+		const sourceControl = await pickSourceControl(sourceControlPane);
+		if (sourceControl) { sourceControl.unstageAll(); }
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.discard', async (resource: vscode.SourceControlResourceState) => {
 		vscode.window.showInformationMessage('Revert file');
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.revertFile(resource.resourceUri); }
