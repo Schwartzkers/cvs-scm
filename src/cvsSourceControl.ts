@@ -5,6 +5,7 @@ import * as path from 'path';
 import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { runCvsBoolCmd } from './utility';
+import { basename, dirname } from 'path';
 
 
 export class CvsSourceControl implements vscode.Disposable {
@@ -28,11 +29,16 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.changedResources = this.cvsScm.createResourceGroup('changeTree', 'Changes');
 		this.conflictResources = this.cvsScm.createResourceGroup('conflictTree', 'Conflicts');
 		this.unknownResources = this.cvsScm.createResourceGroup('untrackedTree', 'Untracked');
+
+		this.changedResources.hideWhenEmpty = true;
+		this.conflictResources.hideWhenEmpty = true;
+		this.unknownResources.hideWhenEmpty = true;
+
 		this.stagedFiles = [];
 		
         this.cvsRepository = new CvsRepository(this.workspacefolder);
 		this.cvsScm.quickDiffProvider = this.cvsRepository;
-		this.cvsScm.inputBox.placeholder = 'cvs commit message';
+		this.cvsScm.inputBox.placeholder = 'Commit Message';
 
 		const fileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/*");
 		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
@@ -50,10 +56,10 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async updateStatusBarItem(textEditor: vscode.TextEditor | undefined): Promise<void> {
-		if (textEditor) {
-			let path = textEditor.document.uri.fsPath.split(this.workspacefolder.fsPath)[1];
-			path = path.substring(1);
-			let sourceFile = new SourceFile(path);
+		if (textEditor && dirname(textEditor.document.uri.fsPath).includes(this.workspacefolder.fsPath)) {
+			let resource = textEditor.document.uri.fsPath.split(this.workspacefolder.fsPath)[1];
+			resource = resource.substring(1);
+			let sourceFile = new SourceFile(resource);
 			await this.cvsRepository.getStatusOfFile(sourceFile);
 			if (sourceFile.branch && sourceFile.workingRevision) {
 				this.myStatusBarItem.text = `$(source-control-view-icon) ${sourceFile.branch}: ${sourceFile.workingRevision}`;
@@ -133,8 +139,14 @@ export class CvsSourceControl implements vscode.Disposable {
 				}
 			} else if (element.state === SourceFileState.untracked)
 			{
+				var type = "untracked_file";
+				if (element.isFolder) {
+					type = "untracked_folder";
+				}
+
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.path),
+					contextValue: type,
 					decorations: {
 						dark:{
 							iconPath: __dirname + "/../resources/icons/dark/untracked.svg",
@@ -381,7 +393,6 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
 			if (_uri.fsPath.includes(element.path))
 			{
-				console.log('stage');
 				element.isStaged = true;
 
 				//temp array until all stats are cached
@@ -399,7 +410,6 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
 			if (_uri.fsPath.includes(element.path))
 			{
-				console.log('unstage');
 				element.isStaged = false;
 
 				//temp array until all stats are cached
@@ -447,7 +457,7 @@ export class CvsSourceControl implements vscode.Disposable {
 
 	async forceRevert(_uri: vscode.Uri): Promise<void> {
 		try {
-			await this.deleteFile(_uri);
+			await this.deleteUri(_uri);
 			await this.revertFile(_uri);
 		} catch(e) {
 			vscode.window.showErrorMessage("Error reverting file");
@@ -467,8 +477,16 @@ export class CvsSourceControl implements vscode.Disposable {
 		await runCvsBoolCmd(`cvs update ${path.basename(_uri.fsPath)}`, path.dirname(_uri.fsPath));
 	}
 
-	async deleteFile(_uri: vscode.Uri): Promise<void>  {
-		await fsPromises.unlink(_uri.fsPath);
+	async deleteUri(_uri: vscode.Uri): Promise<void>  {
+		const fs = require('fs/promises');
+		// is it a file or folder?
+		const stat = await fs.lstat(_uri.fsPath);
+		if (stat.isFile()) {
+			await fsPromises.unlink(_uri.fsPath);
+		}
+		else {
+			await fsPromises.rmdir(_uri.fsPath);
+		}		
 	}
 
 	async revertFile(_uri: vscode.Uri): Promise<void> {
@@ -490,7 +508,7 @@ export class CvsSourceControl implements vscode.Disposable {
 		
 		files.forEach(async file => {
 			if(file.includes(path.basename(_uri.fsPath))) {
-				await this.deleteFile(vscode.Uri.parse(path.dirname(_uri.fsPath) + '/CVS/' + file));
+				await this.deleteUri(vscode.Uri.parse(path.dirname(_uri.fsPath) + '/CVS/' + file));
 			}
 		});
 

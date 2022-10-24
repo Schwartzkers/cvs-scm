@@ -42,6 +42,12 @@ export class CvsRepository implements QuickDiffProvider {
 				}
 				else {
 					sourceFile.setState("Unknown");
+					// is it a file or folder?
+					var uri = Uri.joinPath(this.workspaceUri, path);
+					const stat = await fs.lstat(uri.fsPath);
+					if (!stat.isFile()) {
+						sourceFile.isFolder = true;
+					}			
 				}
 				this.sourceFiles.push(sourceFile);				
 			} else if (element.includes('is no longer in the repository')) {
