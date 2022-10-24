@@ -33,6 +33,7 @@ export class SourceFile {
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
     public isStaged: boolean;
+    public isFolder: boolean=false;
 
 	constructor(path: string) {
 		this.path = path;

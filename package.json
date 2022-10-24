@@ -28,6 +28,19 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"configuration": {
+			"title": "CVS",
+			"properties": {
+				"exclude.folders": {
+					"markdownDescription": "To exclude CVS folders from Explorer, add glob pattern **/CVS: '#files.exclude#'",
+					"scope": "application"
+				},
+				"exclude.files": {
+					"markdownDescription": "To exclude CVS revision files (e.g. .#file.revision) from Explorer, add glob pattern **/.#*: `#files.exclude#`",
+					"scope": "application"
+				}
+			}
+		},
 		"commands": [
 			{
 				"command": "cvs-scm.refresh",
@@ -49,8 +62,14 @@
 			},
 			{
 				"command": "cvs-scm.add",
-				"title": "Add File",
+				"title": "Add",
 				"icon": "$(add)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.add-folder",
+				"title": "Add Folder to Repo",
+				"icon": "$(cloud-upload)",
 				"category": "cvs-scm"
 			},
 			{
@@ -78,14 +97,14 @@
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.delete-file",
-				"title": "Delete file",
+				"command": "cvs-scm.delete",
+				"title": "Delete",
 				"icon": "$(remove)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.undo-add",
-				"title": "Undo add",
+				"title": "Discard Changes",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
@@ -109,7 +128,7 @@
 			},
 			{
 				"command": "cvs-scm.merge-latest",
-				"title": "Merge latest changes from server",
+				"title": "Merge with HEAD",
 				"icon": "$(cloud-download)",
 				"category": "cvs-scm"
 			},
@@ -121,7 +140,7 @@
 			},
 			{
 				"command": "cvs-scm.openFile",
-				"title": "OpenFile",
+				"title": "Open File",
 				"icon": "$(go-to-file)",
 				"category": "cvs-scm"
 			}
@@ -130,61 +149,66 @@
 			"scm/title":[
 				{
 					"command": "cvs-scm.refresh",
-					"group": "navigation",
+					"group": "navigation@2",
+					"when": "scmProvider == cvs"
+				},
+				{
+					"command": "cvs-scm.commit",
+					"group": "navigation@1",
 					"when": "scmProvider == cvs"
 				}
 			],
 			"scm/resourceGroup/context":[
 				{
 					"command": "cvs-scm.stage-all",
-					"group": "inline",
+					"group": "inline@1",
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
 				},
 				{
 					"command": "cvs-scm.unstage-all",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
-				},
-				{
-					"command": "cvs-scm.commit",
-					"group": "inline",
+					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
 				}
 			],
 			"scm/resourceState/context": [
 				{
 					"command": "cvs-scm.openFile",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed"
+					"group": "inline@1",
+					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder"
 				},
 				{
 					"command": "cvs-scm.discard",
-					"group": "inline",
+					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == modified"
 				},
 				{
 					"command": "cvs-scm.discard",
-					"group": "inline",
+					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == modified"
 				},
 				{
 					"command": "cvs-scm.add",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
+					"group": "inline@2",
+					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_file"
 				},
 				{
-					"command": "cvs-scm.delete-file",
-					"group": "inline",
+					"command": "cvs-scm.add-folder",
+					"group": "inline@2",
+					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_folder"
+				},
+				{
+					"command": "cvs-scm.delete",
+					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
 				},
 				{
 					"command": "cvs-scm.undo-add",
-					"group": "inline",
+					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == undoable"					
 				},
 				{
 					"command": "cvs-scm.undo-add",
-					"group": "inline",
+					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == undoable"					
 				},
 				{
@@ -234,12 +258,12 @@
 				},
 				{
 					"command": "cvs-scm.stage",
-					"group": "inline",
+					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree"				
 				},
 				{
 					"command": "cvs-scm.unstage",
-					"group": "inline",
+					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"				
 				}
 			]
