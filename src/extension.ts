@@ -21,106 +21,113 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
-		//vscode.window.showInformationMessage('Refresh CVS repository');
+		// check CVS repository for local and remote changes
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.getCvsState(); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.commit', async (sourceControlPane: vscode.SourceControl) => {
-		//vscode.window.showInformationMessage('Commit Changes');
+		// commit staged changes
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.commitAll(); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.stage', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Add Changes');
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.stageFile(resource.resourceUri); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.unstage', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Remove Changes');
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.unstageFile(resource.resourceUri); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.stage-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
-		//vscode.window.showInformationMessage('Add all Changes');
-		if (sourceControlResourceGroup.resourceStates.length > 0)
-		{
+		if (sourceControlResourceGroup.resourceStates.length > 0) {
 			const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 			if (sourceControl) { sourceControl.stageAll(); }
 		}		
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.unstage-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
-		//vscode.window.showInformationMessage('Remove all Changes');
-		if (sourceControlResourceGroup.resourceStates.length > 0)
-		{
+		if (sourceControlResourceGroup.resourceStates.length > 0) {
 			const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 			if (sourceControl) { sourceControl.unstageAll(); }
 		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.discard', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Revert file');
-		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.revertFile(resource.resourceUri); }
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to discard Changes?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+			if (sourceControl) { sourceControl.revertFile(resource.resourceUri); }
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.force-revert', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Revert file');
-		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.forceRevert(resource.resourceUri); }
+		const option = await vscode.window.showWarningMessage(`Are you sure you want discard merge and revert to HEAD?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+		 	if (sourceControl) { sourceControl.forceRevert(resource.resourceUri); }
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Add resource to CVS tracking');
+		// slect file to be added to repo on next commit
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.addFile(resource.resourceUri); }
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add-folder', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Add folder to CVS repository');
-		const sourceControl = findSourceControl(resource.resourceUri);
-		// TODO check with user first
-	 	if (sourceControl) { sourceControl.addFile(resource.resourceUri); }
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add-folder', async (resource: vscode.SourceControlResourceState) => {		
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to add the folder to repository?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+	 		if (sourceControl) { sourceControl.addFile(resource.resourceUri); }
+		}	
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.undo-add', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Undo add to CVS repository');
-		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.undoAdd(resource.resourceUri); }
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to discard changes?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+	 		if (sourceControl) { sourceControl.undoAdd(resource.resourceUri); }
+		}		
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.delete', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Delete fIle');
-		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.deleteUri(resource.resourceUri); }
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to delete?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+	 		if (sourceControl) { sourceControl.deleteUri(resource.resourceUri); }
+		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.recover', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Recover deleted file');
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.restore', async (resource: vscode.SourceControlResourceState) => {
+		// restore deleted source file
 		const sourceControl = findSourceControl(resource.resourceUri);
 	 	if (sourceControl) { sourceControl.recoverDeletedFile(resource.resourceUri); }
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.remove-file', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Remove file from CVS repository');
-		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.removeFileFromCvs(resource.resourceUri); }
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.remove', async (resource: vscode.SourceControlResourceState) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to select file for removal from repository?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+			if (sourceControl) { sourceControl.removeFileFromCvs(resource.resourceUri); }
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.undo-remove', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Undo remove of file');
+		// undo the removal of a file
 		const sourceControl = findSourceControl(resource.resourceUri);
 		if (sourceControl) { sourceControl.addFile(resource.resourceUri); }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-latest', async (resource: vscode.SourceControlResourceState) => {
-		//vscode.window.showInformationMessage('Merge latest changes from repository');
-		const sourceControl = findSourceControl(resource.resourceUri);
-		if (sourceControl) { sourceControl.mergeLatest(resource.resourceUri); }
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge the latest changes from repository?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+			if (sourceControl) { sourceControl.mergeLatest(resource.resourceUri); }
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.openFile', async (resource: vscode.SourceControlResourceState) => {
