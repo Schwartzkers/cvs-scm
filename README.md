@@ -30,7 +30,9 @@ The following describes the possible states for a source control resource:
 
 ### Conflicts
 
-Remote changes detected by the extension are displayed here. User intervention may be required to solve merge conflicts. To check for remote changes use the `Refresh Repository` icon.
+ To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here. User intervention may be required to solve merge conflicts.
+
+ ![alt text](resources/images/resolveConflict.png "Resolve Conflict")
 
 ## Branch and Revision
 
