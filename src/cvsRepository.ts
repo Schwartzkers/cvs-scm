@@ -22,9 +22,10 @@ export class CvsRepository implements QuickDiffProvider {
 		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
 
-	async getResources(): Promise<string> {
+	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update`;
-		return await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true, true);
+		const stdout = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true, true);
+		await this.parseResources(stdout);
 	}
 
 	async parseResources(stdout: string): Promise<void> {
@@ -61,7 +62,7 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
-		const cvsCmd = `cvs status ${sourceFile.path}`;
+		const cvsCmd = `cvs status ${sourceFile.relativePathFromRoot}`;
 		const status = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath);
 
 		for (const element of status.split('\n')) {
