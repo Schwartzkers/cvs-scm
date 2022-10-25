@@ -109,20 +109,20 @@
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.remove-file",
-				"title": "Remove file from CVS",
+				"command": "cvs-scm.remove",
+				"title": "Remove file",
 				"icon": "$(remove)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.undo-remove",
-				"title": "Recover removed file",
+				"title": "Discard Changes",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.recover",
-				"title": "Recover deleted file",
+				"command": "cvs-scm.restore",
+				"title": "Restore",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
@@ -134,7 +134,7 @@
 			},
 			{
 				"command": "cvs-scm.force-revert",
-				"title": "Abandon conflicts and revert to HEAD",
+				"title": "Revert to HEAD",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
@@ -212,12 +212,12 @@
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == undoable"					
 				},
 				{
-					"command": "cvs-scm.remove-file",
+					"command": "cvs-scm.remove",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"
 				},
 				{
-					"command": "cvs-scm.recover",
+					"command": "cvs-scm.restore",
 					"group": "inline",
 					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"					
 				},
