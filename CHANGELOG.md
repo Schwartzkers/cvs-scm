@@ -2,10 +2,13 @@
 
 All notable changes to the "cvs-scm" extension will be documented in this file.
 
-## [1.2.0]
+## [v1.2.1]
+- Fix slow refresh rate of CVS SCM resources
+## [v1.2.0]
 - Add staging area for the changes selected for commit
-## [1.1.0]
+
+## [v1.1.0]
 - Add the branch name and revision number of the file (of active editor) to the status bar
 
-## [1.0.0]
+## [v1.0.0]
 - Initial release
