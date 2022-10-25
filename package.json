@@ -74,25 +74,25 @@
 			},
 			{
 				"command": "cvs-scm.stage",
-				"title": "Add Changes to Commit",
+				"title": "Stage Changes",
 				"icon": "$(add)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.unstage",
-				"title": "Remove Changes from Commit",
+				"title": "Unstage Changes",
 				"icon": "$(remove)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.stage-all",
-				"title": "Add all Changes to Commit",
+				"title": "Stage all Changes",
 				"icon": "$(add)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.unstage-all",
-				"title": "Remove all Changes from Commit",
+				"title": "Unstage all Changes",
 				"icon": "$(remove)",
 				"category": "cvs-scm"
 			},
