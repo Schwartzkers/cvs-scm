@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 		{
 			const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 			if (sourceControl) { sourceControl.unstageAll(); }
-		}	
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.discard', async (resource: vscode.SourceControlResourceState) => {

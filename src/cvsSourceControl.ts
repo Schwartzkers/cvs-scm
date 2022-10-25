@@ -25,11 +25,12 @@ export class CvsSourceControl implements vscode.Disposable {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS', worspacefolder);
 		this.workspacefolder = worspacefolder;
 		this.cvsDocumentContentProvider = cvsDocumentContentProvider;
-		this.stagedResources = this.cvsScm.createResourceGroup('stagingTree', 'Changes to Commit');
+		this.stagedResources = this.cvsScm.createResourceGroup('stagingTree', 'Staged Changes');
 		this.changedResources = this.cvsScm.createResourceGroup('changeTree', 'Changes');
 		this.conflictResources = this.cvsScm.createResourceGroup('conflictTree', 'Conflicts');
 		this.unknownResources = this.cvsScm.createResourceGroup('untrackedTree', 'Untracked');
 
+		this.stagedResources.hideWhenEmpty = true;
 		this.changedResources.hideWhenEmpty = true;
 		this.conflictResources.hideWhenEmpty = true;
 		this.unknownResources.hideWhenEmpty = true;
@@ -101,6 +102,8 @@ export class CvsSourceControl implements vscode.Disposable {
 
 		const result = await this.cvsRepository.getResources();
 		await this.cvsRepository.parseResources(result);
+
+		console.log("staged files: " + this.stagedFiles);
 		
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
 
@@ -370,7 +373,7 @@ export class CvsSourceControl implements vscode.Disposable {
 
 	async commitAll(): Promise<void> {
 		if (!this.stagedResources.resourceStates.length) {
-			vscode.window.showErrorMessage("There is nothing to commit.");
+			vscode.window.showErrorMessage("There are no staged changes to commit.");
 			return;
 		}
 		else if (this.cvsScm.inputBox.value.length === 0) {
@@ -381,25 +384,38 @@ export class CvsSourceControl implements vscode.Disposable {
 		//need list of files relative to root 
 		let files = '';
 		let token = this.workspacefolder.fsPath.concat("/");
-		this.changedResources.resourceStates.forEach(element => {			
+		this.stagedResources.resourceStates.forEach(element => {			
 			files = files.concat(element.resourceUri.fsPath.split(token)[1], ' ');
 		});
 
-		await runCvsBoolCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath);
-		this.cvsScm.inputBox.value = '';
+
+		if (await runCvsBoolCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)) {
+			this.stagedResources.resourceStates.forEach(element => {			
+				this.unstageFile(element.resourceUri, false);
+			});
+			
+			this.cvsScm.inputBox.value = '';
+			this.getCvsState();
+			
+		} else {
+			vscode.window.showErrorMessage('Failed to commit changes');
+		};
+
+		
 	}
 
 	async stageFile(_uri: vscode.Uri, refreshScm: boolean=true): Promise<void> {
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
-			if (_uri.fsPath.includes(element.path))
-			{
+		//for (const element of this.cvsRepository.getChangesSourceFiles()) {
+			const resource = _uri.fsPath.split(this.workspacefolder.fsPath)[1].substring(1);			
+			if (resource === element.path) {
 				element.isStaged = true;
 
 				//temp array until all stats are cached
 				this.stagedFiles.push(element.path);
 
 				if (refreshScm) {
-					this.getResourceChanges(_uri);
+					this.getCvsState();
 				}
 				return;
 			}
@@ -408,8 +424,9 @@ export class CvsSourceControl implements vscode.Disposable {
 
 	async unstageFile(_uri: vscode.Uri, refreshScm: boolean=true): Promise<void> {
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
-			if (_uri.fsPath.includes(element.path))
-			{
+		///for (const element of this.cvsRepository.getChangesSourceFiles()) {
+			const resource = _uri.fsPath.split(this.workspacefolder.fsPath)[1].substring(1);
+			if (resource === element.path) {
 				element.isStaged = false;
 
 				//temp array until all stats are cached
@@ -419,7 +436,7 @@ export class CvsSourceControl implements vscode.Disposable {
 				}
 
 				if (refreshScm) {
-					this.getResourceChanges(_uri);
+					this.getCvsState();
 				}
 				return;
 			}
@@ -427,7 +444,7 @@ export class CvsSourceControl implements vscode.Disposable {
 	}
 
 	async stageAll(): Promise<void> {
-		if (!this.changedResources.resourceStates.length) {
+		if (this.changedResources.resourceStates.length === 0) {
 			vscode.window.showErrorMessage("There are no changes to stage.");
 			return;
 		}
@@ -436,12 +453,12 @@ export class CvsSourceControl implements vscode.Disposable {
 			this.stageFile(element.resourceUri, false);
 		});
 
-		this.getResourceChanges(this.workspacefolder);
+		this.getCvsState();
 		return;
 	}
 
 	async unstageAll(): Promise<void> {
-		if (!this.stagedResources.resourceStates.length) {
+		if (this.stagedResources.resourceStates.length === 0) {
 			vscode.window.showErrorMessage("There are no changes to unstage.");
 			return;
 		}
@@ -450,7 +467,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			this.unstageFile(element.resourceUri, false);
 		});
 
-		this.getResourceChanges(this.workspacefolder);
+		this.getCvsState();
 		return;
 	}
 
