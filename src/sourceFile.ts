@@ -27,17 +27,15 @@ const stateMap = new Map<string, SourceFileState>([
 ]);
 
 export class SourceFile {
-	public path: string;
+	public relativePathFromRoot: string;
     public state: SourceFileState | undefined;
     public branch: string | undefined;
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
-    public isStaged: boolean;
     public isFolder: boolean=false;
 
 	constructor(path: string) {
-		this.path = path;
-        this.isStaged = false;
+		this.relativePathFromRoot = path;
     }
 
     setState(state: string): void {

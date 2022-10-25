@@ -18,7 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
-		//console.log(sourceControl.getWorkspaceFolder());
 	});
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
