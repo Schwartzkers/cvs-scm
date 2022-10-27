@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.force-revert', async (resource: vscode.SourceControlResourceState) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want discard merge and revert to HEAD?`, { modal: true }, `Yes`);
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to discard merge and revert to HEAD?`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(resource.resourceUri);
 		 	if (sourceControl) { sourceControl.forceRevert(resource.resourceUri); }

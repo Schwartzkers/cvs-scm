@@ -2,6 +2,8 @@
 
 All notable changes to the "cvs-scm" extension will be documented in this file.
 
+## [v1.3.0]
+- Add user confirmation for several commands (e.g. delete file, discard changes , etc)
 ## [v1.2.1]
 - Fix slow refresh rate of CVS SCM resources
 ## [v1.2.0]
