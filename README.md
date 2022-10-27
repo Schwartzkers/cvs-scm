@@ -28,6 +28,9 @@ The following describes the possible states for a source control resource:
 - `M  (Conflicts) Needs Merge`
 - `U  (Untracked) Unknown`
 
+### Staged Changes
+
+Changes in source control items that are required to be in a commit must be staged. However, unlike git, additonal changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
 ### Conflicts
 
  To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here. User intervention may be required to solve merge conflicts.
