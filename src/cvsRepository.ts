@@ -1,6 +1,7 @@
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult } from "vscode";
+import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
 import { runCvsStrCmd } from './utility';
+import { ConfigManager} from './configManager';
 
 
 export class CvsFile {
@@ -10,10 +11,12 @@ export class CvsFile {
 export const CVS_SCHEME = 'cvs-scm';
 
 export class CvsRepository implements QuickDiffProvider {
-	private sourceFiles: SourceFile[];
+	private _sourceFiles: SourceFile[];
+	private _configManager: ConfigManager;
 
-	constructor(private workspaceUri: Uri) {
-		this.sourceFiles = []; 
+	constructor(private workspaceUri: Uri, configManager: ConfigManager) {
+		this._sourceFiles = [];
+		this._configManager = configManager;
 	}
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
@@ -23,14 +26,14 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	async getResources(): Promise<void> {
-		let cvsCmd = `cvs -n -q update`;
+		let cvsCmd = `cvs -n -q update -d`;
 		const stdout = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true, true);
 		await this.parseResources(stdout);
 	}
 
 	async parseResources(stdout: string): Promise<void> {
 		const fs = require('fs/promises');
-		this.sourceFiles = [];
+		this._sourceFiles = [];
 
 		for (const element of stdout.split('\n')) {
 		//await stdout.split('\n').forEach(async element => { should do promise all
@@ -50,13 +53,23 @@ export class CvsRepository implements QuickDiffProvider {
 						sourceFile.isFolder = true;
 					}			
 				}
-				this.sourceFiles.push(sourceFile);				
+				this._sourceFiles.push(sourceFile);				
 			} else if (element.includes('is no longer in the repository')) {
 				// file has been remotely removed
 				const path = element.substring(element.indexOf('`')+1, element.indexOf('\''));
 				let sourceFile = new SourceFile(path);
 				await this.getStatusOfFile(sourceFile);
-				this.sourceFiles.push(sourceFile);
+				this._sourceFiles.push(sourceFile);
+			} else if (element.includes(`cvs update: New directory`)) {
+				// example output = "cvs update: New directory `NewFolder2' -- ignored"
+				let folder = element.slice(element.indexOf("`")+1, element.indexOf("'"));
+				console.log(folder);
+				if (!this._configManager.getIgnoreFolders().includes(folder)) {
+					let sourceFile = new SourceFile(folder);
+					sourceFile.isFolder = true;
+					sourceFile.setState("New Directory");
+					this._sourceFiles.push(sourceFile);
+				}
 			}
 		};
 	}
@@ -93,7 +106,7 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	getChangesSourceFiles(): SourceFile[] {
-		return this.sourceFiles;
+		return this._sourceFiles;
 	}
 }
 

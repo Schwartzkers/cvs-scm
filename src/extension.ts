@@ -3,8 +3,10 @@ import * as path from 'path';
 import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME } from './cvsRepository';
+import { ConfigManager} from './configManager';
 
 let cvsDocumentContentProvider: CvsDocumentContentProvider;
+let configManager: ConfigManager;
 const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
 export function activate(context: vscode.ExtensionContext) {
@@ -13,6 +15,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
+
+	configManager = new ConfigManager(context);
 
 	initializeWorkspaceFolders(context);
 
@@ -24,6 +28,11 @@ export function activate(context: vscode.ExtensionContext) {
 		// check CVS repository for local and remote changes
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.getCvsState(); }
+		else { 
+			cvsSourceControlRegister.forEach(sourceControl => {
+				sourceControl.getCvsState();
+			});
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.commit', async (sourceControlPane: vscode.SourceControl) => {
@@ -140,6 +149,22 @@ export function activate(context: vscode.ExtensionContext) {
 			initializeFolder(wf, context);
 		});
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.ignore-folder', async (resource: vscode.SourceControlResourceState) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to ignore folder from cvs update?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+			if (sourceControl) { sourceControl.ignoreFolder(resource.resourceUri); }
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-folder', async (resource: vscode.SourceControlResourceState) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to checkout the folder and its contents?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(resource.resourceUri);
+			if (sourceControl) { sourceControl.checkoutFolder(resource.resourceUri); }
+		}
+	}));
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
@@ -170,7 +195,7 @@ async function initializeWorkspaceFolders(context: vscode.ExtensionContext): Pro
 }
 
 async function initializeFolder(folder: vscode.WorkspaceFolder, context: vscode.ExtensionContext): Promise<void> {
-	const cvsSourceControl = new CvsSourceControl(context, folder.uri, cvsDocumentContentProvider);
+	const cvsSourceControl = new CvsSourceControl(context, folder.uri, cvsDocumentContentProvider, configManager);
 	registerCvsSourceControl(cvsSourceControl, context);
 }
 

@@ -31,13 +31,22 @@
 		"configuration": {
 			"title": "CVS",
 			"properties": {
-				"exclude.folders": {
-					"markdownDescription": "To exclude CVS folders from Explorer, add glob pattern **/CVS: '#files.exclude#'",
-					"scope": "application"
+				"explorer.excludeFolders": {
+					"markdownDescription": "To exclude CVS folders from the File Explorer, add glob pattern **/CVS to '#files.exclude#'.",
+					"scope": "window"
 				},
-				"exclude.files": {
-					"markdownDescription": "To exclude CVS revision files (e.g. .#file.revision) from Explorer, add glob pattern **/.#*: `#files.exclude#`",
-					"scope": "application"
+				"explorer.excludeFiles": {
+					"markdownDescription": "To exclude CVS revision files (e.g. .#file.revision) from the File Explorer, add glob pattern **/.#* to `#files.exclude#`.",
+					"scope": "window"
+				},
+				"update.ignoreFolders": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"markdownDescription": "Folders discovered in the CVS repository that will be ignored by `cvs update`.",
+					"scope": "window"
 				}
 			}
 		},
@@ -143,13 +152,25 @@
 				"title": "Open File",
 				"icon": "$(go-to-file)",
 				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.ignore-folder",
+				"title": "Ignore folder",
+				"icon": "$(x)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.checkout-folder",
+				"title": "Checkout folder",
+				"icon": "$(cloud-download)",
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
 			"scm/title":[
 				{
 					"command": "cvs-scm.refresh",
-					"group": "navigation@2",
+					"group": "navigation@3",
 					"when": "scmProvider == cvs"
 				},
 				{
@@ -174,7 +195,7 @@
 				{
 					"command": "cvs-scm.openFile",
 					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder"
+					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
 				},
 				{
 					"command": "cvs-scm.discard",
@@ -265,7 +286,17 @@
 					"command": "cvs-scm.unstage",
 					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"				
-				}
+				},
+				{
+					"command": "cvs-scm.ignore-folder",
+					"group": "inline@1",
+					"when": "scmProvider == cvs && scmResourceState == directory"				
+				},
+				{
+					"command": "cvs-scm.checkout-folder",
+					"group": "inline@2",
+					"when": "scmProvider == cvs && scmResourceState == directory"				
+				}				
 			]
 		}
 	},
