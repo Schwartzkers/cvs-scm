@@ -128,7 +128,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.undo-remove', async (resource: vscode.SourceControlResourceState) => {
 		// undo the removal of a file
 		const sourceControl = findSourceControl(resource.resourceUri);
-		if (sourceControl) { sourceControl.addFile(resource.resourceUri); }
+		if (sourceControl) { 
+			await sourceControl.addFile(resource.resourceUri);
+			await sourceControl.recoverDeletedFile(resource.resourceUri);
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-latest', async (resource: vscode.SourceControlResourceState) => {
