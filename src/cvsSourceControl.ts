@@ -4,9 +4,9 @@ import { CvsRepository } from './cvsRepository';
 import * as path from 'path';
 import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { runCvsBoolCmd } from './utility';
+import { runCvsBoolCmd, runCvsStrCmd } from './utility';
 import { dirname } from 'path';
-
+import { ConfigManager} from './configManager';
 
 export class CvsSourceControl implements vscode.Disposable {
 	private cvsScm: vscode.SourceControl;
@@ -20,11 +20,16 @@ export class CvsSourceControl implements vscode.Disposable {
 	private timeout?: NodeJS.Timer;
 	private myStatusBarItem: vscode.StatusBarItem;
 	private stagedFiles: string[];
+	private configManager: ConfigManager;
 
-    constructor(context: vscode.ExtensionContext, worspacefolder: vscode.Uri, cvsDocumentContentProvider: CvsDocumentContentProvider) {
+    constructor(context: vscode.ExtensionContext,
+		        worspacefolder: vscode.Uri,
+				cvsDocumentContentProvider: CvsDocumentContentProvider,
+				configManager: ConfigManager) {
 		this.cvsScm = vscode.scm.createSourceControl('cvs', 'CVS', worspacefolder);
 		this.workspacefolder = worspacefolder;
 		this.cvsDocumentContentProvider = cvsDocumentContentProvider;
+		this.configManager = configManager;
 		this.stagedResources = this.cvsScm.createResourceGroup('stagingTree', 'Staged Changes');
 		this.changedResources = this.cvsScm.createResourceGroup('changeTree', 'Changes');
 		this.conflictResources = this.cvsScm.createResourceGroup('conflictTree', 'Conflicts');
@@ -37,7 +42,7 @@ export class CvsSourceControl implements vscode.Disposable {
 
 		this.stagedFiles = [];
 		
-        this.cvsRepository = new CvsRepository(this.workspacefolder);
+        this.cvsRepository = new CvsRepository(this.workspacefolder, this.configManager);
 		this.cvsScm.quickDiffProvider = this.cvsRepository;
 		this.cvsScm.inputBox.placeholder = 'Commit Message';
 
@@ -364,7 +369,21 @@ export class CvsSourceControl implements vscode.Disposable {
 					}};
 
 				conflictResources.push(resourceState);
-			}			
+			} else if (element.state === SourceFileState.directory) {
+				const resourceState: vscode.SourceControlResourceState = {
+					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.relativePathFromRoot),
+					contextValue: "directory",
+					decorations: {			
+						dark:{
+							iconPath: __dirname + "/../resources/icons/dark/folder.svg",
+						},
+						light: {
+							iconPath: __dirname + "/../resources/icons/light/folder.svg",
+						}
+					}};
+
+				conflictResources.push(resourceState);
+			}		
 		});
 		
 		this.stagedResources.resourceStates = stagedResources;
@@ -526,6 +545,22 @@ export class CvsSourceControl implements vscode.Disposable {
 		await fsPromises.unlink(path.dirname(_uri.fsPath) + '/CVS/Entries.bak');
 	}
 
+	async ignoreFolder(uri: vscode.Uri): Promise<void>  {
+		await this.configManager.updateIgnoreFolders(this.getResourcePathRelativeToWorkspace(uri));
+	}
+
+	async checkoutFolder(uri: vscode.Uri): Promise<void>  {
+		// 1. make folder
+		const fs = require('fs/promises');
+		await fs.mkdir(uri.fsPath);
+
+		// 2. cvs add folder
+		await this.addFile(uri);
+
+		// 3. cvs update folder
+		await runCvsBoolCmd(`cvs update -d `, path.dirname(uri.fsPath));
+	}
+
 	async readDir(path: string): Promise<string[]> {
 		const fs = require('fs/promises');
 
@@ -564,6 +599,10 @@ export class CvsSourceControl implements vscode.Disposable {
 		} catch(err: any) {
 			console.log(err);
 		}
+	}
+
+	private getResourcePathRelativeToWorkspace(uri: vscode.Uri) {
+		return uri.fsPath.split(this.workspacefolder.fsPath)[1].substring(1);
 	}
 
     dispose() {

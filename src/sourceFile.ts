@@ -9,7 +9,8 @@ export enum SourceFileState {
     patch,
     merge,
     deleted,
-    invalid
+    invalid,
+    directory
 }
 
 const stateMap = new Map<string, SourceFileState>([
@@ -24,6 +25,7 @@ const stateMap = new Map<string, SourceFileState>([
     ["File had conflicts on merge", SourceFileState.conflict],
     ["Locally Deleted", SourceFileState.deleted],
     ["Entry Invalid", SourceFileState.invalid],
+    ["New Directory", SourceFileState.directory],
 ]);
 
 export class SourceFile {

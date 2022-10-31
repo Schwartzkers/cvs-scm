@@ -22,10 +22,12 @@ The following describes the possible states for a source control resource:
 - `M  (Staged Changes/Changes) Locally Modifed`
 - `A  (Staged Changes/Changes) Locally Added`
 - `R  (Staged Changes/Changes) Locally Removed`
-- `NC (Conflicts) Needs Checkout`
-- `P  (Conflicts) Needs Patch`
+- `NC (Conflicts) Needs Checkout from repository`
+- `P  (Conflicts) Needs Patch from repository`
 - `D  (Conflicts) Locally Deleted`
-- `M  (Conflicts) Needs Merge`
+- `R  (Conflicts) Removed from repository`
+- `M  (Conflicts) Needs Merge with repository`
+- `F  (Conflicts) New Directory found in repository`
 - `U  (Untracked) Unknown`
 
 ### Staged Changes
