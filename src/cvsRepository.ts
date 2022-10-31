@@ -63,7 +63,6 @@ export class CvsRepository implements QuickDiffProvider {
 			} else if (element.includes(`cvs update: New directory`)) {
 				// example output = "cvs update: New directory `NewFolder2' -- ignored"
 				let folder = element.slice(element.indexOf("`")+1, element.indexOf("'"));
-				console.log(folder);
 				if (!this._configManager.getIgnoreFolders().includes(folder)) {
 					let sourceFile = new SourceFile(folder);
 					sourceFile.isFolder = true;
