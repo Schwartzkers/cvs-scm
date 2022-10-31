@@ -32,7 +32,7 @@ The following describes the possible states for a source control resource:
 - `R  (Conflicts) Removed from repository`
 - `M  (Conflicts) Needs Merge with repository`
 - `F  (Conflicts) New Directory found in repository`
-- `U  (Untracked) Unknown`
+- `U  (Untracked) Resource is not part of source control`
 
 ### Staged Changes
 
