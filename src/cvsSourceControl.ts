@@ -172,7 +172,7 @@ export class CvsSourceControl implements vscode.Disposable {
 			} else if (element.state === SourceFileState.added) {
 				const resourceState: vscode.SourceControlResourceState = {
 					resourceUri: vscode.Uri.joinPath(this.workspacefolder, element.relativePathFromRoot),
-					contextValue: "undoable",
+					contextValue: "added",
 					decorations: {
 						dark:{
 							iconPath: __dirname + "/../resources/icons/dark/added.svg",

@@ -165,6 +165,27 @@ export function activate(context: vscode.ExtensionContext) {
 			if (sourceControl) { sourceControl.checkoutFolder(resource.resourceUri); }
 		}
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.discard-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to discard all changes?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			if (sourceControlResourceGroup.resourceStates.length > 0) {
+				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
+				
+				if (sourceControl) {
+					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
+						if (resourceState.contextValue === 'modified') {
+							sourceControl.revertFile(resourceState.resourceUri);
+						} else if (resourceState.contextValue === 'added') {
+							sourceControl.undoAdd(resourceState.resourceUri);
+						} else if (resourceState.contextValue === 'removed') {
+							sourceControl.addFile(resourceState.resourceUri);
+						} 
+					});
+				}
+			}
+		}
+	}));
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {

@@ -164,6 +164,12 @@
 				"title": "Checkout folder",
 				"icon": "$(cloud-download)",
 				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.discard-all",
+				"title": "Discard All Changes",
+				"icon": "$(discard)",
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
@@ -189,6 +195,11 @@
 					"command": "cvs-scm.unstage-all",
 					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+				},
+				{
+					"command": "cvs-scm.discard-all",
+					"group": "inline@1",
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
 				}
 			],
 			"scm/resourceState/context": [
@@ -225,12 +236,12 @@
 				{
 					"command": "cvs-scm.undo-add",
 					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == undoable"					
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == added"					
 				},
 				{
 					"command": "cvs-scm.undo-add",
 					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == undoable"					
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == added"					
 				},
 				{
 					"command": "cvs-scm.remove",
