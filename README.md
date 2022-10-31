@@ -5,13 +5,17 @@ The extension provides CVS (Concurrent Versions System) support to VS Code. CVS 
 ## Features
 
 The extenstioin will automatically activate when it detects source code managed by CVS. It provides the following features:
-- Add files.
-- Remove files
-- Undo add or remove of file.
-- Revert files to the repository version.
-- Commit files.
-- Merge changes from the repository into local copy.
-- View diffs between locally modifed file and repository version.
+- Add new file or folder to the repository:
+  - `cvs add <file>`
+  - `cvs add <folder>`
+- Remove file from repository:
+  - `cvs remove <file>`
+- Commit changes to the repository:
+  - `cvs commit <file1> <file2> ...`
+- Merge changes from the repository into local copy
+  - `cvs update <file>`
+- Discard local changes and revert to the repository revision.
+- View diffs between locally modifed file and repository revision.
 - Display branch and revision number of file opened in active editor.
 ## Source Control States
 
@@ -32,7 +36,7 @@ The following describes the possible states for a source control resource:
 
 ### Staged Changes
 
-Changes in source control items that are required to be in a commit must be staged. However, unlike git, additonal changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
+Changes to be included in a commit must be staged. However, unlike git, additonal changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
 ### Conflicts
 
  To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here. User intervention may be required to solve merge conflicts.
@@ -66,5 +70,4 @@ None at this time.
 
 ## Known Issues
 
-- `The extension has only been tested with Ubuntu 16.04 & 22.04 LTS. Issues encountered with Windows or macOS may not be resolved in a timely fashion.`
-- `New folders remotly added to the repository (e.g. another developer) will not be detected by the extension. Use the cvs command line interface to checkout the folders.`
+- The extension has been tested with Ubuntu 16.04 & 22.04 LTS. Issues encountered with Windows or macOS may not be resolved in a timely fashion.
