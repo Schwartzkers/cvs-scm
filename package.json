@@ -2,7 +2,7 @@
   "name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"engines": {
 		"vscode": "^1.69.0"
 	},
@@ -45,7 +45,7 @@
 						"type": "string"
 					},
 					"default": [],
-					"markdownDescription": "Folders discovered in the CVS repository that will be ignored by `cvs update`.",
+					"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
 					"scope": "window"
 				}
 			}
