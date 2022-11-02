@@ -189,6 +189,29 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
+
+// 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
+// 		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge all repository changes into the local checkout?`, { modal: true }, `Yes`);
+// 		if (option === `Yes`) {
+// 			if (sourceControlResourceGroup.resourceStates.length > 0) {
+// 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
+				
+// 				if (sourceControl) {
+// 					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
+// 						if (resourceState.contextValue === 'patch') {
+// 							sourceControl.revertFile(resourceState.resourceUri);
+// 						} else if (resourceState.contextValue === 'merge') {
+// 							sourceControl.undoAdd(resourceState.resourceUri);
+// 						} else if (resourceState.contextValue === 'checkout') {
+// 							sourceControl.addFile(resourceState.resourceUri);
+// 						} else if (resourceState.contextValue === 'directory') {
+// 							sourceControl.addFile(resourceState.resourceUri);
+// 						}						
+// 					});
+// 				}
+// 			}
+// 		}
+// 	}));
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {

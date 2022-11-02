@@ -1,3 +1,5 @@
+import { Uri } from "vscode";
+
 export enum SourceFileState {
     unknown,
     modified,
@@ -29,15 +31,14 @@ const stateMap = new Map<string, SourceFileState>([
 ]);
 
 export class SourceFile {
-	public relativePathFromRoot: string;
     public state: SourceFileState | undefined;
     public branch: string | undefined;
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
     public isFolder: boolean=false;
 
-	constructor(path: string) {
-		this.relativePathFromRoot = path;
+	constructor(public uri: Uri) {
+		this.uri = uri;
     }
 
     setState(state: string): void {

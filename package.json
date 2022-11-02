@@ -170,6 +170,12 @@
 				"title": "Discard All Changes",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.merge-all",
+				"title": "Merge All Changes",
+				"icon": "$(cloud-download)",
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
@@ -200,7 +206,13 @@
 					"command": "cvs-scm.discard-all",
 					"group": "inline@1",
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+				},
+				{
+					"command": "cvs-scm.merge-all",
+					"group": "inline@1",
+					"when": "scmProvider == cvs && scmResourceGroup == conflictTree"
 				}
+
 			],
 			"scm/resourceState/context": [
 				{
