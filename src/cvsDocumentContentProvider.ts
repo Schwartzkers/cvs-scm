@@ -1,7 +1,7 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, workspace, SourceControlResourceState } from "vscode";
 import { CvsFile, CVS_SCHEME } from './cvsRepository';
 import * as path from 'path';
-import { runCvsStrCmd } from './utility';
+import { runCvsCmd } from './utility';
 
 /**
  * Provides the content of the CVS files per the server version i.e.  without the local edits.
@@ -52,6 +52,6 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 
     async getRepositoryRevision(uri: Uri): Promise<string> {
 		const cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)}`;
-		return await runCvsStrCmd(cvsCmd, path.dirname(uri.fsPath), true);
+		return (await runCvsCmd(cvsCmd, path.dirname(uri.fsPath), true)).output;
 	}
 }

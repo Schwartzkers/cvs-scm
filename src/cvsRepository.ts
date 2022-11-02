@@ -1,7 +1,8 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
-import { runCvsStrCmd } from './utility';
+import { runCvsCmd } from './utility';
 import { ConfigManager} from './configManager';
+import { basename, dirname } from 'path';
 
 
 export class CvsFile {
@@ -27,7 +28,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update -d`;
-		const stdout = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath, true, true);
+		const stdout = (await runCvsCmd(cvsCmd, this.workspaceUri.fsPath, true)).output;
 		await this.parseResources(stdout);
 	}
 
@@ -40,7 +41,7 @@ export class CvsRepository implements QuickDiffProvider {
 			let state = element.substring(0, element.indexOf(' '));
 			if (state.length === 1) {				
 				const path = element.substring(element.indexOf(' ')+1, element.length);
-				let sourceFile = new SourceFile(path);
+				let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, path));
 				if ( state !== '?') {
 					 await this.getStatusOfFile(sourceFile);
 				}
@@ -57,14 +58,14 @@ export class CvsRepository implements QuickDiffProvider {
 			} else if (element.includes('is no longer in the repository')) {
 				// file has been remotely removed
 				const path = element.substring(element.indexOf('`')+1, element.indexOf('\''));
-				let sourceFile = new SourceFile(path);
+				let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, path));
 				await this.getStatusOfFile(sourceFile);
 				this._sourceFiles.push(sourceFile);
 			} else if (element.includes(`cvs update: New directory`)) {
 				// example output = "cvs update: New directory `NewFolder2' -- ignored"
 				let folder = element.slice(element.indexOf("`")+1, element.indexOf("'"));
 				if (!this._configManager.getIgnoreFolders().includes(folder)) {
-					let sourceFile = new SourceFile(folder);
+					let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, folder));
 					sourceFile.isFolder = true;
 					sourceFile.setState("New Directory");
 					this._sourceFiles.push(sourceFile);
@@ -74,33 +75,35 @@ export class CvsRepository implements QuickDiffProvider {
 	}
 
 	async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
-		const cvsCmd = `cvs status ${sourceFile.relativePathFromRoot}`;
-		const status = await runCvsStrCmd(cvsCmd, this.workspaceUri.fsPath);
+		const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
+		const status = await runCvsCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
-		for (const element of status.split('\n')) {
-			if (element.includes('Status:')) {
-				const state = element.trim().split('Status: ')[1];
-				sourceFile.setState(state);
-			}
-			else if (element.includes('Working revision:')) {
-				sourceFile.workingRevision = element.trim().split(/\s+/)[2];
-			}
-			else if (element.includes('Repository revision:')) {
-				sourceFile.repoRevision = element.trim().split(/\s+/)[2];
-			}
-			else if (element.includes('Sticky Tag:')) {
-				let branch = element.trim().split(/\s+/)[2];
-				if (branch === '(none)') {
-					branch = 'main';
+		if (status.result && !status.output.includes("Status: Unknown")) {
+			for (const element of status.output.split('\n')) {
+				if (element.includes('Status:')) {
+					const state = element.trim().split('Status: ')[1];
+					sourceFile.setState(state);
 				}
-				sourceFile.branch = branch;
+				else if (element.includes('Working revision:')) {
+					sourceFile.workingRevision = element.trim().split(/\s+/)[2];
+				}
+				else if (element.includes('Repository revision:')) {
+					sourceFile.repoRevision = element.trim().split(/\s+/)[2];
+				}
+				else if (element.includes('Sticky Tag:')) {
+					let branch = element.trim().split(/\s+/)[2];
+					if (branch === '(none)') {
+						branch = 'main';
+					}
+					sourceFile.branch = branch;
+				}
 			}
-		}
-
-		// handle special case for locally deleted files
-		if (sourceFile.state === SourceFileState.checkout &&
-			sourceFile.workingRevision !== 'No') {
-			sourceFile.setState("Locally Deleted");
+	
+			// handle special case for locally deleted files
+			if (sourceFile.state === SourceFileState.checkout &&
+				sourceFile.workingRevision !== 'No') {
+				sourceFile.setState("Locally Deleted");
+			}
 		}
 	}
 

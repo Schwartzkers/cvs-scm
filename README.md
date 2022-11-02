@@ -6,17 +6,13 @@ The extension provides CVS (Concurrent Versions System) support to VS Code. CVS 
 
 The extenstioin will automatically activate when it detects source code managed by CVS. It provides the following features:
 - Add new file or folder to the repository:
-  - `cvs add <file>`
-  - `cvs add <folder>`
 - Remove file from repository:
-  - `cvs remove <file>`
 - Commit changes to the repository:
-  - `cvs commit <file1> <file2> ...`
 - Merge changes from the repository into local copy
-  - `cvs update <file>`
 - Discard local changes and revert to the repository revision.
 - View diffs between locally modifed file and repository revision.
 - Display branch and revision number of file opened in active editor.
+
 ## Source Control States
 
 ![alt text](resources/images/resourceStates.png "CVS Resource States")
@@ -66,7 +62,7 @@ The extension was developed using version 1.12.13-MirDebian-28 (client/server) o
 
 ## Extension Settings
 
-None at this time.
+![alt text](resources/images/settings.png "CVS Settings")
 
 ## Known Issues
 
