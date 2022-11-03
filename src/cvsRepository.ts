@@ -35,7 +35,7 @@ export class CvsRepository implements QuickDiffProvider {
 		const fs = require('fs/promises');
 		this._sourceFiles = [];
 
-		for (const element of stdout.split('\n')) {
+		for (const element of stdout.split('\n').map(e=>e.trim())) {
 		//await stdout.split('\n').forEach(async element => { should do promise all
 			let state = element.substring(0, element.indexOf(' '));
 			if (state.length === 1) {				
@@ -55,7 +55,7 @@ export class CvsRepository implements QuickDiffProvider {
 				}
 				this._sourceFiles.push(sourceFile);				
 			} else if (element.includes('is no longer in the repository')) {
-				// file has been remotely removed
+				// file has been removed from repository
 				const path = element.substring(element.indexOf('`')+1, element.indexOf('\''));
 				let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, path));
 				await this.getStatusOfFile(sourceFile);
@@ -78,7 +78,8 @@ export class CvsRepository implements QuickDiffProvider {
 		const status = await runCvsCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
 		if (status.result && !status.output.includes("Status: Unknown")) {
-			for (const element of status.output.split('\n')) {
+			for (const element of status.output.split('\n').map(e=>e.trim())) {
+
 				if (element.includes('Status:')) {
 					const state = element.trim().split('Status: ')[1];
 					sourceFile.setState(state);
