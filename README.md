@@ -40,7 +40,7 @@ Changes to be included in a commit must be staged. However, unlike git, additona
  
 ### Conflicts
 
-When user intervention is required to solve merge conflicts.
+Changes that require user intervention to solve merge conflicts are listed in `Conflicts`.
 
  ![alt text](resources/images/resolveConflict.png "Resolve Conflict")
 
