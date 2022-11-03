@@ -1,6 +1,6 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, workspace, SourceControlResourceState } from "vscode";
 import { CvsFile, CVS_SCHEME } from './cvsRepository';
-import * as path from 'path';
+import { basename, dirname } from 'path';
 import { runCvsCmd } from './utility';
 
 /**
@@ -38,8 +38,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
-        if (token.isCancellationRequested) { return "Canceled"; }
-
+		if (token.isCancellationRequested) { return "Canceled"; }
 		const resource = this.sourceControlFiles.get(uri.fsPath);
 		if (!resource) {
 			return new Promise((resolve) => {
@@ -51,7 +50,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
     async getRepositoryRevision(uri: Uri): Promise<string> {
-		const cvsCmd = `cvs -Q update -C -p ${path.basename(uri.fsPath)}`;
-		return (await runCvsCmd(cvsCmd, path.dirname(uri.fsPath), true)).output;
+		const cvsCmd = `cvs -Q update -C -p ${basename(uri.fsPath)}`;
+		return (await runCvsCmd(cvsCmd, dirname(uri.fsPath), true)).output;
 	}
 }

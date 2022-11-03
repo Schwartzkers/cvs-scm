@@ -22,14 +22,13 @@ export class CvsRepository implements QuickDiffProvider {
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		if (token.isCancellationRequested) { return undefined; }
-
 		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
 	}
 
 	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update -d`;
-		const stdout = (await runCvsCmd(cvsCmd, this.workspaceUri.fsPath, true)).output;
-		await this.parseResources(stdout);
+		const result = await runCvsCmd(cvsCmd, this.workspaceUri.fsPath, true);
+		await this.parseResources(result.output);
 	}
 
 	async parseResources(stdout: string): Promise<void> {

@@ -22,20 +22,25 @@ The following describes the possible states for a source control resource:
 - `M  (Staged Changes/Changes) Locally Modifed`
 - `A  (Staged Changes/Changes) Locally Added`
 - `R  (Staged Changes/Changes) Locally Removed`
+- `D  (Changes) Locally Deleted`
+- `R  (Repository Changes) Removed from repository`
+- `F  (Repository Changes) New Directory found in repository`
+- `M  (Repository Changes) Needs Merge with repository`
 - `NC (Conflicts) Needs Checkout from repository`
-- `P  (Conflicts) Needs Patch from repository`
-- `D  (Conflicts) Locally Deleted`
-- `R  (Conflicts) Removed from repository`
-- `M  (Conflicts) Needs Merge with repository`
-- `F  (Conflicts) New Directory found in repository`
+- `P  (Repository Changes) Needs Patch from repository`
+- `C  (Conflicts) File had conflicts on merge`
 - `U  (Untracked) Resource is not part of source control`
 
 ### Staged Changes
 
 Changes to be included in a commit must be staged. However, unlike git, additonal changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
+### Repository Changes
+
+ To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here.
+ 
 ### Conflicts
 
- To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here. User intervention may be required to solve merge conflicts.
+When user intervention is required to solve merge conflicts.
 
  ![alt text](resources/images/resolveConflict.png "Resolve Conflict")
 
