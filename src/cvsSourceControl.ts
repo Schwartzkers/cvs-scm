@@ -516,8 +516,8 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async revertFile(uri: Uri): Promise<void> {
-	this.unstageFile(uri, false); // in case staged
-		await runCvsCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		this.unstageFile(uri, false); // in case staged
+			await runCvsCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	async mergeLatest(uri: Uri): Promise<void>  {
