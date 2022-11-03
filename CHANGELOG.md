@@ -2,6 +2,10 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 
+## [v1.5.0]
+- Add new resource group `Repository Changes` to distinguish from actual merge conflicts in `Conflicts`.
+- Add command `merge-all` to `Repository Changes` resource group to merge all changes from the repository.
+- Fix Issue #2: `windows line endings cause parseResources to fail`.
 ## [v1.4.0]
 - Add option to `Discard All Changes` in the `Changes` resource group.
 - Add command to `checkout` new folders discovered on repository not in local checkout.

@@ -412,7 +412,6 @@ export class CvsSourceControl implements Disposable {
 		this.stagedResources.resourceStates.forEach(element => {			
 			files = files.concat(workspace.asRelativePath(element.resourceUri, false) + ' ');
 		});
-		console.log(files);
 
 		if (await runCvsCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)) {
 			this.stagedResources.resourceStates.forEach(element => {			
@@ -554,7 +553,7 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async ignoreFolder(uri: Uri): Promise<void>  {
-		await this.configManager.updateIgnoreFolders(workspace.asRelativePath(this.workspacefolder, false));
+		await this.configManager.updateIgnoreFolders(workspace.asRelativePath(uri, false));
 	}
 
 	async checkoutFolder(uri: Uri): Promise<void>  {

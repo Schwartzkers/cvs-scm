@@ -204,9 +204,16 @@ export function activate(context: vscode.ExtensionContext) {
 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 				
 				if (sourceControl) {
-					sourceControlResourceGroup.resourceStates.forEach(resourceState =>
-						{sourceControl.mergeLatest(resourceState.resourceUri); }
-					);
+					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
+						if (resourceState.contextValue === 'directory') {
+							sourceControl.checkoutFolder(resourceState.resourceUri);
+						} else if (resourceState.contextValue === 'removedFromRepo' ||
+								   resourceState.contextValue === 'checkout' ||
+								   resourceState.contextValue === 'patch' ||
+								   resourceState.contextValue === 'merge') {
+							sourceControl.mergeLatest(resourceState.resourceUri);
+						}
+					});
 				}
 			}
 		}
