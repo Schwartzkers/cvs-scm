@@ -210,7 +210,7 @@
 				{
 					"command": "cvs-scm.merge-all",
 					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree"
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
 				}
 
 			],
@@ -258,12 +258,12 @@
 				{
 					"command": "cvs-scm.remove",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"
 				},
 				{
 					"command": "cvs-scm.restore",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == deleted"					
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"					
 				},
 				{
 					"command": "cvs-scm.undo-remove",
@@ -278,22 +278,22 @@
 				{
 					"command": "cvs-scm.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == merge"
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == merge"
 				},
 				{
 					"command": "cvs-scm.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == patch"					
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == patch"					
 				},
 				{
 					"command": "cvs-scm.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == checkout"					
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == checkout"					
 				},
 				{
 					"command": "cvs-scm.merge-latest",
 					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == invalid"					
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == removedFromRepo"					
 				},
 				{
 					"command": "cvs-scm.force-revert",
@@ -313,12 +313,12 @@
 				{
 					"command": "cvs-scm.ignore-folder",
 					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceState == directory"				
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
 				},
 				{
 					"command": "cvs-scm.checkout-folder",
 					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceState == directory"				
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
 				}				
 			]
 		}

@@ -11,14 +11,15 @@ export async function runCvsCmd(cvsCommand: string, dir: string, getStdErr: bool
     let output = "";
     const result = await new Promise<boolean>((resolve) => {
         exec(cvsCommand, {cwd: dir}, (error: any, stdout: string, stderr: string) => {
+            if (getStdErr) {
+                output = (stdout + stderr);
+            } else {
+                output = stdout;
+            }   
+
             if (error) {
                 resolve(false);
-            } else {
-                if (getStdErr) {
-                    output = (stdout + stderr);
-                } else {
-                    output = stdout;
-                }                
+            } else {             
                 resolve(true);
             }
         });

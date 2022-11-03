@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME } from './cvsRepository';
@@ -43,7 +42,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.stage', async (resource: vscode.SourceControlResourceState) => {
 		const sourceControl = findSourceControl(resource.resourceUri);
-	 	if (sourceControl) { sourceControl.stageFile(resource.resourceUri); }
+	 	if (sourceControl) {
+			// automatically "cvs remove" any deleted files if staged
+			if (resource.contextValue === 'deleted') {
+				await sourceControl.removeFileFromCvs(resource.resourceUri);
+			}
+			sourceControl.stageFile(resource.resourceUri);
+		 }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.unstage', async (resource: vscode.SourceControlResourceState) => {
@@ -183,35 +188,29 @@ export function activate(context: vscode.ExtensionContext) {
 							sourceControl.undoAdd(resourceState.resourceUri);
 						} else if (resourceState.contextValue === 'removed') {
 							sourceControl.addFile(resourceState.resourceUri);
-						} 
+						} else if (resourceState.contextValue === 'deleted') {
+							sourceControl.recoverDeletedFile(resourceState.resourceUri);
+						}
 					});
 				}
 			}
 		}
 	}));
 
-// 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
-// 		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge all repository changes into the local checkout?`, { modal: true }, `Yes`);
-// 		if (option === `Yes`) {
-// 			if (sourceControlResourceGroup.resourceStates.length > 0) {
-// 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-all', async (sourceControlResourceGroup: vscode.SourceControlResourceGroup) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge all repository changes into the local checkout?`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			if (sourceControlResourceGroup.resourceStates.length > 0) {
+				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 				
-// 				if (sourceControl) {
-// 					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
-// 						if (resourceState.contextValue === 'patch') {
-// 							sourceControl.revertFile(resourceState.resourceUri);
-// 						} else if (resourceState.contextValue === 'merge') {
-// 							sourceControl.undoAdd(resourceState.resourceUri);
-// 						} else if (resourceState.contextValue === 'checkout') {
-// 							sourceControl.addFile(resourceState.resourceUri);
-// 						} else if (resourceState.contextValue === 'directory') {
-// 							sourceControl.addFile(resourceState.resourceUri);
-// 						}						
-// 					});
-// 				}
-// 			}
-// 		}
-// 	}));
+				if (sourceControl) {
+					sourceControlResourceGroup.resourceStates.forEach(resourceState =>
+						{sourceControl.mergeLatest(resourceState.resourceUri); }
+					);
+				}
+			}
+		}
+	}));
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
