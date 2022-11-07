@@ -144,7 +144,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/modified.svg",
-						}
+						},
+						tooltip: "Locally Modified"
 					}};
 				
 				if (isStaged) {
@@ -154,9 +155,11 @@ export class CvsSourceControl implements Disposable {
 				}
 			} else if (element.state === SourceFileState.untracked)
 			{
-				var type = "untracked_file";
+				let type = "untracked_file";
+				let tip = "Unknown File";
 				if (element.isFolder) {
 					type = "untracked_folder";
+					tip = "Unknown Folder";
 				}
 
 				const resourceState: SourceControlResourceState = {
@@ -168,7 +171,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/untracked.svg",
-						}
+						},
+						tooltip: tip
 					}};
 
 				unknownResources.push(resourceState);
@@ -182,7 +186,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/added.svg",
-						}
+						},
+						tooltip: "Locally Added"
 					}};
 
 				if (isStaged) {
@@ -202,7 +207,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/removed.svg",
-						}
+						},
+						tooltip: "Locally Removed"
 					}};
 
 				if (isStaged) {
@@ -234,7 +240,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/deleted.svg",
-						}
+						},
+						tooltip: "Deleted"
 					}};
 
 				changedResources.push(resourceState);
@@ -257,7 +264,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/conflict.svg",
-						}
+						},
+						tooltip: "Contains Conflicts"
 					}};
 
 				conflictResources.push(resourceState);
@@ -284,7 +292,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/patch.svg",
-						}
+						},
+						tooltip: "Needs Patch"
 					}};
 
 				repositoryResources.push(resourceState);
@@ -311,7 +320,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/merge.svg",
-						}
+						},
+						tooltip: "Needs Merge"
 					}};
 
 				repositoryResources.push(resourceState);
@@ -338,7 +348,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/checkout.svg",
-						}
+						},
+						tooltip: "Needs Checkout"
 					}};
 
 				repositoryResources.push(resourceState);
@@ -367,7 +378,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/removed.svg",
-						}
+						},
+						tooltip: "Removed from Repository"
 					}};
 
 				repositoryResources.push(resourceState);
@@ -381,7 +393,8 @@ export class CvsSourceControl implements Disposable {
 						},
 						light: {
 							iconPath: __dirname + "/../resources/icons/light/folder.svg",
-						}
+						},
+						tooltip: "Folder found in Repository"
 					}};
 
 				repositoryResources.push(resourceState);
@@ -556,7 +569,7 @@ export class CvsSourceControl implements Disposable {
 		await this.configManager.updateIgnoreFolders(workspace.asRelativePath(uri, false));
 	}
 
-	async checkoutFolder(uri: Uri): Promise<void>  {
+	async checkoutFolder(uri: Uri, isRecursive: boolean=true): Promise<void>  {
 		// 1. make folder
 		const fs = require('fs/promises');
 		await fs.mkdir(uri.fsPath);
@@ -565,7 +578,11 @@ export class CvsSourceControl implements Disposable {
 		await this.addFile(uri);
 
 		// 3. cvs update folder
-		await runCvsCmd(`cvs update -d `, dirname(uri.fsPath));
+		if (isRecursive){
+			await runCvsCmd(`cvs update -d `, dirname(uri.fsPath));
+		} else {
+			await runCvsCmd(`cvs update `, dirname(uri.fsPath));
+		}
 	}
 
 	async readDir(path: string): Promise<string[]> {

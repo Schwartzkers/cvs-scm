@@ -24,7 +24,7 @@ The following describes the possible states for a source control resource:
 - `R  (Staged Changes/Changes) Locally Removed`
 - `D  (Changes) Locally Deleted`
 - `R  (Repository Changes) Removed from repository`
-- `F  (Repository Changes) New Directory found in repository`
+- `F  (Repository Changes) Folder found in repository`
 - `M  (Repository Changes) Needs Merge with repository`
 - `NC (Conflicts) Needs Checkout from repository`
 - `P  (Repository Changes) Needs Patch from repository`

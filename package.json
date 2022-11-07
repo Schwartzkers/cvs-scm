@@ -160,6 +160,12 @@
 				"category": "cvs-scm"
 			},
 			{
+				"command": "cvs-scm.checkout-folder-recursive",
+				"title": "Checkout folder (Recursive)",
+				"icon": "$(arrow-down)",
+				"category": "cvs-scm"
+			},
+			{
 				"command": "cvs-scm.checkout-folder",
 				"title": "Checkout folder",
 				"icon": "$(cloud-download)",
@@ -198,8 +204,18 @@
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
 				},
 				{
+					"command": "cvs-scm.stage-all",
+					"group": "navigation",
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+				},
+				{
 					"command": "cvs-scm.unstage-all",
 					"group": "inline@2",
+					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+				},
+				{
+					"command": "cvs-scm.unstage-all",
+					"group": "navigation",
 					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
 				},
 				{
@@ -208,16 +224,30 @@
 					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
 				},
 				{
+					"command": "cvs-scm.discard-all",
+					"group": "navigation",
+					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+				},
+				{
 					"command": "cvs-scm.merge-all",
 					"group": "inline@1",
 					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
+				},
+				{
+					"command": "cvs-scm.merge-all",
+					"group": "navigation",
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
 				}
-
 			],
 			"scm/resourceState/context": [
 				{
 					"command": "cvs-scm.openFile",
 					"group": "inline@1",
+					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
+				},
+				{
+					"command": "cvs-scm.openFile",
+					"group": "navigation",
 					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
 				},
 				{
@@ -316,10 +346,15 @@
 					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
 				},
 				{
-					"command": "cvs-scm.checkout-folder",
+					"command": "cvs-scm.checkout-folder-recursive",
 					"group": "inline@2",
 					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
-				}				
+				},
+				{
+					"command": "cvs-scm.checkout-folder",
+					"group": "inline@3",
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
+				}					
 			]
 		}
 	},

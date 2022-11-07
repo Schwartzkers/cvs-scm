@@ -19,6 +19,6 @@ Test | Command | Result | Last Tested Version | Description
 15 | force-revert | pass | 1.5.0 | Abandon conflict and update to HEAD from repository 
 16 | openFile | pass | 1.5.0 | Open File in editor
 17 | ignore-folder | pass | 1.5.0 | Ignore folder from subsequent cvs updates
-18 | checkout-folder | pass | 1.5.0 | Checkout local copy of new folder and contents from repository
+18 | checkout-folder-recursive | pass | 1.5.0 | Checkout local copy of new folder and contents from repository
 19 | discard-all | pass | 1.5.0 | Discard all local changes
 19 | merge-all | pass | 1.5.0 | Merge all repository changes to local checkout
