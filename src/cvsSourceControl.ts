@@ -579,9 +579,9 @@ export class CvsSourceControl implements Disposable {
 
 		// 3. cvs update folder
 		if (isRecursive){
-			await runCvsCmd(`cvs update -d `, dirname(uri.fsPath));
+			await runCvsCmd(`cvs update -d `, uri.fsPath);
 		} else {
-			await runCvsCmd(`cvs update `, dirname(uri.fsPath));
+			await runCvsCmd(`cvs update `, uri.fsPath);
 		}
 	}
 
