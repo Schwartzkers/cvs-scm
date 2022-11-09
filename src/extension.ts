@@ -3,6 +3,7 @@ import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME } from './cvsRepository';
 import { ConfigManager} from './configManager';
+import { dirname } from 'path';
 
 let cvsDocumentContentProvider: CvsDocumentContentProvider;
 let configManager: ConfigManager;
@@ -44,11 +45,18 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 		if (sourceControl) {
 			for (const resource of resourceStates) {
-				// automatically "cvs remove" any deleted files if staged
-				if (resource.contextValue === 'deleted') {
-					await sourceControl.removeFileFromCvs(resource.resourceUri);
+				// can only stage modified, added, removed or deleted resource states
+				if (resource.contextValue === "modified" || 
+					resource.contextValue === "added" ||
+					resource.contextValue === "removed" ||
+					resource.contextValue === "deleted") {
+
+					// automatically "cvs remove" any deleted files if staged
+					if (resource.contextValue === 'deleted') {
+						await sourceControl.removeFileFromCvs(resource.resourceUri);
+					}
+					sourceControl.stageFile(resource.resourceUri);
 				}
-				sourceControl.stageFile(resource.resourceUri);
 			}
 		}
 	}));
@@ -57,7 +65,13 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 	 	if (sourceControl) {
 			for (const resource of resourceStates) {
-				sourceControl.unstageFile(resource.resourceUri);
+				// can only unstage modified, added, removed resource states
+				if (resource.contextValue === "modified" || 
+					resource.contextValue === "added" ||
+					resource.contextValue === "removed") {
+
+					sourceControl.unstageFile(resource.resourceUri);
+				}
 			}
 		}
 	}));
@@ -82,7 +96,17 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.revertFile(resource.resourceUri);
+					// can only discard modified, added, deleted or removed resource states
+					if (resource.contextValue === "modified") {
+						await sourceControl.revertFile(resource.resourceUri);
+					} else if (resource.contextValue === "added") {
+						await sourceControl.undoAdd(resource.resourceUri);
+					} else if (resource.contextValue === "deleted") {
+						sourceControl.recoverDeletedFile(resource.resourceUri);
+					} else if (resource.contextValue === "removed") {
+						await sourceControl.addFile(resource.resourceUri);
+						await sourceControl.recoverDeletedFile(resource.resourceUri);
+					}
 				}
 			}
 		}
@@ -94,7 +118,10 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 		 	if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.forceRevert(resource.resourceUri); }
+					// can only force-revert conflict resource states
+					if (resource.contextValue === "conflict") {
+						await sourceControl.forceRevert(resource.resourceUri); }
+					}			
 				}
 		}
 	}));
@@ -104,7 +131,10 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 	 	if (sourceControl) {
 			for (const resource of resourceStates) {
-				sourceControl.addFile(resource.resourceUri);
+				// can only add untracked files
+				if (resource.contextValue === "untracked_file") {
+					await sourceControl.addFile(resource.resourceUri);
+				}	
 			}
 		}
 	}));
@@ -115,22 +145,13 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.addFile(resource.resourceUri);
+					// can only add-folder for untracked folders 
+					if (resource.contextValue === "untracked_folder") {
+						await sourceControl.addFile(resource.resourceUri);
+					}
 				}
 			}
 		}	
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.undo-add', async (...resourceStates: vscode.SourceControlResourceState[]) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to discard changes?`, { modal: true }, `Yes`);
-		if (option === `Yes`) {
-			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
-	 		if (sourceControl) {
-				for (const resource of resourceStates) {
-					sourceControl.undoAdd(resource.resourceUri);
-				}
-			}
-		}		
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.delete', async (...resourceStates: vscode.SourceControlResourceState[]) => {
@@ -139,18 +160,12 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 	 		if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.deleteUri(resource.resourceUri);
+					// can only delete untracked files or folders
+					if (resource.contextValue === "untracked_file" || 
+						resource.contextValue === "untracked_folder" ) {
+						await sourceControl.deleteUri(resource.resourceUri);
+					}					
 				}
-			}
-		}
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.restore', async (...resourceStates: vscode.SourceControlResourceState[]) => {
-		// restore deleted source file
-		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
-	 	if (sourceControl) {
-			for (const resource of resourceStates) {
-				sourceControl.recoverDeletedFile(resource.resourceUri);
 			}
 		}
 	}));
@@ -161,19 +176,11 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.removeFileFromCvs(resource.resourceUri);
+					// can only remove deleted files
+					if (resource.contextValue === "deleted") {
+						await sourceControl.removeFileFromCvs(resource.resourceUri);
+					}
 				}
-			}
-		}
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.undo-remove', async (...resourceStates: vscode.SourceControlResourceState[]) => {
-		// undo the removal of a file
-		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
-		if (sourceControl) {
-			for (const resource of resourceStates) {
-				await sourceControl.addFile(resource.resourceUri);
-				await sourceControl.recoverDeletedFile(resource.resourceUri);
 			}
 		}
 	}));
@@ -184,7 +191,13 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.mergeLatest(resource.resourceUri);
+					// can only merge the following
+					if (resource.contextValue === 'removedFromRepo' ||
+						resource.contextValue === 'checkout' ||
+						resource.contextValue === 'patch' ||
+						resource.contextValue === 'merge') {							
+						await sourceControl.mergeLatest(resource.resourceUri);
+					}					
 				}
 			}
 		}
@@ -193,8 +206,19 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.openFile', async (...resourceStates: vscode.SourceControlResourceState[]) => {
 		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 		if (sourceControl) { 
+			const options: vscode.TextDocumentShowOptions  = {
+				preserveFocus: true,
+            	preview: false,
+			};
 			for (const resource of resourceStates) {
-				vscode.commands.executeCommand("vscode.open", resource.resourceUri);
+				// cannot open the following
+				if (resource.contextValue !== 'removed' &&
+					resource.contextValue !== 'checkout' &&
+					resource.contextValue !== 'deleted' &&
+					resource.contextValue !== 'untracked_folder' &&
+					resource.contextValue !== 'directory') {
+					vscode.commands.executeCommand("vscode.open", resource.resourceUri, options);
+				}					
 			}
 		}		
 	}));
@@ -211,7 +235,10 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.ignoreFolder(resource.resourceUri);
+					// can only ignore-folders on a directory
+					if (resource.contextValue === 'directory') {
+						sourceControl.ignoreFolder(resource.resourceUri);
+					}
 				}
 			}
 		}
@@ -223,7 +250,10 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.checkoutFolder(resource.resourceUri);
+					// can only checkout-folder-recursive on a directory
+					if (resource.contextValue === 'directory') {
+						sourceControl.checkoutFolder(resource.resourceUri);
+					}					
 				}
 			}
 		}
@@ -235,7 +265,10 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
 				for (const resource of resourceStates) {
-					sourceControl.checkoutFolder(resource.resourceUri, false);
+					// can only checkout-folder on a directory
+					if (resource.contextValue === 'directory') {
+						sourceControl.checkoutFolder(resource.resourceUri, false);
+					}
 				}
 			}
 		}
@@ -248,17 +281,17 @@ export function activate(context: vscode.ExtensionContext) {
 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 				
 				if (sourceControl) {
-					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
-						if (resourceState.contextValue === 'modified') {
-							sourceControl.revertFile(resourceState.resourceUri);
-						} else if (resourceState.contextValue === 'added') {
-							sourceControl.undoAdd(resourceState.resourceUri);
-						} else if (resourceState.contextValue === 'removed') {
-							sourceControl.addFile(resourceState.resourceUri);
-						} else if (resourceState.contextValue === 'deleted') {
-							sourceControl.recoverDeletedFile(resourceState.resourceUri);
+					for (const resource of sourceControlResourceGroup.resourceStates) {
+						if (resource.contextValue === 'modified') {
+							sourceControl.revertFile(resource.resourceUri);
+						} else if (resource.contextValue === 'added') {
+							sourceControl.undoAdd(resource.resourceUri);
+						} else if (resource.contextValue === 'removed') {
+							sourceControl.addFile(resource.resourceUri);
+						} else if (resource.contextValue === 'deleted') {
+							sourceControl.recoverDeletedFile(resource.resourceUri);
 						}
-					});
+					}
 				}
 			}
 		}
@@ -271,16 +304,16 @@ export function activate(context: vscode.ExtensionContext) {
 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 				
 				if (sourceControl) {
-					sourceControlResourceGroup.resourceStates.forEach(resourceState => {
-						if (resourceState.contextValue === 'directory') {
-							sourceControl.checkoutFolder(resourceState.resourceUri);
-						} else if (resourceState.contextValue === 'removedFromRepo' ||
-								   resourceState.contextValue === 'checkout' ||
-								   resourceState.contextValue === 'patch' ||
-								   resourceState.contextValue === 'merge') {
-							sourceControl.mergeLatest(resourceState.resourceUri);
+					for (const resource of sourceControlResourceGroup.resourceStates) {
+						if (resource.contextValue === 'directory') {
+							sourceControl.checkoutFolder(resource.resourceUri);
+						} else if (resource.contextValue === 'removedFromRepo' ||
+								   resource.contextValue === 'checkout' ||
+								   resource.contextValue === 'patch' ||
+								   resource.contextValue === 'merge') {
+							sourceControl.mergeLatest(resource.resourceUri);
 						}
-					});
+					}
 				}
 			}
 		}
