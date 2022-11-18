@@ -17,6 +17,7 @@ suite('Extension Test Suite', () => {
 	let configManager: ConfigManager.ConfigManager;
 	let cvsRepository: CvsRepository.CvsRepository;
 	const workspace = vscode.Uri.parse('/home/jon/src/schwartzkers/cvs-scm-example');
+	let resourceMap = new Map();
 
 	suiteSetup(async () => {  
 		ext = vscode.extensions.getExtension("Schwartzkers.cvs-scm");
@@ -25,6 +26,19 @@ suite('Extension Test Suite', () => {
 			await ext.activate();
 			configManager = extension.configManager;			
 			cvsRepository = new CvsRepository.CvsRepository(workspace, configManager);
+
+			resourceMap.set("src/foo.cpp", SourceFile.SourceFileState.modified);
+			resourceMap.set("src/addedFile.cpp", SourceFile.SourceFileState.added);
+			resourceMap.set("untrackedFolder", SourceFile.SourceFileState.untracked);
+			resourceMap.set("untrackedFile.log", SourceFile.SourceFileState.untracked);
+			resourceMap.set("INSTALL.md", SourceFile.SourceFileState.removed);
+			resourceMap.set("interface/subfolder/Ifoo.hpp", SourceFile.SourceFileState.deleted);
+			resourceMap.set("Makefile", SourceFile.SourceFileState.patch);
+			resourceMap.set("gtest/testFile.cpp", SourceFile.SourceFileState.merge);
+			resourceMap.set("gtest/reports/report.xml", SourceFile.SourceFileState.checkout);
+			resourceMap.set("tree/folder7-0", SourceFile.SourceFileState.directory);
+			resourceMap.set("tree/trunk1.cpp", SourceFile.SourceFileState.removedFromRepo);
+			resourceMap.set("src/main.cpp", SourceFile.SourceFileState.conflict);
 		}
 	});
 
@@ -39,22 +53,25 @@ suite('Extension Test Suite', () => {
 		if (cvsRepository.getChangesSourceFiles().length === 0) {
 			assert.fail('No changes found in test repository');
 		}
+		
+		assert.strictEqual(cvsRepository.getChangesSourceFiles().length, 12); // expecting 12 changes in repo
 
-		for(const change of cvsRepository.getChangesSourceFiles()) {
-			if( change.uri.fsPath.includes('src/foo.cpp')) {
-				assert.strictEqual(change.state, SourceFile.SourceFileState.modified);
-			} else if( change.uri.fsPath.includes('src/lala.cpp')) {
-				assert.strictEqual(change.state, SourceFile.SourceFileState.added);
-			} else if( change.uri.fsPath.includes('src/testFolder.cpp')) {
-				assert.strictEqual(change.state, SourceFile.SourceFileState.untracked);
-				assert.strictEqual(change.isFolder, true);
-			} else if( change.uri.fsPath.includes('src/testFile.log')) {
-				assert.strictEqual(change.state, SourceFile.SourceFileState.untracked);
-				assert.strictEqual(change.isFolder, false);
-			} else if( change.uri.fsPath.includes('src/wtf.cpp')) {
-				assert.strictEqual(change.state, SourceFile.SourceFileState.untracked);
+		resourceMap.forEach((value: SourceFile.SourceFileState, key: string) => {
+			let foundChange = false;
+			for(const change of cvsRepository.getChangesSourceFiles()) {
+				if (change.uri.fsPath.includes(key)) {
+					foundChange = true;
+					assert.strictEqual(change.state, value);
+
+					if (key === 'untrackedFolder' || key === 'tree/folder7-0') {
+						assert.strictEqual(change.isFolder, true);
+					} else {
+						assert.strictEqual(change.isFolder, false);
+					}
+				}
 			}
-		}
+			assert.strictEqual(foundChange, true); //must find all changes
+		});
 	});
 
 });
