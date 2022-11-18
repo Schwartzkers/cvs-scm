@@ -5,9 +5,9 @@ import { CVS_SCHEME } from './cvsRepository';
 import { ConfigManager} from './configManager';
 import { dirname } from 'path';
 
-let cvsDocumentContentProvider: CvsDocumentContentProvider;
-let configManager: ConfigManager;
-const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
+export let cvsDocumentContentProvider: CvsDocumentContentProvider;
+export let configManager: ConfigManager;
+export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
 export function activate(context: vscode.ExtensionContext) {
 	
