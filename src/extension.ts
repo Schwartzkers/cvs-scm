@@ -102,7 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
 					} else if (resource.contextValue === "added") {
 						await sourceControl.undoAdd(resource.resourceUri);
 					} else if (resource.contextValue === "deleted") {
-						sourceControl.recoverDeletedFile(resource.resourceUri);
+						await sourceControl.recoverDeletedFile(resource.resourceUri);
 					} else if (resource.contextValue === "removed") {
 						await sourceControl.addFile(resource.resourceUri);
 						await sourceControl.recoverDeletedFile(resource.resourceUri);

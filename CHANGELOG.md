@@ -2,6 +2,8 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 
+## [v1.6.0]
+- Add multi-selection capability, resources that do not support the command are ignored
 ## [v1.5.0]
 - Add new resource group `Repository Changes` to distinguish from actual merge conflicts in `Conflicts`.
 - Add command `merge-all` to `Repository Changes` resource group to merge all changes from the repository.
