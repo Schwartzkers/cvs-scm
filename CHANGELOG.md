@@ -1,7 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
-
+## [v1.6.1]
+- Add optimizations to parsing cvs update/status results
+- Improvements and optimizations to address Issue #5: `Runaway "cvs -Q update -C -p" operations`
 ## [v1.6.0]
 - Add multi-selection capability, resources that do not support the command are ignored
 ## [v1.5.0]

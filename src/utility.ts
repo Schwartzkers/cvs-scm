@@ -39,7 +39,6 @@ export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResu
             cwd: dir,
             shell: true,
             timeout: 5000, // 5 secs
-            signal: AbortSignal
         };
         
         const cmd = spawn(cvsCommand, [""], options);
