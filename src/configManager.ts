@@ -6,12 +6,12 @@ const GLOB_IGNORE_CVS_VERSION_FILES = '**/.#*';
 export class ConfigManager {
 	private _ignoreFolders: string[];
 
-    constructor(context: ExtensionContext) {
+    constructor() {
 		this._ignoreFolders = [];
 
 		this.loadConfiguration();
 
-        workspace.onDidChangeConfiguration(event => this.configurationChange(event), context.subscriptions);
+        //workspace.onDidChangeConfiguration(event => this.configurationChange(event), context.subscriptions);
 	}
 
 	loadConfiguration(): void {

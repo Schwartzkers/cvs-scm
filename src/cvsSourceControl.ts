@@ -1,11 +1,11 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
 		 CancellationTokenSource, StatusBarItem, Uri, ExtensionContext, Command, Disposable,
-		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor } from 'vscode';
+		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor, TabInputTextDiff } from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { runCvsCmd } from './utility';
+import { execCmd } from './utility';
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 
@@ -426,7 +426,7 @@ export class CvsSourceControl implements Disposable {
 			files = files.concat(workspace.asRelativePath(element.resourceUri, false) + ' ');
 		});
 
-		if (await runCvsCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)) {
+		if (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)) {
 			this.stagedResources.resourceStates.forEach(element => {			
 				this.unstageFile(element.resourceUri, false);
 			});
@@ -503,16 +503,16 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async addFile(uri: Uri): Promise<void>  {
-		await runCvsCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	async removeFileFromCvs(uri: Uri): Promise<void>  {
-		await runCvsCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		await execCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	async recoverDeletedFile(uri: Uri): Promise<void>  {
 		this.unstageFile(uri, false); // in case staged
-		await runCvsCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	async deleteUri(uri: Uri): Promise<void>  {
@@ -529,12 +529,12 @@ export class CvsSourceControl implements Disposable {
 
 	async revertFile(uri: Uri): Promise<void> {
 		this.unstageFile(uri, false); // in case staged
-			await runCvsCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+			await execCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	async mergeLatest(uri: Uri): Promise<void>  {
 		// FIX ME need to get latest version in tmp, cvs update will fail if file contains conflicts??
-		await runCvsCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	// can only do this if file was untracked by repository
@@ -579,9 +579,9 @@ export class CvsSourceControl implements Disposable {
 
 		// 3. cvs update folder
 		if (isRecursive){
-			await runCvsCmd(`cvs update -d `, uri.fsPath);
+			await execCmd(`cvs update -d `, uri.fsPath);
 		} else {
-			await runCvsCmd(`cvs update `, uri.fsPath);
+			await execCmd(`cvs update `, uri.fsPath);
 		}
 	}
 
