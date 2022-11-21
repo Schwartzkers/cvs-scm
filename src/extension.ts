@@ -16,7 +16,8 @@ export function activate(context: vscode.ExtensionContext) {
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
 
-	configManager = new ConfigManager(context);
+	configManager = new ConfigManager();
+	vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions);
 
 	initializeWorkspaceFolders(context);
 

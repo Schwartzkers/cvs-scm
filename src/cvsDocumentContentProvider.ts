@@ -1,7 +1,13 @@
-import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, workspace, SourceControlResourceState } from "vscode";
-import { CvsFile, CVS_SCHEME } from './cvsRepository';
+import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
+		 Uri, EventEmitter, Disposable, workspace, SourceControlResourceState,
+		 window, TabInputTextDiff } from "vscode";
+import { CVS_SCHEME } from './cvsRepository';
 import { basename, dirname } from 'path';
-import { runCvsCmd } from './utility';
+import { execCmd, spawnCmd } from './utility';
+
+export class CvsFile {
+	constructor(public cvsUri: Uri, public originalText: string="", public originalTextUpdated: boolean=false, ) { }
+}
 
 /**
  * Provides the content of the CVS files per the server version i.e.  without the local edits.
@@ -20,37 +26,74 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
 	async updated(resourceStates: SourceControlResourceState[]): Promise<void> {
+		// clear cache of originals
 		this.sourceControlFiles.clear();
 
-		if (resourceStates.length > 0) {
-			for (let i:number=0; i < resourceStates.length; i++) {
-
-				let cvsFIle = new CvsFile(resourceStates[i].resourceUri);
-				if (resourceStates[i].contextValue !== 'conflict') { // cannot get repo revision if conflicts exist
-					cvsFIle.text = await this.getRepositoryRevision(resourceStates[i].resourceUri);
+		// get all diff editors currently opened, some may need to be updated
+		let openDiffs: Uri[];
+		openDiffs = [];
+		for (const tabGroup of window.tabGroups.all) {
+			for (const tab of tabGroup.tabs) {
+				if (tab.input instanceof TabInputTextDiff) {
+					openDiffs.push(tab.input.original);
 				}
-
-				const relativePath = workspace.asRelativePath(resourceStates[i].resourceUri.fsPath);
-				this.sourceControlFiles.set(Uri.parse(`${CVS_SCHEME}:${relativePath}`).fsPath, cvsFIle);
-				this._onDidChange.fire(Uri.parse(`${CVS_SCHEME}:${relativePath}`));
 			}
 		}
+
+		resourceStates.forEach(resource => {
+			let cvsFIle = new CvsFile(resource.resourceUri);
+			const cvsUri = Uri.parse(`${CVS_SCHEME}:${resource.resourceUri.fsPath}`);
+			this.sourceControlFiles.set(cvsUri.fsPath, cvsFIle);
+		});
+
+		// update open diff editors of any changes to repository version
+		this.sourceControlFiles.forEach(resource => {
+			for (const diff of openDiffs)
+			{
+				if(resource.cvsUri.fsPath === diff.fsPath) {
+					this._onDidChange.fire(resource.cvsUri);
+					break;
+				}
+			}	
+		});
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
-		if (token.isCancellationRequested) { return "Canceled"; }
-		const resource = this.sourceControlFiles.get(uri.fsPath);
-		if (!resource) {
-			return new Promise((resolve) => {
-					resolve(this.getRepositoryRevision(uri));
-			});
+		if (token.isCancellationRequested) {
+			// TODO cancel getting repository revision
+			// currently it will timeout after 5 secs
+			return "Canceled";
 		}
 
-		return resource.text;
+		const resource = this.sourceControlFiles.get(uri.fsPath);
+		if (resource && resource.originalTextUpdated) {
+			return resource.originalText;
+		} else {
+			return new Promise((resolve) => {
+				resolve(this.getRepositoryRevision(uri));
+			});
+		}
 	}
 
     async getRepositoryRevision(uri: Uri): Promise<string> {
+		let originalText = "";
 		const cvsCmd = `cvs -Q update -C -p ${basename(uri.fsPath)}`;
-		return (await runCvsCmd(cvsCmd, dirname(uri.fsPath), true)).output;
+		const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
+
+		if (!result.result) {
+			window.showErrorMessage(`Failed to obtain HEAD revision from repository: ${basename(uri.fsPath)}`);
+			return "";
+		}
+
+		originalText = result.output;
+		if (originalText.length === 0) { originalText = " "; } // quick diff won't work with empty original
+
+		const resource = this.sourceControlFiles.get(uri.fsPath);
+		if (resource) {
+			resource.originalText = originalText;
+			resource.originalTextUpdated = true;
+		} 
+
+		return originalText;
 	}
 }

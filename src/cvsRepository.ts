@@ -1,13 +1,10 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
-import { runCvsCmd } from './utility';
+import { execCmd } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 
 
-export class CvsFile {
-	constructor(public uri: Uri, public version?: number, public text?: string, public state?: SourceFileState) { }
-}
 
 export const CVS_SCHEME = 'cvs-scm';
 
@@ -27,7 +24,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update -d`;
-		const update = await runCvsCmd(cvsCmd, this.workspaceUri.fsPath, true);
+		const update = await execCmd(cvsCmd, this.workspaceUri.fsPath, true);
 
 		this._sourceFiles = []; // reset source files
 		const sourceFilePromises = update.output.split(/\r?\n|\r|\n/g).map(async (line) => await this.parseCvsUpdateOutput(line));
@@ -74,7 +71,7 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
 		const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
-		const status = await runCvsCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
+		const status = await execCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
 		if (status.result && !status.output.includes("Status: Unknown")) {
 			const sourceFileStatusPromises = status.output.split(/\r?\n|\r|\n/g).map(async (line) => await this.parseCvsStatusOutput(line, sourceFile));
@@ -94,7 +91,7 @@ export class CvsRepository implements QuickDiffProvider {
 		// File: Makefile          Status: Needs Patch
 
 		// Working revision:    1.1     2022-11-03 08:15:12 -0600
-		// Repository revision: 1.2     /home/jon/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
+		// Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
 		// Commit Identifier:   1006377FE10849CE253
 		// Sticky Tag:          (none)
 		// Sticky Date:         (none)
