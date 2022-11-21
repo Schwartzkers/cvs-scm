@@ -426,7 +426,7 @@ export class CvsSourceControl implements Disposable {
 			files = files.concat(workspace.asRelativePath(element.resourceUri, false) + ' ');
 		});
 
-		if (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)) {
+		if ( (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)).result) {
 			this.stagedResources.resourceStates.forEach(element => {			
 				this.unstageFile(element.resourceUri, false);
 			});
