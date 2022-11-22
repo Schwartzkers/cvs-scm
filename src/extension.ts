@@ -3,7 +3,6 @@ import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME } from './cvsRepository';
 import { ConfigManager} from './configManager';
-import { dirname } from 'path';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
@@ -12,6 +11,8 @@ export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 export function activate(context: vscode.ExtensionContext) {
 	
 	console.log('"cvs-scm" is now active');
+
+	vscode.window.showWarningMessage(`Ensure CVS client can connect/login to CVS Server before using CVS extension`);
 
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
@@ -164,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
 					// can only delete untracked files or folders
 					if (resource.contextValue === "untracked_file" || 
 						resource.contextValue === "untracked_folder" ) {
-						await sourceControl.deleteUri(resource.resourceUri);
+						await sourceControl.deleteResource(resource.resourceUri);
 					}					
 				}
 			}

@@ -1,13 +1,14 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
 		 CancellationTokenSource, StatusBarItem, Uri, ExtensionContext, Command, Disposable,
-		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor, TabInputTextDiff } from 'vscode';
+		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor } from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { execCmd } from './utility';
+import { execCmd, readDir, readFile, writeFile, deleteUri, createDir } from './utility';
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
+import { EOL } from 'os';
 
 export class CvsSourceControl implements Disposable {
 	private cvsScm: SourceControl;
@@ -427,20 +428,17 @@ export class CvsSourceControl implements Disposable {
 		});
 
 		if ( (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)).result) {
-			this.stagedResources.resourceStates.forEach(element => {			
-				this.unstageFile(element.resourceUri, false);
-			});
-			
+			this.stagedFiles = [];
 			this.cvsScm.inputBox.value = '';			
 		} else {
 			window.showErrorMessage('Failed to commit changes');
 		};		
 	}
 
-	async stageFile(_uri: Uri, refresh: boolean=true): Promise<void> {
-		if (!this.stagedFiles.includes(_uri.fsPath)) {
+	async stageFile(uri: Uri, refresh: boolean=true): Promise<void> {
+		if (!this.stagedFiles.includes(uri.fsPath)) {
 			// add to staging cache
-			this.stagedFiles.push(_uri.fsPath);
+			this.stagedFiles.push(uri.fsPath);
 		}
 
 		if (refresh) {
@@ -448,10 +446,10 @@ export class CvsSourceControl implements Disposable {
 		}		
 	}
 
-	async unstageFile(_uri: Uri, refresh: boolean=true): Promise<void> {
-		if (this.stagedFiles.includes(_uri.fsPath)) {
+	async unstageFile(uri: Uri, refresh: boolean=true): Promise<void> {
+		if (this.stagedFiles.includes(uri.fsPath)) {
 			// remove from staging cache
-			let index = this.stagedFiles.indexOf(_uri.fsPath, 0);
+			let index = this.stagedFiles.indexOf(uri.fsPath, 0);
 			if (index > -1) {
 				this.stagedFiles.splice(index, 1);
 			}
@@ -469,7 +467,6 @@ export class CvsSourceControl implements Disposable {
 		}
 
 		for (const resource of this.changedResources.resourceStates) {
-		//this.changedResources.resourceStates.forEach(resource => {
 			// automatically "cvs remove" any deleted files
 			if (resource.contextValue === 'deleted') {
 				await this.removeFileFromCvs(resource.resourceUri);
@@ -486,83 +483,125 @@ export class CvsSourceControl implements Disposable {
 			return;
 		}
 
-		this.stagedResources.resourceStates.forEach(element => {			
-			this.unstageFile(element.resourceUri, false);
-		});
-
+		this.stagedFiles = [];
 		this.refreshScm();
 	}
 
-	async forceRevert(_uri: Uri): Promise<void> {
-		try {
-			await this.deleteUri(_uri);
-			await this.revertFile(_uri);
-		} catch(e) {
-			window.showErrorMessage("Error reverting file");
+	async forceRevert(uri: Uri): Promise<void> {
+		if (await deleteUri(uri)) {
+			await this.revertFile(uri);
+		} else {
+			window.showErrorMessage(`Failed to revert file to HEAD: ${basename(uri.fsPath)}`);
 		}
 	}
 
 	async addFile(uri: Uri): Promise<void>  {
-		await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		const response = await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to schedule file for addition: ${basename(uri.fsPath)}`);
+		}
 	}
 
 	async removeFileFromCvs(uri: Uri): Promise<void>  {
-		await execCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		const response = await execCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to schedule file for removal: ${basename(uri.fsPath)}`);
+		}
 	}
 
 	async recoverDeletedFile(uri: Uri): Promise<void>  {
 		this.unstageFile(uri, false); // in case staged
-		await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
-	}
 
-	async deleteUri(uri: Uri): Promise<void>  {
-		const fs = require('fs/promises');
-		// is it a file or folder?
-		const stat = await fs.lstat(uri.fsPath);
-		if (stat.isFile()) {
-			await fsPromises.unlink(uri.fsPath);
+		const response = await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to recover deleted file: ${basename(uri.fsPath)}`);
 		}
-		else {
-			await fsPromises.rmdir(uri.fsPath);
-		}		
 	}
 
 	async revertFile(uri: Uri): Promise<void> {
 		this.unstageFile(uri, false); // in case staged
-			await execCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+
+		const response = await execCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to revert file to HEAD: ${basename(uri.fsPath)}`);
+		}
 	}
 
 	async mergeLatest(uri: Uri): Promise<void>  {
-		// FIX ME need to get latest version in tmp, cvs update will fail if file contains conflicts??
+		// TODO how to handle errors
+		// cvs update will report errors if merge results in conflicts
+		//   csmerge: warning: conflicts during merge
+		//   cvs update: conflicts found in newfile3.cpp
+		// no errors with patching
+		// no errors on checkout new file
+		// stderr on removal "cvs update: `nov17.cpp' is no longer in the repository"
 		await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
 	}
 
 	// can only do this if file was untracked by repository
-	async undoAdd(_uri: Uri): Promise<void>  {
-		this.unstageFile(_uri, false); // in case staged
+	async undoAdd(uri: Uri): Promise<void>  {
+		this.unstageFile(uri, false); // in case staged
+
+		let success = false;
 
 		// 1. remove temp CVS file (e.g. 'test.txt,t')
-		const files = await this.readDir(dirname(_uri.fsPath) + '/CVS');
-		
-		files.forEach(async file => {
-			if(file.includes(basename(_uri.fsPath))) {
-				await this.deleteUri(Uri.parse(dirname(_uri.fsPath) + '/CVS/' + file));
+		const files = await readDir(dirname(uri.fsPath) + '/CVS');
+		if (files.length > 0) {
+			for (const file of files) {
+				if (file.includes(basename(uri.fsPath))) {
+					success = await deleteUri(Uri.parse(dirname(uri.fsPath) + '/CVS/' + file));
+					break;
+				}
 			}
-		});
 
-		const entries = await this.readCvsEntries(dirname(_uri.fsPath) + '/CVS/Entries');
-
-		let newEntries = '';
-		entries.split(/\r?\n/).forEach(element => {
-			if (element.includes(basename(_uri.fsPath)) === false) {
-				newEntries = newEntries.concat(element + '\n');
+			// 2. get lines from Entries to add to the new Entries file
+			let newEntries = '';
+			if (success) {
+				success = false; // reset for next block of logic
+				
+				const lines = await readFile(dirname(uri.fsPath) + '/CVS/Entries');
+				if (lines && lines.length > 0) {
+					for (const line of lines.split(EOL)) {
+						// do not include the line in Entries to be discarded
+						if (line.includes(basename(uri.fsPath)) === false) {
+							newEntries = newEntries.concat(line + EOL);
+						}
+					}
+					success = true;
+				}
 			}
-		});
 
-		await this.writeCvsEntries(dirname(_uri.fsPath) + '/CVS/Entries.out', newEntries);		 
-		await fsPromises.rename(dirname(_uri.fsPath) + '/CVS/Entries', dirname(_uri.fsPath) + '/CVS/Entries.bak');
-		await fsPromises.rename(dirname(_uri.fsPath) + '/CVS/Entries.out', dirname(_uri.fsPath) + '/CVS/Entries');		
-		await fsPromises.unlink(dirname(_uri.fsPath) + '/CVS/Entries.bak');
+			// 3. create new Entries file and remove old Entires
+			if (success) {
+				success = false; // reset for next block of logic
+
+				if (await writeFile(dirname(uri.fsPath) + '/CVS/Entries.out', newEntries) &&
+					await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries', dirname(uri.fsPath) + '/CVS/Entries.bak') === undefined) {						
+					if (await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries.out', dirname(uri.fsPath) + '/CVS/Entries') === undefined) {
+						await fsPromises.unlink(dirname(uri.fsPath) + '/CVS/Entries.bak');
+						success = true;
+					}
+					else {
+						// attempt to revert to old Entries
+						await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries.bak', dirname(uri.fsPath) + '/CVS/Entries');
+					}						
+				}
+			}
+		}
+
+		if (!success) {
+			window.showErrorMessage(`Failed to discard add of file: ${basename(uri.fsPath)}`);
+		}
+	}
+
+	async deleteResource(uri: Uri): Promise<void>  {
+		if(!(await deleteUri(uri))) {
+			window.showErrorMessage(`Failed to delete: ${basename(uri.fsPath)}`);
+		}
 	}
 
 	async ignoreFolder(uri: Uri): Promise<void>  {
@@ -570,57 +609,22 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async checkoutFolder(uri: Uri, isRecursive: boolean=true): Promise<void>  {
-		// 1. make folder
 		const fs = require('fs/promises');
-		await fs.mkdir(uri.fsPath);
 
-		// 2. cvs add folder
-		await this.addFile(uri);
-
-		// 3. cvs update folder
-		if (isRecursive){
-			await execCmd(`cvs update -d `, uri.fsPath);
-		} else {
-			await execCmd(`cvs update `, uri.fsPath);
+		let success = false;
+			
+		if ((await createDir(uri)) &&  // 1. make folder
+		    (await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result) { // 2. cvs add folder
+				// 3. cvs update folder
+				if (isRecursive){
+					success = (await execCmd(`cvs update -d `, uri.fsPath)).result;
+				} else {
+					success = (await execCmd(`cvs update `, uri.fsPath)).result;
+				}
 		}
-	}
-
-	async readDir(path: string): Promise<string[]> {
-		const fs = require('fs/promises');
-
-		let result = [];
-
-		try {
-			result = await fs.readdir(path);
-		} catch (err: any) {
-			console.log(err);
-		}
-
-		return result;
-	}
-
-	async readCvsEntries(path: string): Promise<string> {
-		const fs = require('fs/promises');
-
-		let data = '';
-
-		try{
-			data = await fs.readFile(path, {encoding: 'utf-8'});
-			//console.log(data);		
-		} catch(err: any) {
-			console.log(err);
-		}
-
-		return data;
-	}
-
-	async writeCvsEntries(path: string, data: string): Promise<void> {
-		const fs = require('fs/promises');
-
-		try{
-			await fs.writeFile(path, data);
-		} catch(err: any) {
-			console.log(err);
+		
+		if (!success) {
+			window.showErrorMessage(`Failed to checkout folder: ${basename(uri.fsPath)}`);
 		}
 	}
 

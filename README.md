@@ -2,6 +2,11 @@
 
 The extension provides CVS (Concurrent Versions System) support to VS Code. CVS is an older Source Control Management (SCM) system. The extension integrates CVS into VS Code's SCM interface for a familar user experience such as git.
 
+## Pre-requisites
+CVS client software is [installed](https://www.nongnu.org/cvs/).
+
+**For remote CVS severs (pserver & ext) ensure the CVS client can login/connect successfully before using the extension. Future versions of the extension will attempt to detect and warn when the CVS server cannot be accessed.**
+
 ## Features
 
 The extenstioin will automatically activate when it detects source code managed by CVS. It provides the following features:
@@ -57,18 +62,12 @@ Both the regular diff (when the user clicks on the changed resource in the sourc
 ![alt text](resources/images/quickDiff.png "CVS Quick diff")
 
 ![alt text](resources/images/gutterDiff.png "CVS Gutter diff")
-
-## Pre-requisites
-CVS client software is [installed](https://www.nongnu.org/cvs/).
-
-## Supported CVS Version
-
-The extension was developed using version 1.12.13-MirDebian-28 (client/server) of CVS. Older versions may not be compatible with the extension.
-
 ## Extension Settings
 
 ![alt text](resources/images/settings.png "CVS Settings")
+## Supported CVS Version
 
+The extension was developed using version 1.12.13-MirDebian-28 (client/server) of CVS. Older versions may not be compatible with the extension.
 ## Known Issues
 
 - The extension has been tested with Ubuntu 16.04 & 22.04 LTS. Issues encountered with Windows or macOS may not be resolved in a timely fashion.

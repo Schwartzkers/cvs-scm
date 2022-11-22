@@ -1,4 +1,4 @@
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
+import { QuickDiffProvider, Uri, CancellationToken, ProviderResult } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
 import { execCmd } from './utility';
 import { ConfigManager} from './configManager';
