@@ -1,9 +1,9 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
-		 Uri, EventEmitter, Disposable, workspace, SourceControlResourceState,
+		 Uri, EventEmitter, Disposable, SourceControlResourceState,
 		 window, TabInputTextDiff } from "vscode";
 import { CVS_SCHEME } from './cvsRepository';
 import { basename, dirname } from 'path';
-import { execCmd, spawnCmd } from './utility';
+import { spawnCmd } from './utility';
 
 export class CvsFile {
 	constructor(public cvsUri: Uri, public originalText: string="", public originalTextUpdated: boolean=false, ) { }

@@ -1,3 +1,5 @@
+import { Uri } from 'vscode';
+
 export class CmdResult {
     constructor(public result: boolean, public output: string) {
         this.result = result;
@@ -15,7 +17,7 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
                 output = (stdout + stderr);
             } else {
                 output = stdout;
-            }   
+            }
 
             if (error) {
                 resolve(false);
@@ -67,4 +69,71 @@ export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResu
     });
 
     return new CmdResult(result, stdout);
+}
+
+export async function readDir(path: string): Promise<string[]> {
+    const fs = require('fs/promises');
+
+    let result = [];
+
+    try {
+        result = await fs.readdir(path);
+    } catch (err: any) {
+        console.log(err);
+    }
+
+    return result;
+}
+
+export async function  readFile(path: string): Promise<string | undefined> {
+    const fs = require('fs/promises');
+
+    try{
+        return await fs.readFile(path, {encoding: 'utf-8'});
+    } catch(err: any) {
+        return undefined;
+    }
+}
+
+export async function  writeFile(path: string, data: string): Promise<boolean> {
+    const fs = require('fs/promises');
+
+    if ((await fs.writeFile(path, data)) === undefined) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+export async function  deleteUri(uri: Uri): Promise<boolean>  {
+    const fs = require('fs/promises');
+    
+    let success = false;
+
+    // is it a file or folder?
+    const stat = await fs.lstat(uri.fsPath);
+
+    if (stat) {
+        if (stat.isFile()) {
+            if ((await fs.unlink(uri.fsPath) === undefined)) { success = true; }
+        }
+        else {
+            //TODO Use `fs.rm(path, { recursive: true, force: true })` instead.
+            if ((await fs.rmdir(uri.fsPath) === undefined)) { success = true; }
+        }
+    }
+
+    return success;
+}
+
+export async function createDir(uri: Uri): Promise<boolean> {
+    const fs = require('fs/promises');
+
+    let result = false;
+
+    if ((await fs.mkdir(uri.fsPath)) === undefined) {
+        result = true;
+    }
+
+    return result;        
 }
