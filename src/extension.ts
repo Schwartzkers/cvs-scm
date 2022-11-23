@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	console.log('"cvs-scm" is now active');
 
-	vscode.window.showWarningMessage(`Ensure CVS client can connect/login to CVS Server before using CVS extension`);
+	//vscode.window.showInformationMessage(`Ensure CVS client can connect/login to CVS Server before using CVS extension`);
 
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
