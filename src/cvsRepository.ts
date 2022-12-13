@@ -7,6 +7,7 @@ import { basename, dirname } from 'path';
 
 
 export const CVS_SCHEME = 'cvs-scm';
+export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
 
 export class CvsRepository implements QuickDiffProvider {
 	private _sourceFiles: SourceFile[];

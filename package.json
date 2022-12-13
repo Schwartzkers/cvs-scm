@@ -50,6 +50,14 @@
 				}
 			}
 		},
+		"views": {
+			"scm": [
+			  {
+				"id": "cvs-file-revisions",
+				"name": "FILE REVISIONS"
+			  }
+			]
+		},
 		"commands": [
 			{
 				"command": "cvs-scm.refresh",

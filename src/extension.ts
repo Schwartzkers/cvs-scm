@@ -3,6 +3,7 @@ import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME } from './cvsRepository';
 import { ConfigManager} from './configManager';
+import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider'; 
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
@@ -25,6 +26,15 @@ export function activate(context: vscode.ExtensionContext) {
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
 	});
+
+	// const rootPath =
+	// vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+	// 	? vscode.workspace.workspaceFolders[0].uri.fsPath
+	// 	: undefined;
+	
+	// if(rootPath) {
+	// 	vscode.window.registerTreeDataProvider('revisions', new CvsRevisionProvider(rootPath));
+	// }	
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
 		// check CVS repository for local and remote changes

@@ -16,7 +16,7 @@ suite('Extension Test Suite', () => {
 	let ext: vscode.Extension<any> | undefined;
 	let configManager: ConfigManager.ConfigManager;
 	let cvsRepository: CvsRepository.CvsRepository;
-	const workspace = vscode.Uri.parse('/home/jon/src/schwartzkers/cvs-scm-example');
+	const workspace = vscode.Uri.parse('~/src/schwartzkers/cvs-scm-example');
 	let resourceMap = new Map();
 
 	suiteSetup(async () => {  

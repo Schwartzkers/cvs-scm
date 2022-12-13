@@ -1,14 +1,16 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
 		 CancellationTokenSource, StatusBarItem, Uri, ExtensionContext, Command, Disposable,
-		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor } from 'vscode';
+		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor, TreeView, TreeViewOptions, commands } from 'vscode';
 import { promises as fsPromises } from 'fs';
-import { CvsRepository } from './cvsRepository';
+import { CvsRepository, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { SourceFile, SourceFileState } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { execCmd, readDir, readFile, writeFile, deleteUri, createDir } from './utility';
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
+import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider'; 
+import { CvsCompareContentProvider } from './cvsCompareContentProvider';
 
 export class CvsSourceControl implements Disposable {
 	private cvsScm: SourceControl;
@@ -24,6 +26,9 @@ export class CvsSourceControl implements Disposable {
 	private myStatusBarItem: StatusBarItem;
 	private stagedFiles: string[];
 	private configManager: ConfigManager;
+	private fileHistoryTree: TreeView<CommitData>;
+	private fileHistory: CvsRevisionProvider;
+	private cvsCompareProvider: CvsCompareContentProvider;
 
 	constructor(context: ExtensionContext,
 			worspacefolder: Uri,
@@ -56,6 +61,13 @@ export class CvsSourceControl implements Disposable {
 		fileSystemWatcher.onDidCreate(uri => this.onResourceChange(uri), context.subscriptions);
 		fileSystemWatcher.onDidDelete(uri => this.onResourceChange(uri), context.subscriptions);
 
+		this.fileHistory = new CvsRevisionProvider(this.workspacefolder.fsPath);
+		this.fileHistoryTree = window.createTreeView('cvs-file-revisions', { treeDataProvider: this.fileHistory, canSelectMany: false} );
+		context.subscriptions.push(window.onDidChangeActiveTextEditor(textEditor => this.updateFileHistory(textEditor), context.subscriptions));
+
+		this.cvsCompareProvider = new CvsCompareContentProvider(this.fileHistoryTree);
+		context.subscriptions.push(workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, this.cvsCompareProvider));
+
 		this.myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 100);
 		context.subscriptions.push(this.myStatusBarItem);
 		context.subscriptions.push(window.onDidChangeActiveTextEditor(textEditor => this.updateStatusBarItem(textEditor), context.subscriptions));
@@ -64,6 +76,13 @@ export class CvsSourceControl implements Disposable {
 		context.subscriptions.push(fileSystemWatcher);
 
 		this.updateStatusBarItem(window.activeTextEditor);
+	}
+
+	async updateFileHistory(textEditor: TextEditor | undefined): Promise<void> {
+		if (textEditor && dirname(textEditor.document.uri.fsPath).includes(this.workspacefolder.fsPath)) {
+			this.fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
+			this.fileHistory.refresh();
+		}
 	}
 
 	async updateStatusBarItem(textEditor: TextEditor | undefined): Promise<void> {
