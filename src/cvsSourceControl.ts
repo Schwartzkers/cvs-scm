@@ -79,9 +79,16 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async updateFileHistory(textEditor: TextEditor | undefined): Promise<void> {
-		if (textEditor && dirname(textEditor.document.uri.fsPath).includes(this.workspacefolder.fsPath)) {
-			this.fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
-			this.fileHistory.refresh();
+		if (textEditor) {
+			if (textEditor.document.uri.scheme !== 'file') {
+				return;
+			} else if (dirname(textEditor.document.uri.fsPath).includes(this.workspacefolder.fsPath)) {
+				// don't update if already displayed				
+				if (this.fileHistoryTree.description !== basename(textEditor.document.uri.fsPath)) { 
+					this.fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
+					this.fileHistory.refresh();
+				}
+			}
 		}
 	}
 

@@ -28,19 +28,16 @@ export class CvsCompareContentProvider implements TextDocumentContentProvider, D
 			// currently it will timeout after 5 secs
 			return "Canceled";
 		}
+		
+		const revision = basename(uri.fsPath.slice(uri.fsPath.lastIndexOf('_')+1));
 
-		const commitData = this._treeView.selection[0];
-		if (commitData) {
-			return new Promise((resolve) => {
-				resolve(this.getRepositoryRevision(uri, commitData.revision));
-			});
-		} else {
-			return "";
-		}
+		return new Promise((resolve) => {
+			resolve(this.getRepositoryRevision(uri, revision));
+		});
 	}
 
 	async getRepositoryRevision(uri: Uri, revision: string): Promise<string> {
-		const cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("."+revision)[0])}`;
+		const cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("_"+revision)[0])}`;
 		const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
 
 		if (!result.result) {

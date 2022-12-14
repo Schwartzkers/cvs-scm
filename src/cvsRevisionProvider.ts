@@ -109,20 +109,28 @@ export class CommitData extends TreeItem {
         private date: string
     ) {
         super(revision + "  " + shortMsg.slice(0, 50), TreeItemCollapsibleState.None);
-        //this.resourceUri = uri;
+        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${this.revision}`);
         this.tooltip = this.commitMsg;
         this.description = this.author + ", " + this.date;
         this.iconPath = new ThemeIcon("git-commit");
 
-        let left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}.${this.revision}`);
+        // 1.51 or 1.51.2.3
+        const revIndex = this.revision.lastIndexOf('.') + 1;
+        let revNum = parseInt(this.revision.substring(revIndex));
 
-        const command: Command =
-        {
-            title: "Compare Revisons",
-            command: "vscode.diff",
-            arguments: [left, uri, `${basename(uri.fsPath)} (${this.revision}) <-> (local)`],
-        };
+        if (revNum > 1) {
+            const previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
 
-        this.command = command;
+            const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${previousRevision}`);
+            const right = this.resourceUri;
+    
+            const command: Command =
+            {
+                title: "File History",
+                command: "vscode.diff",
+                arguments: [left, right, `${basename(uri.fsPath)} (${previousRevision}) <-> (${this.revision})`],
+            };
+            this.command = command;
+        }
     }
 }
