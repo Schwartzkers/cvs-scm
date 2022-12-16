@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 	fileHistory = new CvsRevisionProvider();
 	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
+	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(e => updateFileHistory(vscode.window.activeTextEditor), context.subscriptions));
 
 	cvsCompareProvider = new CvsCompareContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
