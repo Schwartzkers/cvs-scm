@@ -1,12 +1,20 @@
 import * as vscode from 'vscode';
 import { CvsSourceControl } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { CVS_SCHEME } from './cvsRepository';
+import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { ConfigManager} from './configManager';
-import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider'; 
+import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
+import { CvsCompareContentProvider } from './cvsCompareContentProvider';
+import { basename, dirname } from 'path';
+import { SourceFile } from './sourceFile';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
+export let fileHistory = new CvsRevisionProvider;
+export let fileHistoryTree: vscode.TreeView<CommitData>;
+export let cvsCompareProvider: CvsCompareContentProvider;
+export let revStatusBarItem: vscode.StatusBarItem;
+
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
 export function activate(context: vscode.ExtensionContext) {
@@ -21,20 +29,22 @@ export function activate(context: vscode.ExtensionContext) {
 	configManager = new ConfigManager();
 	vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions);
 
+	fileHistory = new CvsRevisionProvider();
+	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
+
+	cvsCompareProvider = new CvsCompareContentProvider();
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
+
+	revStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	context.subscriptions.push(revStatusBarItem);
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateStatusBarItem(textEditor), context.subscriptions));
+
 	initializeWorkspaceFolders(context);
 
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
 	});
-
-	// const rootPath =
-	// vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-	// 	? vscode.workspace.workspaceFolders[0].uri.fsPath
-	// 	: undefined;
-	
-	// if(rootPath) {
-	// 	vscode.window.registerTreeDataProvider('revisions', new CvsRevisionProvider(rootPath));
-	// }	
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
 		// check CVS repository for local and remote changes
@@ -346,6 +356,8 @@ export function activate(context: vscode.ExtensionContext) {
 			sourceControl.openRev(commitData);
 		}
 	}));
+
+	updateStatusBarItem(vscode.window.activeTextEditor);
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
@@ -383,6 +395,51 @@ async function initializeFolder(folder: vscode.WorkspaceFolder, context: vscode.
 function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: vscode.ExtensionContext) {
 	cvsSourceControlRegister.set(cvsSourceControl.getWorkspaceFolder(), cvsSourceControl);
 	context.subscriptions.push(cvsSourceControl);
+}
+
+async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Promise<void> {
+	if (textEditor) {
+		if (textEditor.document.uri.scheme !== 'file') {
+			return;
+		} else {
+			const sourceControl = findSourceControl(textEditor.document.uri);
+				
+			if (sourceControl) {
+				// don't update if already displayed
+				if (fileHistoryTree.description !== basename(textEditor.document.uri.fsPath)) { 
+					fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
+					fileHistory.refresh();
+				}
+			}
+		}
+	}
+}
+
+async function updateStatusBarItem(textEditor: vscode.TextEditor | undefined): Promise<void> {
+	if (textEditor) {
+		if (textEditor.document.uri.scheme !== 'file') {
+			return;
+		} else {
+			const sourceControl = findSourceControl(textEditor.document.uri);
+				
+			if (sourceControl) {
+				let sourceFile = new SourceFile(textEditor.document.uri);
+
+				await sourceControl.getCvsStatus(sourceFile);
+			
+				if (sourceFile.branch && sourceFile.workingRevision) {
+					revStatusBarItem.text = `$(source-control-view-icon) ${sourceFile.branch}: ${sourceFile.workingRevision}`;
+					revStatusBarItem.show();
+				}
+				else {
+					revStatusBarItem.hide();
+				}
+			}
+			else {
+				revStatusBarItem.hide();
+			}
+		}
+	}
 }
 
 // this method is called when your extension is deactivated

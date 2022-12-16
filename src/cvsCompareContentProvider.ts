@@ -1,18 +1,13 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
-		 Uri, EventEmitter, Disposable, TreeView,
-		 window, } from "vscode";
+		 Uri, EventEmitter, Disposable, window, } from "vscode";
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
-import { CommitData } from './cvsRevisionProvider';
 
 
 export class CvsCompareContentProvider implements TextDocumentContentProvider, Disposable {
 	private _onDidChange = new EventEmitter<Uri>();
-	private _treeView: TreeView<CommitData>;
 
-	constructor(treeView: TreeView<CommitData>) {
-		this._treeView = treeView;
-	}
+	constructor() { }
 
 	get onDidChange(): Event<Uri> {
 		return this._onDidChange.event;

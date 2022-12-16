@@ -8,7 +8,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     private _onDidChangeTreeData: EventEmitter<CommitData | undefined | null | void> = new EventEmitter<CommitData | undefined | null | void>();
     readonly onDidChangeTreeData: Event<CommitData | undefined | null | void> = this._onDidChangeTreeData.event;
     
-    constructor(private workspaceRoot: string) { }
+    constructor() { }
 
     refresh(): any {
         this._onDidChangeTreeData.fire(undefined);
@@ -19,27 +19,15 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     getChildren(element?: CommitData): Thenable<CommitData[]> {
-        if (!this.workspaceRoot) {
-            window.showInformationMessage('Workspace is empty');
-            return Promise.resolve([]);
-        }
-
         let textEditor = window.activeTextEditor;
         if (textEditor) {
             return Promise.resolve(this.getDeps(textEditor.document.uri));
         }
 
         return Promise.reject();
-
-        // if (element && element.resourceUri) {
-        //     return Promise.resolve(this.getDeps(element.resourceUri));
-        // } else { // get root
-        //     return Promise.resolve(this.getDeps(Uri.parse(this.workspaceRoot)));
-        // }
     }
 
     async getDeps(uri: Uri): Promise<CommitData[]> {
-        //const myFile = Uri.file(this.workspaceRoot + "/cvs-sandbox/foo.txt");
         const log = await this.readCvsLog(uri);
 
         return this.parseCvsLog(log, uri);
@@ -58,8 +46,8 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     parseCvsLog(log: string, uri: Uri): CommitData[] {
+        // remove last line "=======""
         let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n[-]+\r?\n/);
-        //revs.pop(); // remove last line "=======""
 
         let commits = [];
         let shortMsg = '';

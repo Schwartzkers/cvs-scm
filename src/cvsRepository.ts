@@ -4,8 +4,6 @@ import { execCmd } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 
-
-
 export const CVS_SCHEME = 'cvs-scm';
 export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
 
