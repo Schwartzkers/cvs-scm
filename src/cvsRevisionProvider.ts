@@ -2,7 +2,8 @@ import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, Them
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
-import { CVS_SCHEME_COMPARE } from './cvsRepository';
+import { CVS_SCHEME_COMPARE, parseCvsStatusOutput } from './cvsRepository';
+import { SourceFile } from './sourceFile';
 
 export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     private _onDidChangeTreeData: EventEmitter<CommitData | undefined | null | void> = new EventEmitter<CommitData | undefined | null | void>();
@@ -28,16 +29,37 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     async getDeps(uri: Uri): Promise<CommitData[]> {
-        const log = await this.readCvsLog(uri);
+        // 1. get status of file to find branch and repo version
+        const sourceFile = new SourceFile(uri);
+        await this.getStatusOfFile(sourceFile);
 
-        return this.parseCvsLog(log, uri);
+        let commits: CommitData[];
+        commits = [];
+        if (sourceFile.branch === 'main' && sourceFile.repoRevision) {
+            const log = await this.readCvsLog(uri, sourceFile.repoRevision);
+            commits = this.parseCvsLog(log, uri, false);
+        } else if (sourceFile.repoRevision && sourceFile.branch) { // 
+            // 2. use branch name to get any commits on branch
+            const branchLog = await this.readCvsLog(uri, sourceFile.branch);
+            commits = this.parseCvsLog(branchLog, uri, true);
+
+            if (commits.length === 0) {
+                // 3a. use repo version to get remainder of commits
+                const trunkLog = await this.readCvsLog(uri, sourceFile.repoRevision);
+                commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
+            } else { // branch has commits, need to determine parent rev 
+                // e.g 1.3.2.2 -> 1.3
+                const rev = sourceFile.repoRevision.substring(0, sourceFile.repoRevision.length - 4);
+                const trunkLog = await this.readCvsLog(uri, rev);
+                commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
+            }
+        }
+
+        return commits;
     }
 
-    async readCvsLog(resource: Uri): Promise<string> {
-        // TODO get status to get branch and repo version to feed into log
-        // then use branch name to get any commits
-        // then use repo version to get remainder of commits 
-        const cvsCmd = `cvs log -N ${basename(resource.fsPath)}`;
+    async readCvsLog(resource: Uri, revision: string): Promise<string> {
+        const cvsCmd = `cvs log -r:${revision} ${basename(resource.fsPath)}`;
         const result = await spawnCmd(cvsCmd, dirname(resource.fsPath));
         
         if (!result.result || result.output.length === 0) {
@@ -48,7 +70,22 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         return result.output;
     }
 
-    parseCvsLog(log: string, uri: Uri): CommitData[] {
+    async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
+        const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
+        const status = await spawnCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
+
+        if (!status.result || status.output.length === 0) {
+            window.showErrorMessage(`Failed to obtain cvs status for resource: ${basename(sourceFile.uri.fsPath)}`);
+            return;
+        }
+
+        if (!status.output.includes("Status: Unknown")) {
+            const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
+            await Promise.all(sourceFileStatusPromises);
+        }
+    }
+
+    parseCvsLog(log: string, uri: Uri, isBranchCommit: boolean): CommitData[] {
         // remove last line "=======""
         let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n[-]+\r?\n/);
 
@@ -84,7 +121,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                     commitMsg += line  + EOL;
                 }
             }
-            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date));
+            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date, isBranchCommit));
             shortMsg = '';
             commitMsg = '';
         }
@@ -99,7 +136,8 @@ export class CommitData extends TreeItem {
         private commitMsg: string,
         public readonly revision: string,
         private author: string,
-        private date: string
+        private date: string,
+        private isBranchCommit: boolean
     ) {
         super(revision + "  " + shortMsg.slice(0, 50), TreeItemCollapsibleState.None);
         this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${this.revision}`);
@@ -107,14 +145,25 @@ export class CommitData extends TreeItem {
         this.description = this.author + ", " + this.date;
         this.iconPath = new ThemeIcon("git-commit");
         this.contextValue = "revision";
+        this.id = revision;
 
         // 1.51 or 1.51.2.3
         const revIndex = this.revision.lastIndexOf('.') + 1;
         let revNum = parseInt(this.revision.substring(revIndex));
 
+        let shouldDiff = false;
+        let previousRevision = "";
         if (revNum > 1) {
-            const previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
+            previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
+            shouldDiff = true;
+        }
+        else if (isBranchCommit && revNum === 1) {
+            // get parent revision
+            previousRevision = this.revision.substring(0, this.revision.length - 4);
+            shouldDiff = true;
+        }
 
+        if (shouldDiff) {
             const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${previousRevision}`);
             const right = this.resourceUri;
     

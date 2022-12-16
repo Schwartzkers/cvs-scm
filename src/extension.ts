@@ -409,7 +409,7 @@ async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Pro
 				
 			if (sourceControl) {
 				// don't update if already displayed
-				if (fileHistoryTree.description !== basename(textEditor.document.uri.fsPath)) { 
+				if (fileHistoryTree.description !== basename(textEditor.document.uri.fsPath)) { // TODO what if same file name used
 					fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
 					fileHistory.refresh();
 				}
