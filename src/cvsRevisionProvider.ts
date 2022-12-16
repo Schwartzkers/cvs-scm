@@ -34,6 +34,9 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     async readCvsLog(resource: Uri): Promise<string> {
+        // TODO get status to get branch and repo version to feed into log
+        // then use branch name to get any commits
+        // then use repo version to get remainder of commits 
         const cvsCmd = `cvs log -N ${basename(resource.fsPath)}`;
         const result = await spawnCmd(cvsCmd, dirname(resource.fsPath));
         
