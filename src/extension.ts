@@ -398,6 +398,8 @@ function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: v
 }
 
 async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Promise<void> {
+	if (!fileHistoryTree.visible) { return;}
+
 	if (textEditor) {
 		if (textEditor.document.uri.scheme !== 'file') {
 			return;
