@@ -330,6 +330,22 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.compare-to-working', async (commitData: CommitData) => {
+		const sourceControl = findSourceControl(commitData.uri);
+		
+		if (sourceControl) {
+			sourceControl.compareRevToWorkingFile(commitData);
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.open-revision', async (commitData: CommitData) => {
+		const sourceControl = findSourceControl(commitData.uri);
+		
+		if (sourceControl) {
+			sourceControl.openRev(commitData);
+		}
+	}));
 }
 
 function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {

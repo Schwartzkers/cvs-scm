@@ -113,6 +113,7 @@ export class CommitData extends TreeItem {
         this.tooltip = this.commitMsg;
         this.description = this.author + ", " + this.date;
         this.iconPath = new ThemeIcon("git-commit");
+        this.contextValue = "revision";
 
         // 1.51 or 1.51.2.3
         const revIndex = this.revision.lastIndexOf('.') + 1;

@@ -172,6 +172,18 @@
 				"title": "Merge All Changes",
 				"icon": "$(cloud-download)",
 				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.compare-to-working",
+				"title": "Compare to Working File",
+				"icon": "$(compare-changes)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.open-revision",
+				"title": "Open File at Revision",
+				"icon": "$(go-to-file)",
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
@@ -345,6 +357,18 @@
 					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
 				}					
+			],
+			"view/item/context": [
+				{
+				  "command": "cvs-scm.compare-to-working",
+				  "when": "view == cvs-file-revisions && viewItem == revision",
+				  "group": "inline"
+				},
+				{
+					"command": "cvs-scm.open-revision",
+					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				}
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
 		 CancellationTokenSource, StatusBarItem, Uri, ExtensionContext, Command, Disposable,
-		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor, TreeView, TreeViewOptions, commands } from 'vscode';
+		 workspace, RelativePattern, window, StatusBarAlignment, TextEditor, TreeView, TextDocumentShowOptions, commands } from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { SourceFile, SourceFileState } from './sourceFile';
@@ -652,6 +652,21 @@ export class CvsSourceControl implements Disposable {
 		if (!success) {
 			window.showErrorMessage(`Failed to checkout folder: ${basename(uri.fsPath)}`);
 		}
+	}
+
+	async compareRevToWorkingFile(commitData: CommitData): Promise<void> {
+		await commands.executeCommand('vscode.diff',
+									  commitData.resourceUri, commitData.uri,
+									  `${basename(commitData.uri.fsPath)} (${commitData.revision}) <-> (working)`
+									  );
+	}
+
+	async openRev(commitData: CommitData): Promise<void> {
+		await commands.executeCommand('vscode.open',
+									  commitData.resourceUri,
+									   {},
+									  `${basename(commitData.uri.fsPath)} (${commitData.revision})`
+									  );
 	}
 
 	dispose() {
