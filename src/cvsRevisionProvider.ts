@@ -58,9 +58,11 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
 
         for (let rev = 1; rev < revs.length; rev++) {
             let commitLines = 0;
+            let revSet = false;
             for (const line of revs[rev].split(EOL)) {
-                if ( line.includes("revision") ) {
+                if ( line.includes("revision") && revSet === false) {
                     revision = line.split(/revision/)[1].trim();
+                    revSet = true;
                 } else if ( line.includes("date:") && line.includes("author:") ) {
                     let matcher = line.match(/author:\s(.*?);/);
                     if (matcher) { author = matcher[1]; }
