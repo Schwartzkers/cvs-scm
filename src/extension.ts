@@ -10,10 +10,10 @@ import { SourceFile } from './sourceFile';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
-export let fileHistory = new CvsRevisionProvider;
-export let fileHistoryTree: vscode.TreeView<CommitData>;
-export let cvsCompareProvider: CvsCompareContentProvider;
-export let revStatusBarItem: vscode.StatusBarItem;
+let fileHistory = new CvsRevisionProvider;
+let fileHistoryTree: vscode.TreeView<CommitData>;
+let cvsCompareProvider: CvsCompareContentProvider;
+let revStatusBarItem: vscode.StatusBarItem;
 
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
@@ -27,19 +27,20 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
 
 	configManager = new ConfigManager();
-	vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions);
-
-	fileHistory = new CvsRevisionProvider();
-	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
-	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(e => updateFileHistory(vscode.window.activeTextEditor), context.subscriptions));
-
-	cvsCompareProvider = new CvsCompareContentProvider();
-	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
-
 	revStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions));
 	context.subscriptions.push(revStatusBarItem);
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateStatusBarItem(textEditor), context.subscriptions));
+
+	if (configManager.getFileHistoryEnableFlag()) {
+		fileHistory = new CvsRevisionProvider();
+		fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
+		cvsCompareProvider = new CvsCompareContentProvider();
+
+		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
+		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
+		context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(e => updateFileHistory(vscode.window.activeTextEditor), context.subscriptions));
+	}
 
 	initializeWorkspaceFolders(context);
 
@@ -399,7 +400,7 @@ function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: v
 }
 
 async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Promise<void> {
-	if (!fileHistoryTree.visible) { return;}
+	if (!fileHistoryTree.visible) { return; }
 
 	if (textEditor) {
 		if (textEditor.document.uri.scheme !== 'file') {
@@ -409,8 +410,9 @@ async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Pro
 				
 			if (sourceControl) {
 				// don't update if already displayed
-				if (fileHistoryTree.description !== basename(textEditor.document.uri.fsPath)) { // TODO what if same file name used
-					fileHistoryTree.description = basename(textEditor.document.uri.fsPath);
+				const resource = vscode.workspace.asRelativePath(textEditor.document.uri, false); 
+				if (fileHistoryTree.description !== resource) {
+					fileHistoryTree.description = resource;
 					fileHistory.refresh();
 				}
 			}

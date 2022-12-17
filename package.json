@@ -47,6 +47,12 @@
 					"default": [],
 					"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
 					"scope": "window"
+				},
+				"fileHistory.enable": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable the `FILE HISTORY` view (requires restart).",
+					"scope": "window"
 				}
 			}
 		},

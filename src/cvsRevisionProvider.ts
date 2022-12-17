@@ -20,6 +20,8 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     getChildren(element?: CommitData): Thenable<CommitData[]> {
+        if (element) { Promise.resolve([]); } // there are no children with children
+
         let textEditor = window.activeTextEditor;
         if (textEditor) {
             return Promise.resolve(this.getDeps(textEditor.document.uri));
