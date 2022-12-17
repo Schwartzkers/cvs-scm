@@ -81,7 +81,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
             return;
         }
 
-        if (!status.output.includes("Status: Unknown")) {
+        if (!status.output.includes("Status: Unknown") && !status.output.includes("Status: Locally Added")) {
             const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
             await Promise.all(sourceFileStatusPromises);
         }
