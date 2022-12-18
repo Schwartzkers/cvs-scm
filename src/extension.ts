@@ -9,7 +9,7 @@ import { SourceFile } from './sourceFile';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
-let fileHistory: CvsRevisionProvider;
+export let fileHistory: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let revStatusBarItem: vscode.StatusBarItem;
@@ -153,7 +153,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add', async (...resourceStates: vscode.SourceControlResourceState[]) => {
-		// slect file to be added to repo on next commit
+		// select file to be added to repo on next commit
 		const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 	 	if (sourceControl) {
 			for (const resource of resourceStates) {

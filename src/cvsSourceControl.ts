@@ -9,7 +9,8 @@ import { execCmd, readDir, readFile, writeFile, deleteUri, createDir } from './u
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
-import { CommitData } from './cvsRevisionProvider'; 
+import { CommitData } from './cvsRevisionProvider';
+import { fileHistory } from './extension';
 
 export class CvsSourceControl implements Disposable {
 	private cvsScm: SourceControl;
@@ -406,7 +407,8 @@ export class CvsSourceControl implements Disposable {
 
 		if ( (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)).result) {
 			this.stagedFiles = [];
-			this.cvsScm.inputBox.value = '';			
+			this.cvsScm.inputBox.value = '';
+			fileHistory.refresh(); // in case commited file is displayed in tree view
 		} else {
 			window.showErrorMessage('Failed to commit changes');
 		};		
