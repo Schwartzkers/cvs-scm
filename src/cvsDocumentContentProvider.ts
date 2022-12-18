@@ -26,6 +26,10 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
 	async updated(resourceStates: SourceControlResourceState[]): Promise<void> {
+		// TODO fix bug where in-line diff not updated after commit
+		// need to get list of open editors and compare to previous
+		// sourceControlFiles. Update any that match.
+		
 		// clear cache of originals
 		this.sourceControlFiles.clear();
 

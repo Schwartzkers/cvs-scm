@@ -92,7 +92,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
 
     parseCvsLog(log: string, uri: Uri, isBranchCommit: boolean): CommitData[] {
         // remove last line "=======""
-        let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n[-]+\r?\n/);
+        let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n-{10,}\r?\nrevision\s/);
 
         let commits = [];
         let shortMsg = '';
@@ -105,8 +105,8 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
             let commitLines = 0;
             let revSet = false;
             for (const line of revs[rev].split(EOL)) {
-                if ( line.includes("revision") && revSet === false) {
-                    revision = line.split(/revision/)[1].trim();
+                if ( revSet === false) {
+                    revision = line.trim();
                     revSet = true;
                 } else if ( line.includes("date:") && line.includes("author:") ) {
                     let matcher = line.match(/author:\s(.*?);/);
