@@ -50,8 +50,8 @@
 				},
 				"fileHistory.enable": {
 					"type": "boolean",
-					"default": true,
-					"markdownDescription": "Enable the `FILE HISTORY` view (requires restart).",
+					"default": false,
+					"markdownDescription": "Enable or disable the CVS `FILE HISTORY` view (requires restart).",
 					"scope": "window"
 				}
 			}

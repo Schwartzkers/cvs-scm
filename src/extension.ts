@@ -5,12 +5,11 @@ import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { ConfigManager} from './configManager';
 import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
 import { CvsCompareContentProvider } from './cvsCompareContentProvider';
-import { basename, dirname } from 'path';
 import { SourceFile } from './sourceFile';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
-let fileHistory = new CvsRevisionProvider;
+let fileHistory: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let revStatusBarItem: vscode.StatusBarItem;
@@ -32,14 +31,17 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(revStatusBarItem);
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateStatusBarItem(textEditor), context.subscriptions));
 
+	fileHistory = new CvsRevisionProvider(configManager.getFileHistoryEnableFlag());
+	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
 	if (configManager.getFileHistoryEnableFlag()) {
-		fileHistory = new CvsRevisionProvider();
-		fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistory, canSelectMany: false} );
 		cvsCompareProvider = new CvsCompareContentProvider();
 
 		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
 		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
 		context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(e => updateFileHistory(vscode.window.activeTextEditor), context.subscriptions));
+	}
+	else {
+		fileHistoryTree.message = 'Enable view in CVS settings.';
 	}
 
 	initializeWorkspaceFolders(context);

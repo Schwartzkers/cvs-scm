@@ -8,8 +8,11 @@ import { SourceFile } from './sourceFile';
 export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     private _onDidChangeTreeData: EventEmitter<CommitData | undefined | null | void> = new EventEmitter<CommitData | undefined | null | void>();
     readonly onDidChangeTreeData: Event<CommitData | undefined | null | void> = this._onDidChangeTreeData.event;
+    private _enabled: boolean = false;
     
-    constructor() { }
+    constructor(enabled: boolean) { 
+        this._enabled = enabled;
+    }
 
     refresh(): any {
         this._onDidChangeTreeData.fire(undefined);
@@ -20,7 +23,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     getChildren(element?: CommitData): Thenable<CommitData[]> {
-        if (element) { Promise.resolve([]); } // there are no children with children
+        if (!this._enabled || element) { return Promise.resolve([]); } // there are no children with children
 
         let textEditor = window.activeTextEditor;
         if (textEditor) {

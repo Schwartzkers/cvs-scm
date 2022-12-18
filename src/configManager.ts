@@ -26,6 +26,7 @@ export class ConfigManager {
 			this.readIgnoreFolders();
 		} else if (event.affectsConfiguration("fileHistory.enable")) {
             this.readFileHistorySetting();
+            return;
         }
         await commands.executeCommand<Uri>("cvs-scm.refresh", undefined);
 	}
