@@ -4,9 +4,8 @@ import { execCmd } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 
-
-
 export const CVS_SCHEME = 'cvs-scm';
+export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
 
 export class CvsRepository implements QuickDiffProvider {
 	private _sourceFiles: SourceFile[];
@@ -74,7 +73,7 @@ export class CvsRepository implements QuickDiffProvider {
 		const status = await execCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
 		if (status.result && !status.output.includes("Status: Unknown")) {
-			const sourceFileStatusPromises = status.output.split(/\r?\n|\r|\n/g).map(async (line) => await this.parseCvsStatusOutput(line, sourceFile));
+			const sourceFileStatusPromises = status.output.split(/\r?\n|\r|\n/g).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
 			await Promise.all(sourceFileStatusPromises);
 	
 			// handle special case for locally deleted files
@@ -85,39 +84,39 @@ export class CvsRepository implements QuickDiffProvider {
 		}
 	}
 
-	async parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
-		// cvs status example outout
-		// ===================================================================
-		// File: Makefile          Status: Needs Patch
-
-		// Working revision:    1.1     2022-11-03 08:15:12 -0600
-		// Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
-		// Commit Identifier:   1006377FE10849CE253
-		// Sticky Tag:          (none)
-		// Sticky Date:         (none)
-		// Sticky Options:      (none)
-
-		if (output.includes('Status:')) {
-			const state = output.trim().split('Status: ')[1];
-			sourceFile.setState(state);
-		}
-		else if (output.includes('Working revision:')) {
-			sourceFile.workingRevision = output.trim().split(/\s+/)[2];
-		}
-		else if (output.includes('Repository revision:')) {
-			sourceFile.repoRevision = output.trim().split(/\s+/)[2];
-		}
-		else if (output.includes('Sticky Tag:')) {
-			let branch = output.trim().split(/\s+/)[2];
-			if (branch === '(none)') {
-				branch = 'main';
-			}
-			sourceFile.branch = branch;
-		}
-	}
-
 	getChangesSourceFiles(): SourceFile[] {
 		return this._sourceFiles;
 	}
 }
 
+
+export async function parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
+	// cvs status example outout
+	// ===================================================================
+	// File: Makefile          Status: Needs Patch
+
+	// Working revision:    1.1     2022-11-03 08:15:12 -0600
+	// Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
+	// Commit Identifier:   1006377FE10849CE253
+	// Sticky Tag:          (none)
+	// Sticky Date:         (none)
+	// Sticky Options:      (none)
+
+	if (output.includes('Status:')) {
+		const state = output.trim().split('Status: ')[1];
+		sourceFile.setState(state);
+	}
+	else if (output.includes('Working revision:')) {
+		sourceFile.workingRevision = output.trim().split(/\s+/)[2];
+	}
+	else if (output.includes('Repository revision:')) {
+		sourceFile.repoRevision = output.trim().split(/\s+/)[2];
+	}
+	else if (output.includes('Sticky Tag:')) {
+		let branch = output.trim().split(/\s+/)[2];
+		if (branch === '(none)') {
+			branch = 'main';
+		}
+		sourceFile.branch = branch;
+	}
+}
