@@ -1,13 +1,17 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.0]
+- Pe-release version.
+- Added the `FILE HISTORY` tree view to list the file revisions for the current branch.
+- Fix bug where diff editor was not updated after commiting a file included in diff editor.
 ## [v1.6.2]
-- Add user facing error msgs for failed cvs operations
+- Add user facing error msgs for failed cvs operations.
 ## [v1.6.1]
-- Add optimizations to parsing cvs update/status results
-- Improvements and optimizations to address Issue #5: `Runaway "cvs -Q update -C -p" operations`
+- Add optimizations to parsing cvs update/status results.
+- Improvements and optimizations to address Issue #5: `Runaway "cvs -Q update -C -p" operations`.
 ## [v1.6.0]
-- Add multi-selection capability, resources that do not support the command are ignored
+- Add multi-selection capability, resources that do not support the command are ignored.
 ## [v1.5.0]
 - Add new resource group `Repository Changes` to distinguish from actual merge conflicts in `Conflicts`.
 - Add command `merge-all` to `Repository Changes` resource group to merge all changes from the repository.

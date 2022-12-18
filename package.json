@@ -2,7 +2,7 @@
   "name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
-	"version": "1.6.2",
+	"version": "1.7.0",
 	"engines": {
 		"vscode": "^1.69.0"
 	},
@@ -51,7 +51,7 @@
 				"fileHistory.enable": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable or disable the CVS `FILE HISTORY` view (requires restart).",
+					"markdownDescription": "Enable or disable the CVS `FILE HISTORY` view (requires restart of VS Code).",
 					"scope": "window"
 				}
 			}
