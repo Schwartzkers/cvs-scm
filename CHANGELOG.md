@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.1]
+- Pe-release version.
+- Change delimiter for cvs log parsing.
 ## [v1.7.0]
 - Pe-release version.
 - Added the `FILE HISTORY` tree view to list the file revisions for the current branch.
