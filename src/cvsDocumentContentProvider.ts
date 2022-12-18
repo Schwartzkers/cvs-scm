@@ -1,6 +1,6 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
 		 Uri, EventEmitter, Disposable, SourceControlResourceState,
-		 window, TabInputTextDiff } from "vscode";
+		 window, TabInputTextDiff, workspace } from "vscode";
 import { CVS_SCHEME } from './cvsRepository';
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
@@ -53,6 +53,9 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 				if(resource.cvsUri.fsPath === diff.fsPath) {
 					this._onDidChange.fire(resource.cvsUri);
 					break;
+				} else {
+					// file may have just been commited, so not included in resourceStates
+					this._onDidChange.fire(diff);
 				}
 			}	
 		});

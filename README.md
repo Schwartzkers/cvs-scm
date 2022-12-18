@@ -1,21 +1,21 @@
 # CVS for Visual Studio Code
 
-The extension provides CVS (Concurrent Versions System) support to VS Code. CVS is an older Source Control Management (SCM) system. The extension integrates CVS into VS Code's SCM interface for a familar user experience such as git.
+The extension provides CVS (Concurrent Versions System) support to VS Code. CVS is an older Source Control Management (SCM) system. The extension integrates CVS into VS Code's SCM interface for a familiar user experience such as git.
 
 ## Pre-requisites
 CVS client software is [installed](https://www.nongnu.org/cvs/).
 
-**For remote CVS severs (pserver & ext) ensure the CVS client can login/connect successfully before using the extension. Future versions of the extension will attempt to detect and warn when the CVS server cannot be accessed.**
+**For remote CVS servers (pserver & ext) ensure the CVS client can login/connect successfully before using the extension. Future versions of the extension will attempt to detect and warn when the CVS server cannot be accessed.**
 
 ## Features
 
-The extenstioin will automatically activate when it detects source code managed by CVS. It provides the following features:
+The extension will automatically activate when it detects source code managed by CVS. It provides the following features:
 - Add new file or folder to the repository:
 - Remove file from repository:
 - Commit changes to the repository:
 - Merge changes from the repository into local copy
 - Discard local changes and revert to the repository revision.
-- View diffs between locally modifed file and repository revision.
+- View diffs between locally modified file and repository revision.
 - Display branch and revision number of file opened in active editor.
 
 ## Source Control States
@@ -24,7 +24,7 @@ The extenstioin will automatically activate when it detects source code managed 
 
 The following describes the possible states for a source control resource:
 
-- `M  (Staged Changes/Changes) Locally Modifed`
+- `M  (Staged Changes/Changes) Locally Modified`
 - `A  (Staged Changes/Changes) Locally Added`
 - `R  (Staged Changes/Changes) Locally Removed`
 - `D  (Changes) Locally Deleted`
@@ -38,7 +38,7 @@ The following describes the possible states for a source control resource:
 
 ### Staged Changes
 
-Changes to be included in a commit must be staged. However, unlike git, additonal changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
+Changes to be included in a commit must be staged. However, unlike git, additional changes made to a staged item will not display under `Changes`. Think of `Staged Changes` as a collection of changed source control items that are selected for the next commit.
 ### Repository Changes
 
  To check for remote changes use the `Refresh Repository` icon. Remote changes detected by the extension are displayed here.
@@ -61,10 +61,15 @@ Both the regular diff (when the user clicks on the changed resource in the sourc
 
 ![alt text](resources/images/quickDiff.png "CVS Quick diff")
 
-![alt text](resources/images/gutterDiff.png "CVS Gutter diff")
+<img src="resources/images/gutterDiff.png" alt="CVS Gutter diff" width="500"/>
+
 ## Extension Settings
 
-![alt text](resources/images/settings.png "CVS Settings")
+<img src="resources/images/settings.png" alt="CVS Settings" width="700"/>
+
+### File History
+
+The File History tree view is `defaulted to disabled` (off). The view is designed with the expectation that the CVS repository has managed all cvs revison numbers for trunk (1.1, 1.2, 1.3, ...) and branches (1.3.2.1, 1.3.2.2, ...). If the cvs revision numbers have been manualy manipulated (e.g. `cvs commit -r 3.0`) the view will have undefined behaviour. 
 ## Supported CVS Version
 
 The extension was developed using version 1.12.13-MirDebian-28 (client/server) of CVS. Older versions may not be compatible with the extension.

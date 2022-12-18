@@ -47,8 +47,22 @@
 					"default": [],
 					"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
 					"scope": "window"
+				},
+				"fileHistory.enable": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Enable or disable the CVS `FILE HISTORY` view (requires restart).",
+					"scope": "window"
 				}
 			}
+		},
+		"views": {
+			"scm": [
+			  {
+				"id": "cvs-file-revisions",
+				"name": "FILE HISTORY"
+			  }
+			]
 		},
 		"commands": [
 			{
@@ -163,6 +177,18 @@
 				"command": "cvs-scm.merge-all",
 				"title": "Merge All Changes",
 				"icon": "$(cloud-download)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.compare-to-working",
+				"title": "Compare to Working File",
+				"icon": "$(compare-changes)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.open-revision",
+				"title": "Open File at Revision",
+				"icon": "$(go-to-file)",
 				"category": "cvs-scm"
 			}
 		],
@@ -337,6 +363,18 @@
 					"group": "inline@3",
 					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
 				}					
+			],
+			"view/item/context": [
+				{
+				  "command": "cvs-scm.compare-to-working",
+				  "when": "view == cvs-file-revisions && viewItem == revision",
+				  "group": "inline"
+				},
+				{
+					"command": "cvs-scm.open-revision",
+					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				}
 			]
 		}
 	},
