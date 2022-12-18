@@ -53,8 +53,10 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                 const trunkLog = await this.readCvsLog(uri, sourceFile.repoRevision);
                 commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
             } else { // branch has commits, need to determine parent rev 
-                // e.g 1.3.2.2 -> 1.3
-                const rev = sourceFile.repoRevision.substring(0, sourceFile.repoRevision.length - 4);
+                // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3
+                // get location of second last '.'
+                const parentRevIndex = sourceFile.repoRevision.substring(0, sourceFile.repoRevision.lastIndexOf('.')).lastIndexOf('.');
+                const rev = sourceFile.repoRevision.substring(0, parentRevIndex);
                 const trunkLog = await this.readCvsLog(uri, rev);
                 commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
             }
