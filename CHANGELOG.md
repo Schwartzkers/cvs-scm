@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.2]
+- Pe-release version.
+- Handle branch numbers greater than 1 digit in cvs log (e.g. 1.3.20.2).
 ## [v1.7.1]
 - Pe-release version.
 - Change delimiter for cvs log parsing.
