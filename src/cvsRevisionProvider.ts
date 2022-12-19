@@ -41,36 +41,56 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         let commits: CommitData[];
         commits = [];
         if (sourceFile.branch === 'main' && sourceFile.repoRevision) {
-            const log = await this.readCvsLog(uri, sourceFile.repoRevision);
-            commits = this.parseCvsLog(log, uri, false);
-        } else if (sourceFile.repoRevision && sourceFile.branch) { // 
-            // 2. use branch name to get any commits on branch
-            const branchLog = await this.readCvsLog(uri, sourceFile.branch);
-            commits = this.parseCvsLog(branchLog, uri, true);
+            const log = await this.readRevisonLog(uri, sourceFile.repoRevision);
+            commits = this.parseCvsLog(log, uri);
+        } else if (sourceFile.repoRevision && sourceFile.branch) {
+            let revision = sourceFile.repoRevision;
+            // 2. use branch head revision to get any commits on branch
+            const branchLog = await this.readRevisonLog(uri, sourceFile.repoRevision);
+            commits = this.parseCvsLog(branchLog, uri);
 
-            if (commits.length === 0) {
-                // 3a. use repo version to get remainder of commits
-                const trunkLog = await this.readCvsLog(uri, sourceFile.repoRevision);
-                commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
-            } else { // branch has commits, need to determine parent rev 
-                // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3
+            // branch has commits, need to determine parent rev(s)
+            // after 10 loops exit and warn user to avoid infinte loop
+            let loops = 1;
+            while (true) { // handle nested branches
+                // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3 or 1.3.2.2.2.1 -> 1.3.2.2 -> 1.3
                 // get location of second last '.'
-                const parentRevIndex = sourceFile.repoRevision.substring(0, sourceFile.repoRevision.lastIndexOf('.')).lastIndexOf('.');
-                const rev = sourceFile.repoRevision.substring(0, parentRevIndex);
-                const trunkLog = await this.readCvsLog(uri, rev);
-                commits = commits.concat(this.parseCvsLog(trunkLog, uri, false));
+                const parentRevIndex = revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
+                revision = revision.substring(0, parentRevIndex);
+                const log = await this.readRevisonLog(uri, revision);
+                commits = commits.concat(this.parseCvsLog(log, uri));
+
+                if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (1.3)
+                    break;
+                }
+
+                if (loops === 10) {
+                    window.showErrorMessage("Error getting cvs log. Too many nested branches.");
+                    break;
+                }
+                loops += 1;
             }
         }
 
         return commits;
     }
 
-    async readCvsLog(resource: Uri, revision: string): Promise<string> {
+    async readBranchLog(resource: Uri, revision: string): Promise<string> {
+        // a colon (-r:) will get revisions from other branches based on same root revision
+        const cvsCmd = `cvs log -r${revision} ${basename(resource.fsPath)}`;
+        return await this.readLog(resource, cvsCmd);
+    }
+
+    async readRevisonLog(resource: Uri, revision: string): Promise<string> {
         const cvsCmd = `cvs log -r:${revision} ${basename(resource.fsPath)}`;
-        const result = await spawnCmd(cvsCmd, dirname(resource.fsPath));
+        return await this.readLog(resource, cvsCmd);
+    }
+
+    async readLog(uri: Uri, cvsCmd: string): Promise<string> {
+        const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
         
         if (!result.result || result.output.length === 0) {
-            window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(resource.fsPath)}`);
+            window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);
             return "";
         }
 
@@ -92,7 +112,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         }
     }
 
-    parseCvsLog(log: string, uri: Uri, isBranchCommit: boolean): CommitData[] {
+    parseCvsLog(log: string, uri: Uri): CommitData[] {
         // remove last line "=======""
         let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n-{10,}\r?\nrevision\s/);
 
@@ -128,7 +148,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                     commitMsg += line  + EOL;
                 }
             }
-            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date, isBranchCommit));
+            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date));
             shortMsg = '';
             commitMsg = '';
         }
@@ -144,7 +164,6 @@ export class CommitData extends TreeItem {
         public readonly revision: string,
         private author: string,
         private date: string,
-        private isBranchCommit: boolean
     ) {
         super(revision + "  " + shortMsg.slice(0, 50), TreeItemCollapsibleState.None);
         this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${this.revision}`);
@@ -164,10 +183,13 @@ export class CommitData extends TreeItem {
             previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
             shouldDiff = true;
         }
-        else if (isBranchCommit && revNum === 1) {
-            // get parent revision
-            previousRevision = this.revision.substring(0, this.revision.length - 4);
-            shouldDiff = true;
+        else if (revNum === 1) {
+            if (revision.search(/^(\d+\.\d+){1}$/) === -1) { // check if at root revision (1.3)
+                // get parent revision
+                const parentRevIndex = this.revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
+                previousRevision = this.revision.substring(0, parentRevIndex);
+                shouldDiff = true;
+            }
         }
 
         if (shouldDiff) {
