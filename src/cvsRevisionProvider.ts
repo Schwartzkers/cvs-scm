@@ -34,35 +34,28 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     async getDeps(uri: Uri): Promise<CommitData[]> {
-        // 1. get status of file to find branch and repo version
+        // get status of file to repo version
         const sourceFile = new SourceFile(uri);
         await this.getStatusOfFile(sourceFile);
 
         let commits: CommitData[];
         commits = [];
-        if (sourceFile.branch === 'main' && sourceFile.repoRevision) {
-            const log = await this.readRevisonLog(uri, sourceFile.repoRevision);
-            commits = this.parseCvsLog(log, uri);
-        } else if (sourceFile.repoRevision && sourceFile.branch) {
+        if (sourceFile.repoRevision) {
             let revision = sourceFile.repoRevision;
-            // 2. use branch head revision to get any commits on branch
-            const branchLog = await this.readRevisonLog(uri, sourceFile.repoRevision);
-            commits = this.parseCvsLog(branchLog, uri);
+            let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
+            while (true) { // must handle nested branches
+                const log = await this.readCvsLog(uri, revision);
+                commits = commits.concat(this.parseCvsLog(log, uri));
 
-            // branch has commits, need to determine parent rev(s)
-            // after 10 loops exit and warn user to avoid infinte loop
-            let loops = 1;
-            while (true) { // handle nested branches
+                if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (e.g. 1.3)
+                    break;
+                }
+
+                // this file has branch commits, need to determine parent revision
                 // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3 or 1.3.2.2.2.1 -> 1.3.2.2 -> 1.3
                 // get location of second last '.'
                 const parentRevIndex = revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
                 revision = revision.substring(0, parentRevIndex);
-                const log = await this.readRevisonLog(uri, revision);
-                commits = commits.concat(this.parseCvsLog(log, uri));
-
-                if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (1.3)
-                    break;
-                }
 
                 if (loops === 10) {
                     window.showErrorMessage("Error getting cvs log. Too many nested branches.");
@@ -75,18 +68,8 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         return commits;
     }
 
-    async readBranchLog(resource: Uri, revision: string): Promise<string> {
-        // a colon (-r:) will get revisions from other branches based on same root revision
-        const cvsCmd = `cvs log -r${revision} ${basename(resource.fsPath)}`;
-        return await this.readLog(resource, cvsCmd);
-    }
-
-    async readRevisonLog(resource: Uri, revision: string): Promise<string> {
-        const cvsCmd = `cvs log -r:${revision} ${basename(resource.fsPath)}`;
-        return await this.readLog(resource, cvsCmd);
-    }
-
-    async readLog(uri: Uri, cvsCmd: string): Promise<string> {
+    async readCvsLog(uri: Uri, revision: string): Promise<string> {
+        const cvsCmd = `cvs log -r:${revision} ${basename(uri.fsPath)}`;
         const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
         
         if (!result.result || result.output.length === 0) {
