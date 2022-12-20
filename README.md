@@ -7,6 +7,8 @@ CVS client software is [installed](https://www.nongnu.org/cvs/).
 
 **For remote CVS servers (pserver & ext) ensure the CVS client can login/connect successfully before using the extension. Future versions of the extension will attempt to detect and warn when the CVS server cannot be accessed.**
 
+**The root of workspace folders must contain a `CVS` folder. The extension will ignore workspace folders (including sub-folders) that do not contain a `CVS` folder directly under the root of an added/imported workspace folder.**
+
 ## Features
 
 The extension will automatically activate when it detects source code managed by CVS. It provides the following features:
