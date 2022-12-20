@@ -13,6 +13,8 @@ export let fileHistory: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let revStatusBarItem: vscode.StatusBarItem;
+let fileHistoryTimeout: NodeJS.Timer;
+let revStatusBarTimeout: NodeJS.Timer;
 
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
@@ -37,8 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
 		cvsCompareProvider = new CvsCompareContentProvider();
 
 		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
-		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateFileHistory(textEditor), context.subscriptions));
-		context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(e => updateFileHistory(vscode.window.activeTextEditor), context.subscriptions));
+		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateFileHistory(), context.subscriptions));
+		context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => updateFileHistory(), context.subscriptions));
 	}
 	else {
 		fileHistoryTree.message = 'Enable view in CVS settings.';
@@ -401,25 +403,46 @@ function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: v
 	context.subscriptions.push(cvsSourceControl);
 }
 
-async function updateFileHistory(textEditor: vscode.TextEditor | undefined): Promise<void> {
-	if (!fileHistoryTree.visible) { return; }
+function requestToUpdateFileHistory() {
+	if (!fileHistoryTree.visible) {
+		fileHistoryTree.description = '';
+		return;
+	}
 
-	if (textEditor) {
-		if (textEditor.document.uri.scheme !== 'file') {
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		if (editor.document.uri.scheme !== 'file') {
 			return;
 		} else {
-			const sourceControl = findSourceControl(textEditor.document.uri);
+			const sourceControl = findSourceControl(editor.document.uri);
 				
 			if (sourceControl) {
-				// don't update if already displayed
-				const resource = vscode.workspace.asRelativePath(textEditor.document.uri, false); 
+				// don't update again if already displayed
+				const resource = vscode.workspace.asRelativePath(editor.document.uri, false); 
 				if (fileHistoryTree.description !== resource) {
+					fileHistoryTree.message = '';
 					fileHistoryTree.description = resource;
 					fileHistory.refresh();
 				}
+			} else {
+				fileHistory.refresh();
+				fileHistoryTree.description = '';
+				fileHistoryTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide file history information.';
 			}
 		}
+	} else {
+		fileHistory.refresh();
+		fileHistoryTree.description = '';
+		fileHistoryTree.message = 'There are no editors open that can provide file history information.';
 	}
+}
+
+async function updateFileHistory(): Promise<void> {
+	if (fileHistoryTimeout) {
+		clearTimeout(fileHistoryTimeout);
+	}
+
+	fileHistoryTimeout = setTimeout(() => requestToUpdateFileHistory(), 250);
 }
 
 async function updateStatusBarItem(textEditor: vscode.TextEditor | undefined): Promise<void> {
@@ -446,6 +469,16 @@ async function updateStatusBarItem(textEditor: vscode.TextEditor | undefined): P
 				revStatusBarItem.hide();
 			}
 		}
+	} else {
+		if (revStatusBarTimeout) {
+			clearTimeout(revStatusBarTimeout);
+		}
+
+		revStatusBarTimeout = setTimeout(() => {
+			if (vscode.window.activeTextEditor === undefined) {
+				revStatusBarItem.hide();
+			}
+		}, 500);
 	}
 }
 

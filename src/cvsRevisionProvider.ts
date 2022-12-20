@@ -1,4 +1,4 @@
-import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command } from 'vscode';
+import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command, workspace } from 'vscode';
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
@@ -25,9 +25,14 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     getChildren(element?: CommitData): Thenable<CommitData[]> {
         if (!this._enabled || element) { return Promise.resolve([]); } // there are no children with children
 
-        let textEditor = window.activeTextEditor;
+        const textEditor = window.activeTextEditor;
+
         if (textEditor) {
-            return Promise.resolve(this.getDeps(textEditor.document.uri));
+            if (workspace.getWorkspaceFolder(textEditor.document.uri)) {
+                return Promise.resolve(this.getDeps(textEditor.document.uri));
+            } else {
+                return Promise.resolve([]);
+            }
         }
 
         return Promise.reject();
