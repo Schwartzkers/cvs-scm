@@ -1,4 +1,4 @@
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult } from "vscode";
+import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
 import { execCmd } from './utility';
 import { ConfigManager} from './configManager';
@@ -18,7 +18,12 @@ export class CvsRepository implements QuickDiffProvider {
 
 	provideOriginalResource?(uri: Uri, token: CancellationToken): ProviderResult<Uri> {
 		if (token.isCancellationRequested) { return undefined; }
-		return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
+
+		if (workspace.getWorkspaceFolder(uri)) {
+			return Uri.parse(`${CVS_SCHEME}:${uri.fsPath}`);
+		}
+
+		return undefined;
 	}
 
 	async getResources(): Promise<void> {
