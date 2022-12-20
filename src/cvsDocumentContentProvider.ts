@@ -36,17 +36,13 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 		});
 
 		// get open editors, refresh in-line diff
+		// get opened diff editors, refresh original content
 		for (const tabGroup of window.tabGroups.all) {
 			for (const tab of tabGroup.tabs) {
 				if (tab.input instanceof TabInputText) {
 					this._onDidChange.fire(Uri.parse(`${CVS_SCHEME}:${tab.input.uri.fsPath}`));
 				}
-			}
-		}
 
-		// get opened diff editors, refresh original content
-		for (const tabGroup of window.tabGroups.all) {
-			for (const tab of tabGroup.tabs) {
 				if (tab.input instanceof TabInputTextDiff) {
 					this._onDidChange.fire(tab.input.original); // contains CVS_SCHEME
 				}
