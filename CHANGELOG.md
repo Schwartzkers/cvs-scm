@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.4]
+- Pe-release version.
+- Fix issue where editor gutter diffs not updated after a commit.
+- Add debounce for `FILE HISTORY` events for a better UI experience.
 ## [v1.7.3]
 - Pe-release version.
 - Handle nested branches (branch of branch) in `FILE HISTORY` view.
