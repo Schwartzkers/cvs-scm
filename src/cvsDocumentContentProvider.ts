@@ -1,6 +1,6 @@
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
 		 Uri, EventEmitter, Disposable, SourceControlResourceState,
-		 window, TabInputTextDiff, workspace } from "vscode";
+		 window, TabInputTextDiff, workspace, TabInputText } from "vscode";
 import { CVS_SCHEME } from './cvsRepository';
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
@@ -26,23 +26,8 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 	}
 
 	async updated(resourceStates: SourceControlResourceState[]): Promise<void> {
-		// TODO fix bug where in-line diff not updated after commit
-		// need to get list of open editors and compare to previous
-		// sourceControlFiles. Update any that match.
-		
 		// clear cache of originals
 		this.sourceControlFiles.clear();
-
-		// get all diff editors currently opened, some may need to be updated
-		let openDiffs: Uri[];
-		openDiffs = [];
-		for (const tabGroup of window.tabGroups.all) {
-			for (const tab of tabGroup.tabs) {
-				if (tab.input instanceof TabInputTextDiff) {
-					openDiffs.push(tab.input.original);
-				}
-			}
-		}
 
 		resourceStates.forEach(resource => {
 			let cvsFIle = new CvsFile(resource.resourceUri);
@@ -50,19 +35,23 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 			this.sourceControlFiles.set(cvsUri.fsPath, cvsFIle);
 		});
 
-		// update open diff editors of any changes to repository version
-		this.sourceControlFiles.forEach(resource => {
-			for (const diff of openDiffs)
-			{
-				if(resource.cvsUri.fsPath === diff.fsPath) {
-					this._onDidChange.fire(resource.cvsUri);
-					break;
-				} else {
-					// file may have just been commited, so not included in resourceStates
-					this._onDidChange.fire(diff);
+		// get open editors, refresh in-line diff
+		for (const tabGroup of window.tabGroups.all) {
+			for (const tab of tabGroup.tabs) {
+				if (tab.input instanceof TabInputText) {
+					this._onDidChange.fire(Uri.parse(`${CVS_SCHEME}:${tab.input.uri.fsPath}`));
 				}
-			}	
-		});
+			}
+		}
+
+		// get opened diff editors, refresh original content
+		for (const tabGroup of window.tabGroups.all) {
+			for (const tab of tabGroup.tabs) {
+				if (tab.input instanceof TabInputTextDiff) {
+					this._onDidChange.fire(tab.input.original); // contains CVS_SCHEME
+				}
+			}
+		}
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
