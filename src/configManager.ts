@@ -6,10 +6,12 @@ const GLOB_IGNORE_CVS_VERSION_FILES = '**/.#*';
 export class ConfigManager {
 	private _ignoreFolders: string[];
     private _enableFileHistory: boolean;
+    private _enableBranches: boolean;
 
     constructor() {
 		this._ignoreFolders = [];
         this._enableFileHistory = false;
+        this._enableBranches = false;
 
 		this.loadConfiguration();
 
@@ -19,6 +21,7 @@ export class ConfigManager {
 	loadConfiguration(): void {
         this.readIgnoreFolders();
         this.readFileHistorySetting();
+        this.readBranchesSetting();
 	}
 
     async configurationChange(event: ConfigurationChangeEvent): Promise<void> {
@@ -27,7 +30,10 @@ export class ConfigManager {
 		} else if (event.affectsConfiguration("fileHistory.enable")) {
             this.readFileHistorySetting();
             return;
-        }
+        } else if (event.affectsConfiguration("branches.enable")) {
+            this.readBranchesSetting();
+        return;
+    }
         await commands.executeCommand<Uri>("cvs-scm.refresh", undefined);
 	}
 
@@ -37,6 +43,10 @@ export class ConfigManager {
 
     getFileHistoryEnableFlag(): boolean {
         return this._enableFileHistory;
+    }
+
+    getBranchesEnableFlag(): boolean {
+        return this._enableBranches;
     }
 
     async updateIgnoreFolders(folderRelativePath: string): Promise<void> {
@@ -49,6 +59,13 @@ export class ConfigManager {
         let config = workspace.getConfiguration("update").get("ignoreFolders");
 		if (config !== undefined) {
 			this._ignoreFolders = config as Array<string>;
+		}
+    }
+
+    private readBranchesSetting(): void {
+        let config = workspace.getConfiguration("branches").get("enable");
+		if (config !== undefined) {
+			this._enableBranches = config as boolean;
 		}
     }
 

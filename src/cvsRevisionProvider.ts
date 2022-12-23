@@ -9,6 +9,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     private _onDidChangeTreeData: EventEmitter<CommitData | undefined | null | void> = new EventEmitter<CommitData | undefined | null | void>();
     readonly onDidChangeTreeData: Event<CommitData | undefined | null | void> = this._onDidChangeTreeData.event;
     private _enabled: boolean = false;
+    private _startup: boolean = true;
     
     constructor(enabled: boolean) { 
         this._enabled = enabled;
@@ -23,7 +24,10 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     getChildren(element?: CommitData): Thenable<CommitData[]> {
-        if (!this._enabled || element) { return Promise.resolve([]); } // there are no children with children
+        if (!this._enabled || element || this._startup) {  // there are no children with children in this tree
+            this._startup = false; // ignore on startup because it will be refreshed by seperate event on boot
+            return Promise.resolve([]);
+        }
 
         const textEditor = window.activeTextEditor;
 
@@ -74,7 +78,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     async readCvsLog(uri: Uri, revision: string): Promise<string> {
-        const cvsCmd = `cvs log -r:${revision} ${basename(uri.fsPath)}`;
+        const cvsCmd = `cvs log -N -r:${revision} ${basename(uri.fsPath)}`;
         const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
         
         if (!result.result || result.output.length === 0) {
