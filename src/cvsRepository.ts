@@ -1,6 +1,6 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
-import { execCmd } from './utility';
+import { execCmd, spawnCmd } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 
@@ -40,11 +40,11 @@ export class CvsRepository implements QuickDiffProvider {
 				
 		const cvsResourceState = output.trim().substring(0, output.indexOf(' '));
 
-		if (cvsResourceState.length === 1) {				
+		if (cvsResourceState.length === 1) {
 			const cvsResourceRelPath = output.substring(output.indexOf(' ')+1, output.length);
 			const sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, cvsResourceRelPath));
 			if ( cvsResourceState !== '?') {
-					await this.getStatusOfFile(sourceFile);
+					await this.status(sourceFile);
 			} else {
 				sourceFile.setState("Unknown");
 				// check if resource is a file or a folder?
@@ -59,7 +59,7 @@ export class CvsRepository implements QuickDiffProvider {
 			// example output = cvs update: `tree/trunk1.cpp' is no longer in the repository
 			const cvsResourceRelPath = output.substring(output.indexOf('`')+1, output.indexOf('\''));
 			let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, cvsResourceRelPath));
-			await this.getStatusOfFile(sourceFile);
+			await this.status(sourceFile);
 			this._sourceFiles.push(sourceFile);
 		} else if (output.includes(`cvs update: New directory`)) {
 			// example output = "cvs update: New directory `NewFolder2' -- ignored"
@@ -73,7 +73,7 @@ export class CvsRepository implements QuickDiffProvider {
 		}
 	}
 
-	async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
+	async status(sourceFile: SourceFile): Promise<void> {
 		const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
 		const status = await execCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
@@ -86,6 +86,56 @@ export class CvsRepository implements QuickDiffProvider {
 				sourceFile.workingRevision !== 'No') {
 				sourceFile.setState("Locally Deleted");
 			}
+		}
+	}
+
+	async commit(message: string, changes: Uri[]): Promise<boolean> {
+		// need sting of chnaged files relative to the workspace root
+		let files= '';
+		changes.forEach(uri => {
+			files = files.concat(workspace.asRelativePath(uri, false) + ' ');
+		});
+
+		return (await spawnCmd(`cvs commit -m "${message}" ${files}`, this.workspaceUri.fsPath)).result;
+	}
+
+	async add(uri: Uri): Promise<boolean> {
+		return (await spawnCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+	}
+
+	async remove(uri: Uri): Promise<boolean> {
+		return (await spawnCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+	}
+
+	async update(uri: Uri): Promise<boolean> {
+		return (await spawnCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+	}
+
+	async updateToRevision(uri: Uri | undefined, revision: string): Promise<boolean> {
+		if (uri) {
+			return (await spawnCmd(`cvs update -r ${revision} ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+		} else {
+			return (await spawnCmd(`cvs update -r ${revision}`, this.workspaceUri.fsPath)).result;
+		}
+	}
+
+	async revert(uri: Uri | undefined): Promise<boolean> {
+		if (uri) {
+			return (await spawnCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+		} else {
+			return (await spawnCmd(`cvs update -C`, this.workspaceUri.fsPath)).result;
+		}
+	}
+
+	async updateBuildDirs(uri: Uri): Promise<boolean> {
+		return (await spawnCmd(`cvs update -d ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+	}
+
+	async removeSticky(uri: Uri | undefined): Promise<boolean> {
+		if (uri) {
+			return (await spawnCmd(`cvs update -A ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+		} else {
+			return (await spawnCmd(`cvs update -A`, this.workspaceUri.fsPath)).result;
 		}
 	}
 

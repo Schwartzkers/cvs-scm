@@ -408,18 +408,17 @@ export class CvsSourceControl implements Disposable {
 			return;
 		}
 
-		// need list of files relative to root 
-		let files = '';
-		this.stagedResources.resourceStates.forEach(element => {			
-			files = files.concat(workspace.asRelativePath(element.resourceUri, false) + ' ');
+		let changes: Uri[] = [];
+		this.stagedResources.resourceStates.forEach(element => {
+			changes.push(element.resourceUri);
 		});
 
-		if ( (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)).result) {
+		if ( await this.cvsRepository.commit(this.cvsScm.inputBox.value, changes)) {
 			this.stagedFiles = [];
 			this.cvsScm.inputBox.value = '';
 		} else {
-			window.showErrorMessage('Failed to commit changes');
-		};		
+			window.showErrorMessage('Failed to commit changes to repository.');
+		};
 	}
 
 	async stageFile(uri: Uri, refresh: boolean=true): Promise<void> {
@@ -430,7 +429,7 @@ export class CvsSourceControl implements Disposable {
 
 		if (refresh) {
 			this.refreshScm();
-		}		
+		}
 	}
 
 	async unstageFile(uri: Uri, refresh: boolean=true): Promise<void> {
@@ -456,7 +455,7 @@ export class CvsSourceControl implements Disposable {
 		for (const resource of this.changedResources.resourceStates) {
 			// automatically "cvs remove" any deleted files
 			if (resource.contextValue === 'deleted') {
-				await this.removeFileFromCvs(resource.resourceUri);
+				await this.removeResource(resource.resourceUri);
 			}
 			this.stageFile(resource.resourceUri, false);
 		};
@@ -482,28 +481,22 @@ export class CvsSourceControl implements Disposable {
 		}
 	}
 
-	async addFile(uri: Uri): Promise<void>  {
-		const response = await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath));
-
-		if(!response.result) {
+	async addResource(uri: Uri): Promise<void>  {
+		if ( ! await this.cvsRepository.add(uri)) {
 			window.showErrorMessage(`Failed to schedule file for addition: ${basename(uri.fsPath)}`);
 		}
 	}
 
-	async removeFileFromCvs(uri: Uri): Promise<void>  {
-		const response = await execCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath));
-
-		if(!response.result) {
+	async removeResource(uri: Uri): Promise<void>  {
+		if (! await this.cvsRepository.remove(uri)) {
 			window.showErrorMessage(`Failed to schedule file for removal: ${basename(uri.fsPath)}`);
 		}
 	}
 
-	async recoverDeletedFile(uri: Uri): Promise<void>  {
+	async recoverResource(uri: Uri): Promise<void>  {
 		this.unstageFile(uri, false); // in case staged
 
-		const response = await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
-
-		if(!response.result) {
+		if (! await this.cvsRepository.update(uri)) {
 			window.showErrorMessage(`Failed to recover deleted file: ${basename(uri.fsPath)}`);
 		}
 	}
@@ -511,9 +504,7 @@ export class CvsSourceControl implements Disposable {
 	async revertFile(uri: Uri): Promise<void> {
 		this.unstageFile(uri, false); // in case staged
 
-		const response = await execCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath));
-
-		if(!response.result) {
+		if(! await this.cvsRepository.revert(uri)) {
 			window.showErrorMessage(`Failed to revert file to HEAD: ${basename(uri.fsPath)}`);
 		}
 	}
@@ -526,7 +517,7 @@ export class CvsSourceControl implements Disposable {
 		// no errors with patching
 		// no errors on checkout new file
 		// stderr on removal "cvs update: `nov17.cpp' is no longer in the repository"
-		await execCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath));
+		await this.cvsRepository.update(uri);
 	}
 
 	// can only do this if file was untracked by repository
@@ -567,7 +558,7 @@ export class CvsSourceControl implements Disposable {
 				success = false; // reset for next block of logic
 
 				if (await writeFile(dirname(uri.fsPath) + '/CVS/Entries.out', newEntries) &&
-					await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries', dirname(uri.fsPath) + '/CVS/Entries.bak') === undefined) {						
+					await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries', dirname(uri.fsPath) + '/CVS/Entries.bak') === undefined) {
 					if (await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries.out', dirname(uri.fsPath) + '/CVS/Entries') === undefined) {
 						await fsPromises.unlink(dirname(uri.fsPath) + '/CVS/Entries.bak');
 						success = true;
@@ -575,7 +566,7 @@ export class CvsSourceControl implements Disposable {
 					else {
 						// attempt to revert to old Entries
 						await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries.bak', dirname(uri.fsPath) + '/CVS/Entries');
-					}						
+					}
 				}
 			}
 		}
@@ -586,7 +577,7 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async deleteResource(uri: Uri): Promise<void>  {
-		if(!(await deleteUri(uri))) {
+		if (!(await deleteUri(uri))) {
 			window.showErrorMessage(`Failed to delete: ${basename(uri.fsPath)}`);
 		}
 	}
@@ -596,17 +587,14 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async checkoutFolder(uri: Uri, isRecursive: boolean=true): Promise<void>  {
-		const fs = require('fs/promises');
-
 		let success = false;
-			
 		if ((await createDir(uri)) &&  // 1. make folder
-		    (await execCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result) { // 2. cvs add folder
+		    (await this.cvsRepository.add(uri))) { // 2. cvs add folder
 				// 3. cvs update folder
 				if (isRecursive){
-					success = (await execCmd(`cvs update -d `, uri.fsPath)).result;
+					success = await this.cvsRepository.updateBuildDirs(uri);
 				} else {
-					success = (await execCmd(`cvs update `, uri.fsPath)).result;
+					success = await this.cvsRepository.update(uri);
 				}
 		}
 		
@@ -631,41 +619,39 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async switchFileToBranch(branchData: BranchData): Promise<void> {
-		let response = await spawnCmd(`cvs update -C ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+		let result = await this.cvsRepository.revert(branchData.uri);
 
-		if (response.result) {
+		if (result) {
 			if (branchData.branchName === 'main') {
-				response = await execCmd(`cvs update -A ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+				result = await this.cvsRepository.removeSticky(branchData.uri);
 			} else {
-				response = await execCmd(`cvs update -r ${branchData.branchName} ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+				result = await this.cvsRepository.updateToRevision(branchData.uri, branchData.branchName);
 			}
-	
 		}
 
-		if(!response.result) {
+		if(!result) {
 			window.showErrorMessage(`Failed to switch file: ${basename(branchData.uri.fsPath)} to branch: ${branchData.branchName}`);
 		}
 	}
 
 	async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
-		let response = await execCmd(`cvs update -C`, this.workspacefolder.fsPath);
+		let result = await this.cvsRepository.revert(undefined);
 
-		if (response.result) {
+		if (result) {
 			if (branchData.branchName === 'main') {
-				response = await execCmd(`cvs update -A`, this.workspacefolder.fsPath);
-	
+				result = await this.cvsRepository.removeSticky(undefined);
 			} else {
-				response = await execCmd(`cvs update -r ${branchData.branchName}`, this.workspacefolder.fsPath);
+				result = await this.cvsRepository.updateToRevision(undefined, branchData.branchName);
 			}
 		}
 
-		if(!response.result) {
+		if(!result) {
 			window.showErrorMessage(`Failed to switch workspace to branch: ${branchData.branchName}`);
 		}
 	}
 
 	async getCvsStatus(sourceFile: SourceFile): Promise<void> {
-		await this.cvsRepository.getStatusOfFile(sourceFile);
+		await this.cvsRepository.status(sourceFile);
 	}
 
 	dispose() {

@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 					// automatically "cvs remove" any deleted files if staged
 					if (resource.contextValue === 'deleted') {
-						await sourceControl.removeFileFromCvs(resource.resourceUri);
+						await sourceControl.removeResource(resource.resourceUri);
 					}
 					sourceControl.stageFile(resource.resourceUri);
 				}
@@ -148,10 +148,10 @@ export function activate(context: vscode.ExtensionContext) {
 					} else if (resource.contextValue === "added") {
 						await sourceControl.undoAdd(resource.resourceUri);
 					} else if (resource.contextValue === "deleted") {
-						await sourceControl.recoverDeletedFile(resource.resourceUri);
+						await sourceControl.recoverResource(resource.resourceUri);
 					} else if (resource.contextValue === "removed") {
-						await sourceControl.addFile(resource.resourceUri);
-						await sourceControl.recoverDeletedFile(resource.resourceUri);
+						await sourceControl.addResource(resource.resourceUri);
+						await sourceControl.recoverResource(resource.resourceUri);
 					}
 				}
 			}
@@ -179,7 +179,7 @@ export function activate(context: vscode.ExtensionContext) {
 			for (const resource of resourceStates) {
 				// can only add untracked files
 				if (resource.contextValue === "untracked_file") {
-					await sourceControl.addFile(resource.resourceUri);
+					await sourceControl.addResource(resource.resourceUri);
 				}	
 			}
 		}
@@ -193,7 +193,7 @@ export function activate(context: vscode.ExtensionContext) {
 				for (const resource of resourceStates) {
 					// can only add-folder for untracked folders 
 					if (resource.contextValue === "untracked_folder") {
-						await sourceControl.addFile(resource.resourceUri);
+						await sourceControl.addResource(resource.resourceUri);
 					}
 				}
 			}
@@ -224,7 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
 				for (const resource of resourceStates) {
 					// can only remove deleted files
 					if (resource.contextValue === "deleted") {
-						await sourceControl.removeFileFromCvs(resource.resourceUri);
+						await sourceControl.removeResource(resource.resourceUri);
 					}
 				}
 			}
@@ -333,9 +333,9 @@ export function activate(context: vscode.ExtensionContext) {
 						} else if (resource.contextValue === 'added') {
 							sourceControl.undoAdd(resource.resourceUri);
 						} else if (resource.contextValue === 'removed') {
-							sourceControl.addFile(resource.resourceUri);
+							sourceControl.addResource(resource.resourceUri);
 						} else if (resource.contextValue === 'deleted') {
-							sourceControl.recoverDeletedFile(resource.resourceUri);
+							sourceControl.recoverResource(resource.resourceUri);
 						}
 					}
 				}
