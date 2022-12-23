@@ -5,12 +5,13 @@ import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import { SourceFileState, SourceFile } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { execCmd, readDir, readFile, writeFile, deleteUri, createDir } from './utility';
+import { execCmd, readDir, readFile, writeFile, deleteUri, createDir, spawnCmd } from './utility';
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
-import { fileHistory } from './extension';
+import { BranchData } from './cvsBranchProvider';
+import { updateStatusBarItem, updateFileHistoryTree, updateBranchesTree } from './extension';
 
 export class CvsSourceControl implements Disposable {
 	private cvsScm: SourceControl;
@@ -25,6 +26,7 @@ export class CvsSourceControl implements Disposable {
 	private timeout?: NodeJS.Timer;
 	private stagedFiles: string[];
 	private configManager: ConfigManager;
+	private _startup: boolean = true;
 
 
 	constructor(context: ExtensionContext,
@@ -66,8 +68,7 @@ export class CvsSourceControl implements Disposable {
 		return this.workspacefolder;
 	}
 
-	getCvsState(): void 
-	{
+	getCvsState(): void {
 		this.onResourceChange(this.workspacefolder);
 	}
 
@@ -386,7 +387,15 @@ export class CvsSourceControl implements Disposable {
 		this.conflictResources.resourceStates = conflictResources;
 		this.unknownResources.resourceStates = unknownResources;
 
-		this.cvsDocumentContentProvider.updated(changedResources.concat(conflictResources, stagedResources, repositoryResources));
+		if (this._startup) {
+			this._startup = false; // there's nothing to update on startup
+		} else {
+			this.cvsDocumentContentProvider.updated(changedResources.concat(conflictResources, stagedResources, repositoryResources));
+		}
+
+		updateFileHistoryTree();
+		updateBranchesTree();
+		updateStatusBarItem(window.activeTextEditor);
 	}
 
 	async commitAll(): Promise<void> {
@@ -408,7 +417,6 @@ export class CvsSourceControl implements Disposable {
 		if ( (await execCmd(`cvs commit -m "${this.cvsScm.inputBox.value}" ${files}`, this.workspacefolder.fsPath)).result) {
 			this.stagedFiles = [];
 			this.cvsScm.inputBox.value = '';
-			fileHistory.refresh(); // in case commited file is displayed in tree view
 		} else {
 			window.showErrorMessage('Failed to commit changes');
 		};		
@@ -620,6 +628,40 @@ export class CvsSourceControl implements Disposable {
 									   {},
 									  `${basename(commitData.uri.fsPath)} (${commitData.revision})`
 									  );
+	}
+
+	async switchFileToBranch(branchData: BranchData): Promise<void> {
+		let response = await spawnCmd(`cvs update -C ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+
+		if (response.result) {
+			if (branchData.branchName === 'main') {
+				response = await execCmd(`cvs update -A ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+			} else {
+				response = await execCmd(`cvs update -r ${branchData.branchName} ${basename(branchData.uri.fsPath)}`, dirname(branchData.uri.fsPath));
+			}
+	
+		}
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to switch file: ${basename(branchData.uri.fsPath)} to branch: ${branchData.branchName}`);
+		}
+	}
+
+	async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
+		let response = await execCmd(`cvs update -C`, this.workspacefolder.fsPath);
+
+		if (response.result) {
+			if (branchData.branchName === 'main') {
+				response = await execCmd(`cvs update -A`, this.workspacefolder.fsPath);
+	
+			} else {
+				response = await execCmd(`cvs update -r ${branchData.branchName}`, this.workspacefolder.fsPath);
+			}
+		}
+
+		if(!response.result) {
+			window.showErrorMessage(`Failed to switch workspace to branch: ${branchData.branchName}`);
+		}
 	}
 
 	async getCvsStatus(sourceFile: SourceFile): Promise<void> {

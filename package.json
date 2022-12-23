@@ -51,7 +51,13 @@
 				"fileHistory.enable": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable or disable the CVS `FILE HISTORY` view (requires restart of VS Code).",
+					"markdownDescription": "Enable or disable the FILE HISTORY` view (requires restart of VS Code).",
+					"scope": "window"
+				},
+				"branches.enable": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Enable or disable the `BRANCHES` view (requires restart of VS Code).",
 					"scope": "window"
 				}
 			}
@@ -61,6 +67,10 @@
 			  {
 				"id": "cvs-file-revisions",
 				"name": "FILE HISTORY"
+			  },
+			  {
+				"id": "cvs-file-branches",
+				"name": "BRANCHES"
 			  }
 			]
 		},
@@ -189,6 +199,18 @@
 				"command": "cvs-scm.open-revision",
 				"title": "Open File at Revision",
 				"icon": "$(go-to-file)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.switch-file-to-branch",
+				"title": "Switch File to Branch",
+				"icon": "$(arrow-circle-down)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.checkout-branch",
+				"title": "Switch Workspace to Branch",
+				"icon": "$(cloud-download)",
 				"category": "cvs-scm"
 			}
 		],
@@ -373,6 +395,16 @@
 				{
 					"command": "cvs-scm.open-revision",
 					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.switch-file-to-branch",
+					"when": "view == cvs-file-branches && viewItem == branch",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.checkout-branch",
+					"when": "view == cvs-file-branches && viewItem == branch",
 					"group": "inline"
 				}
 			]

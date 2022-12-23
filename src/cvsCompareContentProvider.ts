@@ -32,7 +32,12 @@ export class CvsCompareContentProvider implements TextDocumentContentProvider, D
 	}
 
 	async getRepositoryRevision(uri: Uri, revision: string): Promise<string> {
-		const cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("_"+revision)[0])}`;
+		let cvsCmd: string = '';
+		if (revision === 'main') {
+			cvsCmd = `cvs -Q update -p -A ${basename(uri.fsPath.split("_"+revision)[0])}`;
+		} else {
+			cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("_"+revision)[0])}`;
+		}
 		const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
 
 		if (!result.result) {

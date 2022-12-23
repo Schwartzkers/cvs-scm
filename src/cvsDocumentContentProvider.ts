@@ -15,7 +15,8 @@ export class CvsFile {
  */
 export class CvsDocumentContentProvider implements TextDocumentContentProvider, Disposable {
 	private _onDidChange = new EventEmitter<Uri>();
-	private sourceControlFiles = new Map<string, CvsFile>(); // this assumes each file is only opened once per workspace
+	private _sourceControlFiles = new Map<string, CvsFile>(); // this assumes each file is only opened once per workspace
+	private _startup: boolean = true;
 
 	get onDidChange(): Event<Uri> {
 		return this._onDidChange.event;
@@ -27,12 +28,12 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 
 	async updated(resourceStates: SourceControlResourceState[]): Promise<void> {
 		// clear cache of originals
-		this.sourceControlFiles.clear();
+		this._sourceControlFiles.clear();
 
 		resourceStates.forEach(resource => {
 			let cvsFIle = new CvsFile(resource.resourceUri);
 			const cvsUri = Uri.parse(`${CVS_SCHEME}:${resource.resourceUri.fsPath}`);
-			this.sourceControlFiles.set(cvsUri.fsPath, cvsFIle);
+			this._sourceControlFiles.set(cvsUri.fsPath, cvsFIle);
 		});
 
 		// get open editors, refresh in-line diff
@@ -57,7 +58,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 			return "Canceled";
 		}
 
-		const resource = this.sourceControlFiles.get(uri.fsPath);
+		const resource = this._sourceControlFiles.get(uri.fsPath);
 		if (resource && resource.originalTextUpdated) {
 			return resource.originalText;
 		} else {
@@ -80,7 +81,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 		originalText = result.output;
 		if (originalText.length === 0) { originalText = " "; } // quick diff won't work with empty original
 
-		const resource = this.sourceControlFiles.get(uri.fsPath);
+		const resource = this._sourceControlFiles.get(uri.fsPath);
 		if (resource) {
 			resource.originalText = originalText;
 			resource.originalTextUpdated = true;
