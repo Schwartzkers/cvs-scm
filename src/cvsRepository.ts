@@ -3,6 +3,7 @@ import { SourceFile, SourceFileState } from './sourceFile';
 import { execCmd, spawnCmd } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
+import { EOL } from 'os';
 
 export const CVS_SCHEME = 'cvs-scm';
 export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
@@ -31,7 +32,7 @@ export class CvsRepository implements QuickDiffProvider {
 		const update = await execCmd(cvsCmd, this.workspaceUri.fsPath, true);
 
 		this._sourceFiles = []; // reset source files
-		const sourceFilePromises = update.output.split(/\r?\n|\r|\n/g).map(async (line) => await this.parseCvsUpdateOutput(line));
+		const sourceFilePromises = update.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line));
 		await Promise.all(sourceFilePromises);
 	}
 
@@ -52,9 +53,9 @@ export class CvsRepository implements QuickDiffProvider {
 				const stat = await fs.lstat(uri.fsPath);
 				if (!stat.isFile()) {
 					sourceFile.isFolder = true;
-				}			
+				}
 			}
-			this._sourceFiles.push(sourceFile);				
+			this._sourceFiles.push(sourceFile);
 		} else if (output.includes('is no longer in the repository')) {
 			// example output = cvs update: `tree/trunk1.cpp' is no longer in the repository
 			const cvsResourceRelPath = output.substring(output.indexOf('`')+1, output.indexOf('\''));

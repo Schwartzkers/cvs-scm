@@ -27,6 +27,7 @@ export class CvsSourceControl implements Disposable {
 	private stagedFiles: string[];
 	private configManager: ConfigManager;
 	private _startup: boolean = true;
+	private _resourcesDirty = false;
 
 
 	constructor(context: ExtensionContext,
@@ -56,7 +57,7 @@ export class CvsSourceControl implements Disposable {
 		this.cvsScm.inputBox.placeholder = 'Commit Message';
 
 		const fileSystemWatcher = workspace.createFileSystemWatcher(new RelativePattern(this.workspacefolder, '**/*'));
-		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
+		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri, false), context.subscriptions); // do not refresh diff for a save
 		fileSystemWatcher.onDidCreate(uri => this.onResourceChange(uri), context.subscriptions);
 		fileSystemWatcher.onDidDelete(uri => this.onResourceChange(uri), context.subscriptions);
 
@@ -72,14 +73,43 @@ export class CvsSourceControl implements Disposable {
 		this.onResourceChange(this.workspacefolder);
 	}
 
-	onResourceChange(_uri: Uri): void {
+	onResourceChange(uri: Uri, dirty: boolean = true): void {
+		console.log(uri.fsPath);
+		this._resourcesDirty = dirty || this._resourcesDirty;
+
 		if (this.timeout) { clearTimeout(this.timeout); }
-		this.timeout = setTimeout(() => this.getResourceChanges(_uri), 500);
+		this.timeout = setTimeout(() => this.getResourceChanges(uri), 500);
 	}
 
-	async getResourceChanges(event: Uri): Promise<void> {
-		await this.cvsRepository.getResources();
-		this.refreshScm();
+	async getResourceChanges(uri: Uri): Promise<void> {
+		if (!this._resourcesDirty) {
+			// check if uri includes CVS folders
+			// if a file has been saved there is no point in refreshing
+			if (uri.fsPath.includes('CVS/')) {
+				this._resourcesDirty = true;
+			} // else a save event
+		}
+
+		if (this._resourcesDirty) { // add, delete or CVS/ folder event
+			await this.cvsRepository.getResources();
+			this.refreshScm();
+			this._resourcesDirty = false;
+
+			// TODO is this the correct location?
+			updateFileHistoryTree();
+			updateBranchesTree();
+			updateStatusBarItem(window.activeTextEditor);
+
+			// What changed?
+			if (this._startup) {
+				this._startup = false; // there's nothing to update on startup
+			} else {
+				const resources = this.changedResources.resourceStates.concat(this.conflictResources.resourceStates,
+																			  this.stagedResources.resourceStates,
+																			  this.repositoryResources.resourceStates);
+				this.cvsDocumentContentProvider.updated(resources);
+			}
+		}
 	}
 
 	refreshScm(): void {
@@ -386,16 +416,6 @@ export class CvsSourceControl implements Disposable {
 		this.repositoryResources.resourceStates = repositoryResources;
 		this.conflictResources.resourceStates = conflictResources;
 		this.unknownResources.resourceStates = unknownResources;
-
-		if (this._startup) {
-			this._startup = false; // there's nothing to update on startup
-		} else {
-			this.cvsDocumentContentProvider.updated(changedResources.concat(conflictResources, stagedResources, repositoryResources));
-		}
-
-		updateFileHistoryTree();
-		updateBranchesTree();
-		updateStatusBarItem(window.activeTextEditor);
 	}
 
 	async commitAll(): Promise<void> {
