@@ -70,11 +70,12 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	getCvsState(): void {
+		this._resourcesDirty = true; // refresh button??
 		this.onResourceChange(this.workspacefolder);
 	}
 
 	onResourceChange(uri: Uri, dirty: boolean = true): void {
-		console.log(uri.fsPath);
+		//console.log(uri.fsPath);
 		this._resourcesDirty = dirty || this._resourcesDirty;
 
 		if (this.timeout) { clearTimeout(this.timeout); }
@@ -95,7 +96,7 @@ export class CvsSourceControl implements Disposable {
 			this.refreshScm();
 			this._resourcesDirty = false;
 
-			// TODO is this the correct location?
+			// TODO is this the correct location for these actions?
 			updateFileHistoryTree();
 			updateBranchesTree();
 			updateStatusBarItem(window.activeTextEditor);

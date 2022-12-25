@@ -11,6 +11,7 @@ export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
 export class CvsRepository implements QuickDiffProvider {
 	private _sourceFiles: SourceFile[];
 	private _configManager: ConfigManager;
+	private _sourceFilesCache = new Map</*relative workspace path*/ string, SourceFile>;
 
 	constructor(private workspaceUri: Uri, configManager: ConfigManager) {
 		this._sourceFiles = [];
@@ -29,14 +30,69 @@ export class CvsRepository implements QuickDiffProvider {
 
 	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update -d`;
-		const update = await execCmd(cvsCmd, this.workspaceUri.fsPath, true);
+		const response = await execCmd(cvsCmd, this.workspaceUri.fsPath, true);
 
-		this._sourceFiles = []; // reset source files
-		const sourceFilePromises = update.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line));
-		await Promise.all(sourceFilePromises);
+		if (response.result) {
+			this._sourceFiles = []; // reset source files
+			let tempFiles: SourceFile[] = [];
+			const sourceFilePromises = response.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line, tempFiles));
+			await Promise.all(sourceFilePromises);
+
+			if (this._sourceFiles.length > 0) {
+				// get status for "most" files returned
+				let resources: Uri[] = [];
+				this._sourceFiles.forEach(file => {
+					if (file.uri &&
+						file.state !== SourceFileState.directory &&
+						file.state !== SourceFileState.untracked) {
+						resources.push(file.uri);
+					} else {
+						this._sourceFiles.push(file);
+					}
+				});
+
+				const status = await this.statusNew(resources);
+				const sourceFileStatusPromises = status.trim().split(/={20,}\r?\nFile:\s/).map(async (stat) => {
+					if (stat.length > 0 && !stat.includes("Status: Unknown")) {
+						let sourceFile = new SourceFile(undefined);
+						for (const line of stat.split(EOL)) {
+							this.parseCvsStatusOutput(line, sourceFile);
+
+							// handle special case for locally deleted files
+							if (sourceFile.state === SourceFileState.checkout && sourceFile.workingRevision !== 'No') {
+								sourceFile.setState("Locally Deleted");
+							}
+						}
+						this._sourceFiles.push(sourceFile);
+					}
+				});
+				await Promise.all(sourceFileStatusPromises);
+			}
+		}
+		console.log(this._sourceFiles.length);
 	}
 
-	async parseCvsUpdateOutput(output: string): Promise<void> {
+	// Example output from `cvs -n -q update -d`
+	// R INSTALL.md
+	// U Makefile
+	// ? untrackedFile.log
+	// ? untrackedFolder
+	// RCS file: /home/jon/.cvsroot/schwartzkers/cvs-scm-example/gtest/testFile.cpp,v
+	// retrieving revision 1.2
+	// retrieving revision 1.3
+	// Merging differences between 1.2 and 1.3 into testFile.cpp
+	// rcsmerge: warning: conflicts during merge
+	// cvs update: conflicts found in gtest/testFile.cpp
+	// C gtest/testFile.cpp
+	// U gtest/reports/report.xml
+	// cvs update: warning: `interface/subfolder/Ifoo.hpp' was lost
+	// U interface/subfolder/Ifoo.hpp
+	// A src/addedFile.cpp
+	// M src/foo.cpp
+	// C src/main.cpp
+	// cvs update: `tree/trunk1.cpp' is no longer in the repository
+	// cvs update: New directory `tree/folder7-0' -- ignored
+	async parseCvsUpdateOutput(output: string, sourceFiles: SourceFile[]): Promise<void> {
 		const fs = require('fs/promises');
 				
 		const cvsResourceState = output.trim().substring(0, output.indexOf(' '));
@@ -45,7 +101,7 @@ export class CvsRepository implements QuickDiffProvider {
 			const cvsResourceRelPath = output.substring(output.indexOf(' ')+1, output.length);
 			const sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, cvsResourceRelPath));
 			if ( cvsResourceState !== '?') {
-					await this.status(sourceFile);
+					//await this.status(sourceFile); // TODO can this be removed? check if state has changed before poking repo??
 			} else {
 				sourceFile.setState("Unknown");
 				// check if resource is a file or a folder?
@@ -55,13 +111,13 @@ export class CvsRepository implements QuickDiffProvider {
 					sourceFile.isFolder = true;
 				}
 			}
-			this._sourceFiles.push(sourceFile);
+			sourceFiles.push(sourceFile);
 		} else if (output.includes('is no longer in the repository')) {
 			// example output = cvs update: `tree/trunk1.cpp' is no longer in the repository
 			const cvsResourceRelPath = output.substring(output.indexOf('`')+1, output.indexOf('\''));
 			let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, cvsResourceRelPath));
-			await this.status(sourceFile);
-			this._sourceFiles.push(sourceFile);
+			//await this.status(sourceFile);
+			sourceFiles.push(sourceFile);
 		} else if (output.includes(`cvs update: New directory`)) {
 			// example output = "cvs update: New directory `NewFolder2' -- ignored"
 			let folderRelPath = output.slice(output.indexOf("`")+1, output.indexOf("'"));
@@ -69,17 +125,18 @@ export class CvsRepository implements QuickDiffProvider {
 				let sourceFile = new SourceFile(Uri.joinPath(this.workspaceUri, folderRelPath));
 				sourceFile.isFolder = true;
 				sourceFile.setState("New Directory");
-				this._sourceFiles.push(sourceFile);
+				sourceFiles.push(sourceFile);
 			}
 		}
 	}
 
 	async status(sourceFile: SourceFile): Promise<void> {
+		console.log('status');
 		const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
 		const status = await execCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
 
 		if (status.result && !status.output.includes("Status: Unknown")) {
-			const sourceFileStatusPromises = status.output.split(/\r?\n|\r|\n/g).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
+			const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await this.parseCvsStatusOutput(line, sourceFile));
 			await Promise.all(sourceFileStatusPromises);
 	
 			// handle special case for locally deleted files
@@ -90,8 +147,18 @@ export class CvsRepository implements QuickDiffProvider {
 		}
 	}
 
+	async statusNew(resources: Uri[]): Promise<string> {
+		// need string of changed files relative to the workspace root
+		let files= '';
+		for (const resource of resources) {
+			files = files.concat(workspace.asRelativePath(resource, false) + ' ');
+		}
+		const cvsCmd = `cvs status ${files}`;
+		return (await spawnCmd(cvsCmd, this.workspaceUri.fsPath)).output;
+	}
+
 	async commit(message: string, changes: Uri[]): Promise<boolean> {
-		// need sting of chnaged files relative to the workspace root
+		// need sting of changed files relative to the workspace root
 		let files= '';
 		changes.forEach(uri => {
 			files = files.concat(workspace.asRelativePath(uri, false) + ' ');
@@ -143,36 +210,40 @@ export class CvsRepository implements QuickDiffProvider {
 	getChangesSourceFiles(): SourceFile[] {
 		return this._sourceFiles;
 	}
-}
 
-
-export async function parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
-	// cvs status example outout
-	// ===================================================================
-	// File: Makefile          Status: Needs Patch
-
-	// Working revision:    1.1     2022-11-03 08:15:12 -0600
-	// Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
-	// Commit Identifier:   1006377FE10849CE253
-	// Sticky Tag:          (none)
-	// Sticky Date:         (none)
-	// Sticky Options:      (none)
-
-	if (output.includes('Status:')) {
-		const state = output.trim().split('Status: ')[1];
-		sourceFile.setState(state);
-	}
-	else if (output.includes('Working revision:')) {
-		sourceFile.workingRevision = output.trim().split(/\s+/)[2];
-	}
-	else if (output.includes('Repository revision:')) {
-		sourceFile.repoRevision = output.trim().split(/\s+/)[2];
-	}
-	else if (output.includes('Sticky Tag:')) {
-		let branch = output.trim().split(/\s+/)[2];
-		if (branch === '(none)') {
-			branch = 'main';
+	async parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
+		// ===================================================================
+		// File: Makefile          Status: Needs Patch
+	
+		// Working revision:    1.1     2022-11-03 08:15:12 -0600
+		// Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
+		// Commit Identifier:   1006377FE10849CE253
+		// Sticky Tag:          (none)
+		// Sticky Date:         (none)
+		// Sticky Options:      (none)
+	
+		if (output.includes('Status:')) {
+			const state = output.trim().split('Status: ')[1];
+			sourceFile.setState(state);
 		}
-		sourceFile.branch = branch;
+		else if (output.includes('Working revision:')) {
+			sourceFile.workingRevision = output.trim().split(/\s+/)[2];
+		}
+		else if (output.includes('Repository revision:')) {
+			const repoLine = output.trim().split(/\s+/);
+			sourceFile.repoRevision = repoLine[2];
+			
+			let name = repoLine[3].split('/code/')[1];
+			let stopIndex = name.lastIndexOf(',');
+			sourceFile.uri = Uri.joinPath(this.workspaceUri, name.substring(0, stopIndex));
+			console.log(`here ${sourceFile.uri.fsPath}`);
+		}
+		else if (output.includes('Sticky Tag:')) {
+			let branch = output.trim().split(/\s+/)[2];
+			if (branch === '(none)') {
+				branch = 'main';
+			}
+			sourceFile.branch = branch;
+		}
 	}
 }
