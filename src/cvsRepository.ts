@@ -31,45 +31,43 @@ export class CvsRepository implements QuickDiffProvider {
 	async getResources(): Promise<void> {
 		let cvsCmd = `cvs -n -q update -d`;
 		const response = await execCmd(cvsCmd, this.workspaceUri.fsPath, true);
-
+		
+		this._sourceFiles = []; // reset source files
+		let tempFiles: SourceFile[] = [];
 		if (response.result) {
-			this._sourceFiles = []; // reset source files
-			let tempFiles: SourceFile[] = [];
+			
 			const sourceFilePromises = response.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line, tempFiles));
 			await Promise.all(sourceFilePromises);
-
-			if (this._sourceFiles.length > 0) {
-				// get status for "most" files returned
-				let resources: Uri[] = [];
-				this._sourceFiles.forEach(file => {
-					if (file.uri &&
-						file.state !== SourceFileState.directory &&
-						file.state !== SourceFileState.untracked) {
-						resources.push(file.uri);
-					} else {
-						this._sourceFiles.push(file);
-					}
-				});
-
-				const status = await this.statusNew(resources);
-				const sourceFileStatusPromises = status.trim().split(/={20,}\r?\nFile:\s/).map(async (stat) => {
-					if (stat.length > 0 && !stat.includes("Status: Unknown")) {
-						let sourceFile = new SourceFile(undefined);
-						for (const line of stat.split(EOL)) {
-							this.parseCvsStatusOutput(line, sourceFile);
-
-							// handle special case for locally deleted files
-							if (sourceFile.state === SourceFileState.checkout && sourceFile.workingRevision !== 'No') {
-								sourceFile.setState("Locally Deleted");
-							}
-						}
-						this._sourceFiles.push(sourceFile);
-					}
-				});
-				await Promise.all(sourceFileStatusPromises);
-			}
 		}
-		console.log(this._sourceFiles.length);
+
+		if (tempFiles.length > 0) {
+			// get status for "most" files returned
+			let resources: Uri[] = [];
+			tempFiles.forEach(file => {
+				if (file.uri &&
+					file.state !== SourceFileState.directory &&
+					file.state !== SourceFileState.untracked) {
+					resources.push(file.uri);
+				} else {
+					this._sourceFiles.push(file);
+				}
+			});
+
+			const status = await this.statusNew(resources);
+			const sourceFileStatusPromises = status.trim().split(/={20,}\r?\nFile:\s/).map(async (stat) => {
+				if (stat.length > 0 && !stat.includes("Status: Unknown")) {
+					let sourceFile = new SourceFile(undefined);
+					this.parseCvsStatusOutput(stat, sourceFile);
+
+					// handle special case for locally deleted files
+					if (sourceFile.state === SourceFileState.checkout && sourceFile.workingRevision !== 'No') {
+						sourceFile.setState("Locally Deleted");
+					}
+					this._sourceFiles.push(sourceFile);
+				}
+			});
+			await Promise.all(sourceFileStatusPromises);
+		}
 	}
 
 	// Example output from `cvs -n -q update -d`
@@ -211,7 +209,7 @@ export class CvsRepository implements QuickDiffProvider {
 		return this._sourceFiles;
 	}
 
-	async parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
+	parseCvsStatusOutput(output: string, sourceFile: SourceFile) {
 		// ===================================================================
 		// File: Makefile          Status: Needs Patch
 	
@@ -222,28 +220,33 @@ export class CvsRepository implements QuickDiffProvider {
 		// Sticky Date:         (none)
 		// Sticky Options:      (none)
 	
-		if (output.includes('Status:')) {
-			const state = output.trim().split('Status: ')[1];
-			sourceFile.setState(state);
-		}
-		else if (output.includes('Working revision:')) {
-			sourceFile.workingRevision = output.trim().split(/\s+/)[2];
-		}
-		else if (output.includes('Repository revision:')) {
-			const repoLine = output.trim().split(/\s+/);
-			sourceFile.repoRevision = repoLine[2];
-			
-			let name = repoLine[3].split('/code/')[1];
-			let stopIndex = name.lastIndexOf(',');
-			sourceFile.uri = Uri.joinPath(this.workspaceUri, name.substring(0, stopIndex));
-			console.log(`here ${sourceFile.uri.fsPath}`);
-		}
-		else if (output.includes('Sticky Tag:')) {
-			let branch = output.trim().split(/\s+/)[2];
-			if (branch === '(none)') {
-				branch = 'main';
+		for (const line of output.split(EOL)) {
+			if (line.includes('Status:')) {
+				const state = line.trim().split('Status: ')[1];
+				sourceFile.setState(state);
+				continue;
 			}
-			sourceFile.branch = branch;
+			else if (line.includes('Working revision:')) {
+				sourceFile.workingRevision = line.trim().split(/\s+/)[2];
+				continue;
+			}
+			else if (line.includes('Repository revision:')) {
+				const repoLine = line.trim().split(/\s+/);
+				sourceFile.repoRevision = repoLine[2];
+
+				let name = repoLine[3].split('/code/')[1]; // FIX ME with repo
+				let stopIndex = name.lastIndexOf(',');
+				sourceFile.uri = Uri.joinPath(this.workspaceUri, name.substring(0, stopIndex));
+				continue;
+			}
+			else if (line.includes('Sticky Tag:')) {
+				let branch = line.trim().split(/\s+/)[2];
+				if (branch === '(none)') {
+					branch = 'main';
+				}
+				sourceFile.branch = branch;
+				continue;
+			}
 		}
 	}
 }

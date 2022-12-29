@@ -86,9 +86,22 @@ export class CvsSourceControl implements Disposable {
 		if (!this._resourcesDirty) {
 			// check if uri includes CVS folders
 			// if a file has been saved there is no point in refreshing
+			// unless not included in SCM yet
 			if (uri.fsPath.includes('CVS/')) {
 				this._resourcesDirty = true;
-			} // else a save event
+			} else {
+				let foundResource = false;
+				for (const sourceFile of this.cvsRepository.getChangesSourceFiles()) {
+					if (sourceFile.uri?.fsPath === uri.fsPath) {
+						foundResource = true;
+						break;
+					}
+				}
+				
+				if (!foundResource) {
+					this._resourcesDirty = true;
+				}
+			} 
 		}
 
 		if (this._resourcesDirty) { // add, delete or CVS/ folder event
