@@ -104,12 +104,13 @@ export class CvsSourceControl implements Disposable {
 			} 
 		}
 
-		if (this._resourcesDirty) { // add, delete or CVS/ folder event
-			await this.cvsRepository.getResources();
+		if (this._resourcesDirty) { // add, delete, first local change or CVS/ folder event
+			await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
 			this.refreshScm();
 			this._resourcesDirty = false;
 
 			// TODO is this the correct location for these actions?
+			// do not update on a save, only on CVS folder change 
 			updateFileHistoryTree();
 			updateBranchesTree();
 			updateStatusBarItem(window.activeTextEditor);
@@ -134,6 +135,8 @@ export class CvsSourceControl implements Disposable {
 		const unknownResources: SourceControlResourceState[] = [];
 		
 		this.cvsRepository.getChangesSourceFiles().forEach(element => {
+
+			if (element.uri === undefined) { return; }
 
 			// check if resource is staged
 			let isStaged = false;			
@@ -684,8 +687,14 @@ export class CvsSourceControl implements Disposable {
 		}
 	}
 
-	async getCvsStatus(sourceFile: SourceFile): Promise<void> {
-		await this.cvsRepository.status(sourceFile);
+	async getSourceFile(uri: Uri): Promise<SourceFile> {
+		let sourceFile = this.cvsRepository.findSourceFile(uri);
+
+		if (sourceFile === undefined) {
+			sourceFile = await this.cvsRepository.createSourceFile(uri);
+		}
+
+		return sourceFile;
 	}
 
 	dispose() {

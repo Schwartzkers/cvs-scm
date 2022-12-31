@@ -404,7 +404,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 }
 
-function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
+export function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {
 	for (const uri of cvsSourceControlRegister.keys()) {
 		if (resource.fsPath.includes(uri.fsPath)) {
 			return cvsSourceControlRegister.get(uri);
@@ -533,9 +533,7 @@ export async function updateStatusBarItem(textEditor: vscode.TextEditor | undefi
 			const sourceControl = findSourceControl(textEditor.document.uri);
 				
 			if (sourceControl) {
-				let sourceFile = new SourceFile(textEditor.document.uri);
-
-				await sourceControl.getCvsStatus(sourceFile);
+				const sourceFile = await sourceControl.getSourceFile(textEditor.document.uri);
 			
 				if (sourceFile.branch && sourceFile.workingRevision) {
 					revStatusBarItem.text = `$(source-control-view-icon) ${sourceFile.branch}: ${sourceFile.workingRevision}`;

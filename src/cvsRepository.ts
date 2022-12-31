@@ -35,7 +35,6 @@ export class CvsRepository implements QuickDiffProvider {
 		this._sourceFiles = []; // reset source files
 		let tempFiles: SourceFile[] = [];
 		if (response.result) {
-			
 			const sourceFilePromises = response.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line, tempFiles));
 			await Promise.all(sourceFilePromises);
 		}
@@ -53,7 +52,7 @@ export class CvsRepository implements QuickDiffProvider {
 				}
 			});
 
-			const status = await this.statusNew(resources);
+			const status = await this.status(resources);
 			const sourceFileStatusPromises = status.trim().split(/={20,}\r?\nFile:\s/).map(async (stat) => {
 				if (stat.length > 0 && !stat.includes("Status: Unknown")) {
 					let sourceFile = new SourceFile(undefined);
@@ -128,29 +127,35 @@ export class CvsRepository implements QuickDiffProvider {
 		}
 	}
 
-	async status(sourceFile: SourceFile): Promise<void> {
-		console.log('status');
-		const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
-		const status = await execCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
-
-		if (status.result && !status.output.includes("Status: Unknown")) {
-			const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await this.parseCvsStatusOutput(line, sourceFile));
-			await Promise.all(sourceFileStatusPromises);
-	
-			// handle special case for locally deleted files
-			if (sourceFile.state === SourceFileState.checkout &&
-				sourceFile.workingRevision !== 'No') {
-				sourceFile.setState("Locally Deleted");
+	findSourceFile(uri: Uri): SourceFile | undefined {
+		for (const file of this._sourceFiles) {
+			if (file.uri?.fsPath === uri.fsPath) {
+				return file;
 			}
-		}
+		};
 	}
 
-	async statusNew(resources: Uri[]): Promise<string> {
+	async createSourceFile(uri: Uri): Promise<SourceFile> {
+		console.log('createSourceFile');
+		let sourceFile = new SourceFile(undefined);
+		this.parseCvsStatusOutput(await this.status(uri), sourceFile);
+
+		this._sourceFiles.push(sourceFile);
+		return sourceFile;
+	}
+
+	async status(resources: Uri[] | Uri): Promise<string> {
 		// need string of changed files relative to the workspace root
 		let files= '';
-		for (const resource of resources) {
-			files = files.concat(workspace.asRelativePath(resource, false) + ' ');
+
+		if (Array.isArray(resources)) {
+			for (const resource of resources) {
+				files = files.concat(workspace.asRelativePath(resource, false) + ' ');
+			}
+		} else {
+			files = workspace.asRelativePath(resources, false);
 		}
+
 		const cvsCmd = `cvs status ${files}`;
 		return (await spawnCmd(cvsCmd, this.workspaceUri.fsPath)).output;
 	}
@@ -224,6 +229,12 @@ export class CvsRepository implements QuickDiffProvider {
 			if (line.includes('Status:')) {
 				const state = line.trim().split('Status: ')[1];
 				sourceFile.setState(state);
+
+				if (sourceFile.state === SourceFileState.untracked ||
+					sourceFile.state === SourceFileState.added) {
+						break;
+				}
+
 				continue;
 			}
 			else if (line.includes('Working revision:')) {

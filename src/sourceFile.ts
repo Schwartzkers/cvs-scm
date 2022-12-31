@@ -1,4 +1,6 @@
 import { Uri } from "vscode";
+import { BranchData } from "./cvsBranchProvider";
+import { CommitData } from "./cvsRevisionProvider";
 
 export enum SourceFileState {
     unknown,
@@ -37,6 +39,8 @@ export class SourceFile {
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
     public isFolder: boolean=false;
+    public commitLog: CommitData[] | undefined;
+    public branches: BranchData[] | undefined;
 
 	constructor(uri: Uri | undefined) {
 		if (uri) {

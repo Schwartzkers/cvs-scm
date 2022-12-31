@@ -3,7 +3,8 @@ import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
 import { CVS_SCHEME_COMPARE } from './cvsRepository';
-import { SourceFile } from './sourceFile';
+import { SourceFile, SourceFileState } from './sourceFile';
+import { findSourceControl } from "./extension";
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();
@@ -42,19 +43,34 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     }
 
     async getDeps(uri: Uri): Promise<BranchData[]> {
-        // get status of file to get active branch
-        const sourceFile = new SourceFile(uri);
-        await this.getStatusOfFile(sourceFile);
-
-        const log = await this.readCvsLog(uri);
-        const branches = await this.getBranches(log);
+        const sourceFile = await findSourceControl(uri)?.getSourceFile(uri);
 
         let branchData: BranchData[] = [];
-        branchData.push(new BranchData('main', uri, sourceFile.branch === 'main'));
 
-        branches.forEach(element => {
-            branchData.push(new BranchData(element, uri, sourceFile.branch === element));
-        });
+        if (sourceFile) {
+            // no logs for added or untracked
+            if (sourceFile.state === SourceFileState.untracked ||
+                sourceFile.state === SourceFileState.added) {
+                    return branchData;
+            }
+
+            if (sourceFile.branches) {
+                console.log('return cache');
+                return sourceFile.branches;
+            }
+            else {
+                const log = await this.readCvsLog(uri);
+                const branches = await this.getBranches(log);
+        
+                branchData.push(new BranchData('main', uri, sourceFile.branch === 'main'));
+        
+                branches.forEach(element => {
+                    branchData.push(new BranchData(element, uri, sourceFile.branch === element));
+                });
+
+                sourceFile.branches = branchData;
+            }
+        }
 
         return branchData;
     }
@@ -69,23 +85,6 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         }
 
         return result.output;
-    }
-
-    async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
-        if (sourceFile.uri) {
-            const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
-            const status = await spawnCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
-
-            if (!status.result || status.output.length === 0) {
-                window.showErrorMessage(`Failed to obtain cvs status for resource: ${basename(sourceFile.uri.fsPath)}`);
-                return;
-            }
-
-            if (!status.output.includes("Status: Unknown") && !status.output.includes("Status: Locally Added")) {
-                const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
-                await Promise.all(sourceFileStatusPromises);
-            }
-        }
     }
 
     async getBranches(log: string): Promise<string[]> {
