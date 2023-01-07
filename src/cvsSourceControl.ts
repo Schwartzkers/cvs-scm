@@ -71,26 +71,20 @@ export class CvsSourceControl implements Disposable {
 
 	getCvsState(): void {
 		console.log('getCvsState');
-		this._resourcesDirty = true; // refresh button??
 		this.onResourceChange(this.workspacefolder);
 	}
 
 	onResourceChange(uri: Uri, dirty: boolean = true): void {
 		console.log('onResourceChange: ' + uri.fsPath);
-		//console.log(uri.fsPath);
-		this._resourcesDirty = dirty || this._resourcesDirty;
 
-		if (this.timeout) { clearTimeout(this.timeout); }
-		this.timeout = setTimeout(() => this.getResourceChanges(uri), 300);
-	}
+		let isDirty = false;
 
-	async getResourceChanges(uri: Uri): Promise<void> {
-		if (!this._resourcesDirty) {
+		if (!dirty) {
 			// check if uri includes CVS folders
 			// if a file has been saved there is no point in refreshing
 			// unless not included in SCM yet
 			if (uri.fsPath.includes('CVS/')) {
-				this._resourcesDirty = true;
+				isDirty = true;
 			} else {
 				let foundResource = false;
 				for (const sourceFile of this.cvsRepository.getChangesSourceFiles()) {
@@ -101,31 +95,40 @@ export class CvsSourceControl implements Disposable {
 				}
 				
 				if (!foundResource) {
-					this._resourcesDirty = true;
+					isDirty = true;
 				}
 			} 
 		}
+		else {
+			isDirty = true;
+		}
 
-		if (this._resourcesDirty) { // add, delete, first local change or CVS/ folder event
-			await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
-			this.refreshScm();
-			this._resourcesDirty = false;
+		if (isDirty) {
+			this._resourcesDirty = true;
+			if (this.timeout) { clearTimeout(this.timeout); }
+			this.timeout = setTimeout(() => this.getResourceChanges(uri), 300);
+		}
+	}
 
-			// TODO is this the correct location for these actions?
-			// do not update on a save, only on CVS folder change 
-			updateFileHistoryTree();
-			updateBranchesTree();
-			updateStatusBarItem();
+	async getResourceChanges(uri: Uri): Promise<void> {
+		// add, delete, first local change or a CVS/ folder event
+		await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
+		this.refreshScm();
+		this._resourcesDirty = false;
 
-			// What changed?
-			if (this._startup) {
-				this._startup = false; // there's nothing to update on startup
-			} else {
-				const resources = this.changedResources.resourceStates.concat(this.conflictResources.resourceStates,
-																			  this.stagedResources.resourceStates,
-																			  this.repositoryResources.resourceStates);
-				this.cvsDocumentContentProvider.updated(resources);
-			}
+		// TODO is this the correct location for these actions?
+		updateFileHistoryTree();
+		updateBranchesTree();
+		updateStatusBarItem();
+
+		// update any diff editors currently opened as files may have been commited
+		if (this._startup) {
+			this._startup = false; // there's nothing to update on startup
+		} else {
+			const resources = this.changedResources.resourceStates.concat(this.conflictResources.resourceStates,
+																			this.stagedResources.resourceStates,
+																			this.repositoryResources.resourceStates);
+			this.cvsDocumentContentProvider.updated(resources);
 		}
 	}
 

@@ -5,14 +5,13 @@ import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { ConfigManager} from './configManager';
 import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
 import { CvsCompareContentProvider } from './cvsCompareContentProvider';
-import { SourceFile } from './sourceFile';
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
-export let fileHistoryProvider: CvsRevisionProvider;
+let fileHistoryProvider: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
-export let fileBranchProvider: CvsBranchProvider;
+let fileBranchProvider: CvsBranchProvider;
 let fileBranchTree:  vscode.TreeView<BranchData>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let revStatusBarItem: vscode.StatusBarItem;
@@ -66,7 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	initializeWorkspaceFolders(context);
 
-	console.log(cvsSourceControlRegister.size);
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
 	});
@@ -457,7 +455,7 @@ function requestToUpdateFileHistory() {
 			const sourceControl = findSourceControl(editor.document.uri);
 				
 			if (sourceControl) {
-				// don't update again if already displayed
+				// FIX ME: don't update again if already displayed
 				const resource = vscode.workspace.asRelativePath(editor.document.uri, false); 
 				fileHistoryTree.message = '';
 				fileHistoryTree.description = resource;
@@ -535,7 +533,7 @@ export async function updateStatusBarItem(): Promise<void> {
 	revStatusBarTimeout = setTimeout(() => requestToUpdateStatusBarItem(), 500);
 } 
 
-export async function requestToUpdateStatusBarItem(): Promise<void> {
+async function requestToUpdateStatusBarItem(): Promise<void> {
 	const textEditor = vscode.window.activeTextEditor;
 	if (textEditor) {
 		if (textEditor.document.uri.scheme !== 'file') {
