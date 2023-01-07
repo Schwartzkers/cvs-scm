@@ -111,6 +111,7 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async getResourceChanges(uri: Uri): Promise<void> {
+		console.log('getResourceChanges');
 		// add, delete, first local change or a CVS/ folder event
 		await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
 		this.refreshScm();
