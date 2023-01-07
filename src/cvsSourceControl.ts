@@ -70,16 +70,18 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	getCvsState(): void {
+		console.log('getCvsState');
 		this._resourcesDirty = true; // refresh button??
 		this.onResourceChange(this.workspacefolder);
 	}
 
 	onResourceChange(uri: Uri, dirty: boolean = true): void {
+		console.log('onResourceChange: ' + uri.fsPath);
 		//console.log(uri.fsPath);
 		this._resourcesDirty = dirty || this._resourcesDirty;
 
 		if (this.timeout) { clearTimeout(this.timeout); }
-		this.timeout = setTimeout(() => this.getResourceChanges(uri), 500);
+		this.timeout = setTimeout(() => this.getResourceChanges(uri), 300);
 	}
 
 	async getResourceChanges(uri: Uri): Promise<void> {
@@ -113,7 +115,7 @@ export class CvsSourceControl implements Disposable {
 			// do not update on a save, only on CVS folder change 
 			updateFileHistoryTree();
 			updateBranchesTree();
-			updateStatusBarItem(window.activeTextEditor);
+			updateStatusBarItem();
 
 			// What changed?
 			if (this._startup) {
@@ -141,7 +143,7 @@ export class CvsSourceControl implements Disposable {
 			// check if resource is staged
 			let isStaged = false;			
 			this.stagedFiles.forEach(resource => {
-				if (resource === element.uri.fsPath) {
+				if (resource === element.uri?.fsPath) {
 					isStaged = true;
 				}
 			});

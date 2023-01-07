@@ -59,7 +59,7 @@ suite('Extension Test Suite', () => {
 		resourceMap.forEach((value: SourceFile.SourceFileState, key: string) => {
 			let foundChange = false;
 			for(const change of cvsRepository.getChangesSourceFiles()) {
-				if (change.uri.fsPath.includes(key)) {
+				if (change.uri?.fsPath.includes(key)) {
 					foundChange = true;
 					assert.strictEqual(change.state, value);
 

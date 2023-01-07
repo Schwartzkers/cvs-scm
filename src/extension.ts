@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	revStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions));
 	context.subscriptions.push(revStatusBarItem);
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(textEditor => updateStatusBarItem(textEditor), context.subscriptions));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateStatusBarItem(), context.subscriptions));
 
 	fileHistoryProvider = new CvsRevisionProvider(configManager.getFileHistoryEnableFlag());
 	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistoryProvider, canSelectMany: false} );
@@ -66,11 +66,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	initializeWorkspaceFolders(context);
 
+	console.log(cvsSourceControlRegister.size);
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
 	});
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
+		console.log('refresh');
 		// check CVS repository for local and remote changes
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.getCvsState(); }
@@ -512,7 +514,7 @@ export async function updateBranchesTree(): Promise<void> {
 		clearTimeout(branchesTimeout);
 	}
 
-	branchesTimeout = setTimeout(() => requestToUpdateBranches(), 300);
+	branchesTimeout = setTimeout(() => requestToUpdateBranches(), 500);
 }
 
 export async function updateFileHistoryTree(): Promise<void> {
@@ -522,10 +524,19 @@ export async function updateFileHistoryTree(): Promise<void> {
 		clearTimeout(fileHistoryTimeout);
 	}
 
-	fileHistoryTimeout = setTimeout(() => requestToUpdateFileHistory(), 300);
+	fileHistoryTimeout = setTimeout(() => requestToUpdateFileHistory(), 500);
 }
 
-export async function updateStatusBarItem(textEditor: vscode.TextEditor | undefined): Promise<void> {
+export async function updateStatusBarItem(): Promise<void> {
+	if (revStatusBarTimeout) {
+		clearTimeout(revStatusBarTimeout);
+	}
+
+	revStatusBarTimeout = setTimeout(() => requestToUpdateStatusBarItem(), 500);
+} 
+
+export async function requestToUpdateStatusBarItem(): Promise<void> {
+	const textEditor = vscode.window.activeTextEditor;
 	if (textEditor) {
 		if (textEditor.document.uri.scheme !== 'file') {
 			return;
@@ -548,15 +559,7 @@ export async function updateStatusBarItem(textEditor: vscode.TextEditor | undefi
 			}
 		}
 	} else {
-		if (revStatusBarTimeout) {
-			clearTimeout(revStatusBarTimeout);
-		}
-
-		revStatusBarTimeout = setTimeout(() => {
-			if (vscode.window.activeTextEditor === undefined) {
-				revStatusBarItem.hide();
-			}
-		}, 500);
+		revStatusBarItem.hide();
 	}
 }
 
