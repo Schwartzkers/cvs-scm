@@ -1,22 +1,22 @@
 import { Uri, workspace, TreeView, window, TextEditor } from "vscode";
-import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
+import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 import { findSourceControl } from './extension';
 
 
-export class FileHistoryController {
+export class BranchesController {
     private _isEnabled: boolean = false;
-    private _fileHistoryProvider: CvsRevisionProvider;
-    private _fileHistoryTree: TreeView<CommitData>;
-    private _fileHistoryTimeout?: NodeJS.Timer;
+    private _branchesProvider: CvsBranchProvider;
+    private _branchesTree: TreeView<BranchData>;
+    private _branchesTimeout?: NodeJS.Timer;
     private _displayedFile?: Uri;
     private _lockedWorkspaces: Uri[] = [];
 
-    constructor(fileHistoryProvider: CvsRevisionProvider, fileHistoryTree: TreeView<CommitData>, isEnabled: boolean) {
+    constructor(branchesProvider: CvsBranchProvider, branchesTree: TreeView<BranchData>, isEnabled: boolean) {
         this._isEnabled = isEnabled;
-        this._fileHistoryProvider = fileHistoryProvider;
-        this._fileHistoryTree = fileHistoryTree;
+        this._branchesProvider = branchesProvider;
+        this._branchesTree = branchesTree;
         if (!isEnabled) {
-            this._fileHistoryTree.message = 'Enable view in CVS settings.';
+            this._branchesTree.message = 'Enable view in CVS settings.';
         }
     }
 
@@ -27,7 +27,6 @@ export class FileHistoryController {
         } else {
             console.log('workspace already locked');
         }
-        
     }
 
     unlockEvent(workspaceUri: Uri): void {
@@ -36,25 +35,25 @@ export class FileHistoryController {
             this._lockedWorkspaces.splice(locked, 1);
             console.log('unlocked: ' + workspaceUri.fsPath);
 
-            this.requestToUpdateFileHistory();
+            this.requestToUpdateBranches();
         } else {
             console.log('workspace not found');
         }
     }
 
-    async updateFileHistoryTree(): Promise<void> {
+    async updateBranchesTree(): Promise<void> {
         if (!this._isEnabled) { return; }
     
-        if (this._fileHistoryTimeout) {
-            clearTimeout(this._fileHistoryTimeout);
+        if (this._branchesTimeout) {
+            clearTimeout(this._branchesTimeout);
         }
     
-        this._fileHistoryTimeout = setTimeout(() => this.requestToUpdateFileHistory(), 250);
+        this._branchesTimeout = setTimeout(() => this.requestToUpdateBranches(), 250);
     }
 
-    private requestToUpdateFileHistory() {
-        if (!this._fileHistoryTree.visible) {
-            this._fileHistoryTree.description = '';
+    private requestToUpdateBranches() {
+        if (!this._branchesTree.visible) {
+            this._branchesTree.description = '';
             return;
         }
     
@@ -71,21 +70,21 @@ export class FileHistoryController {
                 const sourceControl = findSourceControl(editor.document.uri);
                     
                 if (sourceControl) {
-                    // FIX ME: don't update again if already displayed
+                    // don't update again if already displayed
                     const resource = workspace.asRelativePath(editor.document.uri, false); 
-                    this._fileHistoryTree.message = '';
-                    this._fileHistoryTree.description = resource;
-                    this._fileHistoryProvider.refresh();
+                    this._branchesProvider.refresh();
+                    this._branchesTree.description = resource;
+                    this._branchesTree.message = '';
                 } else {
-                    this._fileHistoryProvider.refresh();
-                    this._fileHistoryTree.description = '';
-                    this._fileHistoryTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide file history information.';
+                    this._branchesProvider.refresh();
+                    this._branchesTree.description = '';
+                    this._branchesTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide branch information.';
                 }
             }
         } else {
-            this._fileHistoryProvider.refresh();
-            this._fileHistoryTree.description = '';
-            this._fileHistoryTree.message = 'There are no editors open that can provide file history information.';
+            this._branchesProvider.refresh();
+            this._branchesTree.description = '';
+            this._branchesTree.message = 'There are no editors open that can provide branch information.';
         }
     }
 }

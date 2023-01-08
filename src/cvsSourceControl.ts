@@ -11,7 +11,7 @@ import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
 import { BranchData } from './cvsBranchProvider';
-import { updateStatusBarItem, updateBranchesTree } from './extension';
+import { updateStatusBarItem } from './extension';
 
 
 export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
@@ -115,24 +115,20 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async getResourceChanges(uri: Uri): Promise<void> {
+		// emmit event to stop update of trees, status bar
 		onResouresLocked.fire(this.workspacefolder);
-
-		// TODO emmit event to stop update of trees, diffs, status bar
+		
 		console.log('getResourceChanges');
 		// add, delete, first local change or a CVS/ folder event
 		await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
 		this.refreshScm();
 		this._resourcesDirty = false;
 
-		// TODO is this the correct location for these actions?
-		//updateFileHistoryTree();
-		updateBranchesTree();
 		updateStatusBarItem();
 
 		// update any diff editors currently opened as files may have been commited
 		if (this._startup) {
 			this._startup = false; // there's nothing to update on startup
-			// TODO emmit event to start update trees, diffs, status bar
 		} else {
 			const resources = this.changedResources.resourceStates.concat(this.conflictResources.resourceStates,
 																			this.stagedResources.resourceStates,
