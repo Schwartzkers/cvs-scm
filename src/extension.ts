@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { CvsSourceControl } from './cvsSourceControl';
+import { CvsSourceControl, onResouresLocked, onResouresUnlocked } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { ConfigManager} from './configManager';
 import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
 import { CvsCompareContentProvider } from './cvsCompareContentProvider';
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
+import { FileHistoryController as FileHistoryController } from './fileHistoryController';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
@@ -15,9 +16,9 @@ let fileBranchProvider: CvsBranchProvider;
 let fileBranchTree:  vscode.TreeView<BranchData>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let revStatusBarItem: vscode.StatusBarItem;
-let fileHistoryTimeout: NodeJS.Timer;
 let branchesTimeout: NodeJS.Timer;
 let revStatusBarTimeout: NodeJS.Timer;
+let fileHistoryController: FileHistoryController;
 
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
@@ -36,18 +37,17 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(revStatusBarItem);
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateStatusBarItem(), context.subscriptions));
 
+	cvsCompareProvider = new CvsCompareContentProvider();
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
+
 	fileHistoryProvider = new CvsRevisionProvider(configManager.getFileHistoryEnableFlag());
 	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistoryProvider, canSelectMany: false} );
-	if (configManager.getFileHistoryEnableFlag()) {
-		cvsCompareProvider = new CvsCompareContentProvider();
-
-		context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
-		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateFileHistoryTree(), context.subscriptions));
-		context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => updateFileHistoryTree(), context.subscriptions));
-	}
-	else {
-		fileHistoryTree.message = 'Enable view in CVS settings.';
-	}
+	fileHistoryController =  new FileHistoryController(fileHistoryProvider, fileHistoryTree, configManager.getFileHistoryEnableFlag());
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileHistoryController.updateFileHistoryTree(), context.subscriptions));
+	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => fileHistoryController.updateFileHistoryTree(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
+	
 
 	fileBranchProvider = new CvsBranchProvider(configManager.getBranchesEnableFlag());
 	fileBranchTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: fileBranchProvider, canSelectMany: false} );
@@ -70,7 +70,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
-		console.log('refresh');
 		// check CVS repository for local and remote changes
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.getCvsState(); }
@@ -441,38 +440,6 @@ function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: v
 	context.subscriptions.push(cvsSourceControl);
 }
 
-function requestToUpdateFileHistory() {
-	if (!fileHistoryTree.visible) {
-		fileHistoryTree.description = '';
-		return;
-	}
-
-	const editor = vscode.window.activeTextEditor;
-	if (editor) {
-		if (editor.document.uri.scheme !== 'file') {
-			return;
-		} else {
-			const sourceControl = findSourceControl(editor.document.uri);
-				
-			if (sourceControl) {
-				// FIX ME: don't update again if already displayed
-				const resource = vscode.workspace.asRelativePath(editor.document.uri, false); 
-				fileHistoryTree.message = '';
-				fileHistoryTree.description = resource;
-				fileHistoryProvider.refresh();
-			} else {
-				fileHistoryProvider.refresh();
-				fileHistoryTree.description = '';
-				fileHistoryTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide file history information.';
-			}
-		}
-	} else {
-		fileHistoryProvider.refresh();
-		fileHistoryTree.description = '';
-		fileHistoryTree.message = 'There are no editors open that can provide file history information.';
-	}
-}
-
 function requestToUpdateBranches() {
 	if (!fileBranchTree.visible) {
 		fileBranchTree.description = '';
@@ -513,16 +480,6 @@ export async function updateBranchesTree(): Promise<void> {
 	}
 
 	branchesTimeout = setTimeout(() => requestToUpdateBranches(), 500);
-}
-
-export async function updateFileHistoryTree(): Promise<void> {
-	if (!configManager.getFileHistoryEnableFlag()) { return; }
-
-	if (fileHistoryTimeout) {
-		clearTimeout(fileHistoryTimeout);
-	}
-
-	fileHistoryTimeout = setTimeout(() => requestToUpdateFileHistory(), 500);
 }
 
 export async function updateStatusBarItem(): Promise<void> {

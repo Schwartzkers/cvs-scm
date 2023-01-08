@@ -1,17 +1,21 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
 		 CancellationTokenSource, Uri, ExtensionContext, Command, Disposable,
-		 workspace, RelativePattern, window, commands } from 'vscode';
+		 workspace, RelativePattern, window, commands, EventEmitter, Event } from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import { SourceFileState, SourceFile } from './sourceFile';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
-import { execCmd, readDir, readFile, writeFile, deleteUri, createDir, spawnCmd } from './utility';
+import { readDir, readFile, writeFile, deleteUri, createDir } from './utility';
 import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
 import { BranchData } from './cvsBranchProvider';
-import { updateStatusBarItem, updateFileHistoryTree, updateBranchesTree } from './extension';
+import { updateStatusBarItem, updateBranchesTree } from './extension';
+
+
+export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
+export let onResouresUnlocked: EventEmitter<Uri> = new EventEmitter<Uri>();
 
 export class CvsSourceControl implements Disposable {
 	private cvsScm: SourceControl;
@@ -27,7 +31,7 @@ export class CvsSourceControl implements Disposable {
 	private stagedFiles: string[];
 	private configManager: ConfigManager;
 	private _startup: boolean = true;
-	private _resourcesDirty = false;
+	private _resourcesDirty: boolean = false;
 
 
 	constructor(context: ExtensionContext,
@@ -111,6 +115,9 @@ export class CvsSourceControl implements Disposable {
 	}
 
 	async getResourceChanges(uri: Uri): Promise<void> {
+		onResouresLocked.fire(this.workspacefolder);
+
+		// TODO emmit event to stop update of trees, diffs, status bar
 		console.log('getResourceChanges');
 		// add, delete, first local change or a CVS/ folder event
 		await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
@@ -118,19 +125,22 @@ export class CvsSourceControl implements Disposable {
 		this._resourcesDirty = false;
 
 		// TODO is this the correct location for these actions?
-		updateFileHistoryTree();
+		//updateFileHistoryTree();
 		updateBranchesTree();
 		updateStatusBarItem();
 
 		// update any diff editors currently opened as files may have been commited
 		if (this._startup) {
 			this._startup = false; // there's nothing to update on startup
+			// TODO emmit event to start update trees, diffs, status bar
 		} else {
 			const resources = this.changedResources.resourceStates.concat(this.conflictResources.resourceStates,
 																			this.stagedResources.resourceStates,
 																			this.repositoryResources.resourceStates);
 			this.cvsDocumentContentProvider.updated(resources);
 		}
+
+		onResouresUnlocked.fire(this.workspacefolder);
 	}
 
 	refreshScm(): void {
