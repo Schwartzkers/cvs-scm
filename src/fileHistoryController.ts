@@ -1,18 +1,15 @@
-import { Uri, workspace, TreeView, window, TextEditor } from "vscode";
+import { workspace, TreeView, window } from "vscode";
 import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
 import { findSourceControl } from './extension';
+import { Controller } from './contoller';
 
 
-export class FileHistoryController {
-    private _isEnabled: boolean = false;
+export class FileHistoryController extends Controller {
     private _fileHistoryProvider: CvsRevisionProvider;
     private _fileHistoryTree: TreeView<CommitData>;
-    private _fileHistoryTimeout?: NodeJS.Timer;
-    private _displayedFile?: Uri;
-    private _lockedWorkspaces: Uri[] = [];
 
     constructor(fileHistoryProvider: CvsRevisionProvider, fileHistoryTree: TreeView<CommitData>, isEnabled: boolean) {
-        this._isEnabled = isEnabled;
+        super(isEnabled);
         this._fileHistoryProvider = fileHistoryProvider;
         this._fileHistoryTree = fileHistoryTree;
         if (!isEnabled) {
@@ -20,39 +17,7 @@ export class FileHistoryController {
         }
     }
 
-    lockEvent(workspaceUri: Uri): void {
-        if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceUri.fsPath) === -1) {
-            this._lockedWorkspaces.push(workspaceUri);
-            console.log('locked: ' + workspaceUri.fsPath);
-        } else {
-            console.log('workspace already locked');
-        }
-        
-    }
-
-    unlockEvent(workspaceUri: Uri): void {
-        const locked = this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceUri.fsPath);
-        if (locked !== -1) {
-            this._lockedWorkspaces.splice(locked, 1);
-            console.log('unlocked: ' + workspaceUri.fsPath);
-
-            this.requestToUpdateFileHistory();
-        } else {
-            console.log('workspace not found');
-        }
-    }
-
-    async updateFileHistoryTree(): Promise<void> {
-        if (!this._isEnabled) { return; }
-    
-        if (this._fileHistoryTimeout) {
-            clearTimeout(this._fileHistoryTimeout);
-        }
-    
-        this._fileHistoryTimeout = setTimeout(() => this.requestToUpdateFileHistory(), 250);
-    }
-
-    private requestToUpdateFileHistory() {
+    protected async update(): Promise<void> {
         if (!this._fileHistoryTree.visible) {
             this._fileHistoryTree.description = '';
             return;

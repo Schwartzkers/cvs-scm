@@ -8,18 +8,19 @@ import { CvsCompareContentProvider } from './cvsCompareContentProvider';
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 import { FileHistoryController } from './fileHistoryController';
 import { BranchesController } from './branchesController';
+import { StatusBarController } from './statusBarController';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
 let fileHistoryProvider: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
+let fileHistoryController: FileHistoryController;
 let branchesProvider: CvsBranchProvider;
 let branchesTree:  vscode.TreeView<BranchData>;
-let cvsCompareProvider: CvsCompareContentProvider;
-let revStatusBarItem: vscode.StatusBarItem;
-let revStatusBarTimeout: NodeJS.Timer;
-let fileHistoryController: FileHistoryController;
 let branchesController: BranchesController;
+let cvsCompareProvider: CvsCompareContentProvider;
+let statusBarItem: vscode.StatusBarItem;
+let statusBarController: StatusBarController;
 
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
@@ -33,10 +34,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
 
 	configManager = new ConfigManager();
-	revStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions));
-	context.subscriptions.push(revStatusBarItem);
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateStatusBarItem(), context.subscriptions));
+	
+	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBarController = new StatusBarController(statusBarItem, true);
+	context.subscriptions.push(statusBarItem);
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => statusBarController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => statusBarController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => statusBarController.unlockEvent(uri), context.subscriptions));
 
 	cvsCompareProvider = new CvsCompareContentProvider();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
@@ -44,16 +49,16 @@ export function activate(context: vscode.ExtensionContext) {
 	fileHistoryProvider = new CvsRevisionProvider(configManager.getFileHistoryEnableFlag());
 	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistoryProvider, canSelectMany: false} );
 	fileHistoryController =  new FileHistoryController(fileHistoryProvider, fileHistoryTree, configManager.getFileHistoryEnableFlag());
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileHistoryController.updateFileHistoryTree(), context.subscriptions));
-	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => fileHistoryController.updateFileHistoryTree(), context.subscriptions));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileHistoryController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => fileHistoryController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
 	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
 
 	branchesProvider = new CvsBranchProvider(configManager.getBranchesEnableFlag());
 	branchesTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: branchesProvider, canSelectMany: false} );
 	branchesController = new BranchesController(branchesProvider, branchesTree, configManager.getBranchesEnableFlag());
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => branchesController.updateBranchesTree(), context.subscriptions));
-	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateBranchesTree(), context.subscriptions));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => branchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(onResouresLocked.event(uri => branchesController.lockEvent(uri), context.subscriptions));
 	context.subscriptions.push(onResouresUnlocked.event(uri => branchesController.unlockEvent(uri), context.subscriptions));
 
@@ -432,42 +437,6 @@ async function initializeFolder(folder: vscode.WorkspaceFolder, context: vscode.
 function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: vscode.ExtensionContext) {
 	cvsSourceControlRegister.set(cvsSourceControl.getWorkspaceFolder(), cvsSourceControl);
 	context.subscriptions.push(cvsSourceControl);
-}
-
-export async function updateStatusBarItem(): Promise<void> {
-	if (revStatusBarTimeout) {
-		clearTimeout(revStatusBarTimeout);
-	}
-
-	revStatusBarTimeout = setTimeout(() => requestToUpdateStatusBarItem(), 500);
-} 
-
-async function requestToUpdateStatusBarItem(): Promise<void> {
-	const textEditor = vscode.window.activeTextEditor;
-	if (textEditor) {
-		if (textEditor.document.uri.scheme !== 'file') {
-			return;
-		} else {
-			const sourceControl = findSourceControl(textEditor.document.uri);
-				
-			if (sourceControl) {
-				const sourceFile = await sourceControl.getSourceFile(textEditor.document.uri);
-			
-				if (sourceFile.branch && sourceFile.workingRevision) {
-					revStatusBarItem.text = `$(source-control-view-icon) ${sourceFile.branch}: ${sourceFile.workingRevision}`;
-					revStatusBarItem.show();
-				}
-				else {
-					revStatusBarItem.hide();
-				}
-			}
-			else {
-				revStatusBarItem.hide();
-			}
-		}
-	} else {
-		revStatusBarItem.hide();
-	}
 }
 
 // this method is called when your extension is deactivated

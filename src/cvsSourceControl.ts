@@ -11,7 +11,6 @@ import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
 import { BranchData } from './cvsBranchProvider';
-import { updateStatusBarItem } from './extension';
 
 
 export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
@@ -123,8 +122,6 @@ export class CvsSourceControl implements Disposable {
 		await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
 		this.refreshScm();
 		this._resourcesDirty = false;
-
-		updateStatusBarItem();
 
 		// update any diff editors currently opened as files may have been commited
 		if (this._startup) {
