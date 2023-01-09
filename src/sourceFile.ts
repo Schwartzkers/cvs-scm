@@ -1,4 +1,6 @@
 import { Uri } from "vscode";
+import { BranchData } from "./cvsBranchProvider";
+import { CommitData } from "./cvsRevisionProvider";
 
 export enum SourceFileState {
     unknown,
@@ -31,14 +33,19 @@ const stateMap = new Map<string, SourceFileState>([
 ]);
 
 export class SourceFile {
+    public uri: Uri | undefined;
     public state: SourceFileState | undefined;
     public branch: string | undefined;
     public workingRevision: string | undefined;
     public repoRevision: string | undefined;
     public isFolder: boolean=false;
+    public commitLog: CommitData[] | undefined;
+    public branches: BranchData[] | undefined;
 
-	constructor(public uri: Uri) {
-		this.uri = uri;
+	constructor(uri: Uri | undefined) {
+		if (uri) {
+            this.uri = uri;
+        }
     }
 
     setState(state: string): void {

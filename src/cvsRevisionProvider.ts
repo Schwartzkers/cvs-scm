@@ -2,8 +2,9 @@ import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, Them
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
-import { CVS_SCHEME_COMPARE, parseCvsStatusOutput } from './cvsRepository';
-import { SourceFile } from './sourceFile';
+import { CVS_SCHEME_COMPARE } from './cvsRepository';
+import { SourceFileState } from './sourceFile';
+import { findSourceControl } from "./extension";
 
 export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     private _onDidChangeTreeData: EventEmitter<CommitData | undefined | null | void> = new EventEmitter<CommitData | undefined | null | void>();
@@ -43,34 +44,47 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
     }
 
     async getDeps(uri: Uri): Promise<CommitData[]> {
-        // get status of file to repo version
-        const sourceFile = new SourceFile(uri);
-        await this.getStatusOfFile(sourceFile);
+        let commits: CommitData[] = [];
 
-        let commits: CommitData[];
-        commits = [];
-        if (sourceFile.repoRevision) {
-            let revision = sourceFile.repoRevision;
-            let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
-            while (true) { // must handle nested branches
-                const log = await this.readCvsLog(uri, revision);
-                commits = commits.concat(this.parseCvsLog(log, uri));
+        const sourceFile = await findSourceControl(uri)?.getSourceFile(uri);
 
-                if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (e.g. 1.3)
-                    break;
+        if (sourceFile) {
+            // no logs for added or untracked
+            if (sourceFile.state === SourceFileState.untracked ||
+                sourceFile.state === SourceFileState.added) {
+                    return commits;
+            }
+
+            if (sourceFile.commitLog) {
+                console.log('return cache');
+                return sourceFile.commitLog;
+            }
+            else {
+                if (sourceFile.repoRevision) {
+                    let revision = sourceFile.repoRevision;
+                    let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
+                    while (true) { // must handle nested branches
+                        const log = await this.readCvsLog(uri, revision);
+                        commits = commits.concat(this.parseCvsLog(log, uri));
+        
+                        if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (e.g. 1.3)
+                            break;
+                        }
+        
+                        // this file has branch commits, need to determine parent revision
+                        // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3 or 1.3.2.2.2.1 -> 1.3.2.2 -> 1.3
+                        // get location of second last '.'
+                        const parentRevIndex = revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
+                        revision = revision.substring(0, parentRevIndex);
+        
+                        if (loops === 10) {
+                            window.showErrorMessage("Error getting cvs log. Too many nested branches.");
+                            break;
+                        }
+                        loops += 1;
+                    }
+                    sourceFile.commitLog =  commits;
                 }
-
-                // this file has branch commits, need to determine parent revision
-                // e.g 1.3.2.2 -> 1.3 or 1.3.20.2 -> 1.3 or 1.3.2.2.2.1 -> 1.3.2.2 -> 1.3
-                // get location of second last '.'
-                const parentRevIndex = revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
-                revision = revision.substring(0, parentRevIndex);
-
-                if (loops === 10) {
-                    window.showErrorMessage("Error getting cvs log. Too many nested branches.");
-                    break;
-                }
-                loops += 1;
             }
         }
 
@@ -87,21 +101,6 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         }
 
         return result.output;
-    }
-
-    async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
-        const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
-        const status = await spawnCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
-
-        if (!status.result || status.output.length === 0) {
-            window.showErrorMessage(`Failed to obtain cvs status for resource: ${basename(sourceFile.uri.fsPath)}`);
-            return;
-        }
-
-        if (!status.output.includes("Status: Unknown") && !status.output.includes("Status: Locally Added")) {
-            const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
-            await Promise.all(sourceFileStatusPromises);
-        }
     }
 
     parseCvsLog(log: string, uri: Uri): CommitData[] {

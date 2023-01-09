@@ -2,8 +2,9 @@ import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, Them
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
-import { CVS_SCHEME_COMPARE, parseCvsStatusOutput } from './cvsRepository';
-import { SourceFile } from './sourceFile';
+import { CVS_SCHEME_COMPARE } from './cvsRepository';
+import { SourceFile, SourceFileState } from './sourceFile';
+import { findSourceControl } from "./extension";
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();
@@ -42,19 +43,34 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     }
 
     async getDeps(uri: Uri): Promise<BranchData[]> {
-        // get status of file to get active branch
-        const sourceFile = new SourceFile(uri);
-        await this.getStatusOfFile(sourceFile);
-
-        const log = await this.readCvsLog(uri);
-        const branches = await this.getBranches(log);
+        const sourceFile = await findSourceControl(uri)?.getSourceFile(uri);
 
         let branchData: BranchData[] = [];
-        branchData.push(new BranchData('main', uri, sourceFile.branch === 'main'));
 
-        branches.forEach(element => {
-            branchData.push(new BranchData(element, uri, sourceFile.branch === element));
-        });
+        if (sourceFile) {
+            // no logs for added or untracked
+            if (sourceFile.state === SourceFileState.untracked ||
+                sourceFile.state === SourceFileState.added) {
+                    return branchData;
+            }
+
+            if (sourceFile.branches) {
+                console.log('return cache');
+                return sourceFile.branches;
+            }
+            else {
+                const log = await this.readCvsLog(uri);
+                const branches = await this.getBranches(log);
+        
+                branchData.push(new BranchData('main', uri, sourceFile.branch === 'main'));
+        
+                branches.forEach(element => {
+                    branchData.push(new BranchData(element, uri, sourceFile.branch === element));
+                });
+
+                sourceFile.branches = branchData;
+            }
+        }
 
         return branchData;
     }
@@ -69,21 +85,6 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         }
 
         return result.output;
-    }
-
-    async getStatusOfFile(sourceFile: SourceFile): Promise<void> {
-        const cvsCmd = `cvs status ${basename(sourceFile.uri.fsPath)}`;
-        const status = await spawnCmd(cvsCmd, dirname(sourceFile.uri.fsPath));
-
-        if (!status.result || status.output.length === 0) {
-            window.showErrorMessage(`Failed to obtain cvs status for resource: ${basename(sourceFile.uri.fsPath)}`);
-            return;
-        }
-
-        if (!status.output.includes("Status: Unknown") && !status.output.includes("Status: Locally Added")) {
-            const sourceFileStatusPromises = status.output.split(EOL).map(async (line) => await parseCvsStatusOutput(line, sourceFile));
-            await Promise.all(sourceFileStatusPromises);
-        }
     }
 
     async getBranches(log: string): Promise<string[]> {
@@ -131,5 +132,36 @@ export class BranchData extends TreeItem {
             arguments: [left, right, `${basename(this.resourceUri.fsPath)} (${this.branchName}) <-> (working})`],
         };
         this.command = command;
+    }
+}
+
+async function parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
+    // ===================================================================
+    // File: Makefile          Status: Needs Patch
+
+    // Working revision:    1.1     2022-11-03 08:15:12 -0600
+    // Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
+    // Commit Identifier:   1006377FE10849CE253
+    // Sticky Tag:          (none)
+    // Sticky Date:         (none)
+    // Sticky Options:      (none)
+
+    if (output.includes('Status:')) {
+        const state = output.trim().split('Status: ')[1];
+        sourceFile.setState(state);
+    }
+    else if (output.includes('Working revision:')) {
+        sourceFile.workingRevision = output.trim().split(/\s+/)[2];
+    }
+    else if (output.includes('Repository revision:')) {
+        const repoLine = output.trim().split(/\s+/);
+        sourceFile.repoRevision = repoLine[2];
+    }
+    else if (output.includes('Sticky Tag:')) {
+        let branch = output.trim().split(/\s+/)[2];
+        if (branch === '(none)') {
+            branch = 'main';
+        }
+        sourceFile.branch = branch;
     }
 }
