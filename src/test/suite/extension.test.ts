@@ -16,7 +16,7 @@ suite('Extension Test Suite', () => {
 	let ext: vscode.Extension<any> | undefined;
 	let configManager: ConfigManager.ConfigManager;
 	let cvsRepository: CvsRepository.CvsRepository;
-	const workspace = vscode.Uri.parse('~/src/schwartzkers/cvs-scm-example');
+	const workspace = vscode.Uri.parse('/home/jon/src/schwartzkers/cvs-scm-example');
 	let resourceMap = new Map();
 
 	suiteSetup(async () => {  
@@ -51,7 +51,7 @@ suite('Extension Test Suite', () => {
 		await cvsRepository.getResources();
 
 		if (cvsRepository.getChangesSourceFiles().length === 0) {
-			assert.fail('No changes found in test repository');
+			assert.fail('No changes found in test repository: ' + cvsRepository.getChangesSourceFiles().length);
 		}
 		
 		assert.strictEqual(cvsRepository.getChangesSourceFiles().length, 12); // expecting 12 changes in repo
@@ -59,7 +59,7 @@ suite('Extension Test Suite', () => {
 		resourceMap.forEach((value: SourceFile.SourceFileState, key: string) => {
 			let foundChange = false;
 			for(const change of cvsRepository.getChangesSourceFiles()) {
-				if (change.uri.fsPath.includes(key)) {
+				if (change.uri?.fsPath.includes(key)) {
 					foundChange = true;
 					assert.strictEqual(change.state, value);
 
