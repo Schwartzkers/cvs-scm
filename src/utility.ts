@@ -33,7 +33,7 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
 export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResult>  {
     const { spawn } = require("child_process");
 
-    console.log(cvsCommand);
+    //console.log(cvsCommand);
 
     let stdout = '';
     let stderr = '';
@@ -65,7 +65,7 @@ export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResu
         });
 
         cmd.on("close", (code: any) => {
-            console.log(`child process (spawn) exited with code ${code}`);
+            //console.log(`child process (spawn) exited with code ${code}`);
             resolve(true);
         });
     });

@@ -38,8 +38,6 @@ export class CvsRepository implements QuickDiffProvider {
         const sourceFilePromises = response.output.split(EOL).map(async (line) => await this.parseCvsUpdateOutput(line, tempFiles));
         await Promise.all(sourceFilePromises);
 
-        console.log(tempFiles.length);
-
         if (tempFiles.length > 0) {
             // get status for "most" files returned
             let resources: Uri[] = [];
@@ -140,7 +138,6 @@ export class CvsRepository implements QuickDiffProvider {
     }
 
     async createSourceFile(uri: Uri): Promise<SourceFile> {
-        console.log('createSourceFile');
         let sourceFile = new SourceFile(uri);
         this.parseCvsStatusOutput(await this.status(uri), sourceFile);
 

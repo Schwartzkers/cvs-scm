@@ -73,12 +73,11 @@ export class CvsSourceControl implements Disposable {
     }
 
     getCvsState(): void {
-        console.log('getCvsState');
         this.onResourceChange(this.workspacefolder);
     }
 
     onResourceChange(uri: Uri, dirty: boolean = true): void {
-        console.log('onResourceChange: ' + uri.fsPath);
+        //console.log('onResourceChange: ' + uri.fsPath);
 
         let isDirty = false;
 
@@ -95,7 +94,6 @@ export class CvsSourceControl implements Disposable {
                 for (const resource of resources) {
                     if (resource.resourceUri.fsPath === uri.fsPath) {
                         foundResource = true;
-                        console.log('found ' + uri.fsPath);
                         break;
                     }
                 }
@@ -119,8 +117,7 @@ export class CvsSourceControl implements Disposable {
     async getResourceChanges(uri: Uri): Promise<void> {
         // emmit event to stop update of trees, status bar
         onResouresLocked.fire(this.workspacefolder);
-        
-        console.log('getResourceChanges');
+
         // add, delete, first local change or a CVS/ folder event
         await this.cvsRepository.getResources(); // only get resourcs on CVS changes?
         this.refreshScm();
