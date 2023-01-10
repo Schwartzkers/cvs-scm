@@ -89,7 +89,7 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     async getBranches(log: string): Promise<string[]> {
         let branches: string[] = [];
         const branchPromises = log.split(EOL).map(async (line) => {
-            let branch = line.match(/^\t.*0.{2}$/)?.[0]; //element.search(/^\t.*0.{2}$/) !== -1
+            let branch = line.match(/^\t.+:\s\d+\..*\.0\.\d+$/)?.[0]; //element.search(/^\t.*0.{2}$/) !== -1
             if (branch) {
                 branches.push(branch.substring(0,branch.indexOf(':')).trim());
             }
@@ -131,36 +131,5 @@ export class BranchData extends TreeItem {
             arguments: [left, right, `${basename(this.resourceUri.fsPath)} (${this.branchName}) <-> (working})`],
         };
         this.command = command;
-    }
-}
-
-async function parseCvsStatusOutput(output: string, sourceFile: SourceFile): Promise<void> {
-    // ===================================================================
-    // File: Makefile          Status: Needs Patch
-
-    // Working revision:    1.1     2022-11-03 08:15:12 -0600
-    // Repository revision: 1.2     /home/user/.cvsroot/schwartzkers/cvs-scm-example/Makefile,v
-    // Commit Identifier:   1006377FE10849CE253
-    // Sticky Tag:          (none)
-    // Sticky Date:         (none)
-    // Sticky Options:      (none)
-
-    if (output.includes('Status:')) {
-        const state = output.trim().split('Status: ')[1];
-        sourceFile.setState(state);
-    }
-    else if (output.includes('Working revision:')) {
-        sourceFile.workingRevision = output.trim().split(/\s+/)[2];
-    }
-    else if (output.includes('Repository revision:')) {
-        const repoLine = output.trim().split(/\s+/);
-        sourceFile.repoRevision = repoLine[2];
-    }
-    else if (output.includes('Sticky Tag:')) {
-        let branch = output.trim().split(/\s+/)[2];
-        if (branch === '(none)') {
-            branch = 'main';
-        }
-        sourceFile.branch = branch;
     }
 }
