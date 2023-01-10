@@ -28,7 +28,7 @@ export class BranchesController extends Controller {
             // check if workspace is locked
             const workspaceFolder = workspace.getWorkspaceFolder(editor.document.uri);
             if (workspaceFolder && this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceFolder.uri.fsPath) !== -1) {
-                console.log('workspace is currently locked');
+                //console.log('workspace is currently locked');
                 return;
             } else if (editor.document.uri.scheme !== 'file') {
                 return;

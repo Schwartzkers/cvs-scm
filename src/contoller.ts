@@ -15,9 +15,9 @@ export class Controller {
     lockEvent(workspaceUri: Uri): void {
         if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceUri.fsPath) === -1) {
             this._lockedWorkspaces.push(workspaceUri);
-            console.log('locked: ' + workspaceUri.fsPath);
+            //console.log('locked: ' + workspaceUri.fsPath);
         } else {
-            console.log('workspace already locked');
+            //console.log('workspace already locked');
         }
     }
 
@@ -25,11 +25,11 @@ export class Controller {
         const locked = this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceUri.fsPath);
         if (locked !== -1) {
             this._lockedWorkspaces.splice(locked, 1);
-            console.log('unlocked: ' + workspaceUri.fsPath);
+            //console.log('unlocked: ' + workspaceUri.fsPath);
 
             this.update();
         } else {
-            console.log('workspace not found');
+            //console.log('workspace not found');
         }
     }
 

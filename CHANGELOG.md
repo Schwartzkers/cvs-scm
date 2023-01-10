@@ -3,6 +3,11 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ## [v1.7.4]
 - Pe-release version.
+- Add `BRANCHES` tree to list the branches available for the file opened in the active editor.
+- Refactor code to reduce cvs server calls.
+- Cache cvs data for unchanged files.
+## [v1.7.4]
+- Pe-release version.
 - Fix issue where editor gutter diffs not updated after a commit.
 - Add debounce for `FILE HISTORY` events for a better UI experience.
 ## [v1.7.3]

@@ -55,7 +55,6 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
             }
 
             if (sourceFile.branches) {
-                console.log('return cache');
                 return sourceFile.branches;
             }
             else {

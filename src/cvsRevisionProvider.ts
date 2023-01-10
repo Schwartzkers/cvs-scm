@@ -56,7 +56,6 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
             }
 
             if (sourceFile.commitLog) {
-                console.log('return cache');
                 return sourceFile.commitLog;
             }
             else {

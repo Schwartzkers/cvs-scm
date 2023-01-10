@@ -16,7 +16,7 @@ export class StatusBarController extends Controller {
         if (textEditor) {
             const workspaceFolder = workspace.getWorkspaceFolder(textEditor.document.uri);
             if (workspaceFolder && this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceFolder.uri.fsPath) !== -1) {
-                console.log('workspace is currently locked');
+                //console.log('workspace is currently locked');
                 return;
             } else 
             if (textEditor.document.uri.scheme !== 'file') {
