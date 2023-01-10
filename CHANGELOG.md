@@ -1,7 +1,10 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
-## [v1.7.4]
+## [v1.7.6]
+- Pe-release version.
+- Handle Branch names with `_` when comparing.
+## [v1.7.5]
 - Pe-release version.
 - Add `BRANCHES` tree to list the branches available for the file opened in the active editor.
 - Refactor code to reduce cvs server calls.

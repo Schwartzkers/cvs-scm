@@ -156,7 +156,7 @@ export class CommitData extends TreeItem {
         private date: string,
     ) {
         super(revision + "  " + shortMsg.slice(0, 50), TreeItemCollapsibleState.None);
-        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${this.revision}`);
+        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}__rev_${this.revision}`);
         this.tooltip = this.commitMsg;
         this.description = this.author + ", " + this.date;
         this.iconPath = new ThemeIcon("git-commit");
@@ -183,7 +183,7 @@ export class CommitData extends TreeItem {
         }
 
         if (shouldDiff) {
-            const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}_${previousRevision}`);
+            const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}__rev_${previousRevision}`);
             const right = this.resourceUri;
     
             const command: Command =

@@ -24,7 +24,7 @@ export class CvsCompareContentProvider implements TextDocumentContentProvider, D
 			return "Canceled";
 		}
 		
-		const revision = basename(uri.fsPath.slice(uri.fsPath.lastIndexOf('_')+1));
+		const revision = basename(uri.fsPath.slice(uri.fsPath.lastIndexOf('__rev_')+6));
 
 		return new Promise((resolve) => {
 			resolve(this.getRepositoryRevision(uri, revision));
@@ -34,9 +34,9 @@ export class CvsCompareContentProvider implements TextDocumentContentProvider, D
 	async getRepositoryRevision(uri: Uri, revision: string): Promise<string> {
 		let cvsCmd: string = '';
 		if (revision === 'main') {
-			cvsCmd = `cvs -Q update -p -A ${basename(uri.fsPath.split("_"+revision)[0])}`;
+			cvsCmd = `cvs -Q update -p -A ${basename(uri.fsPath.split("__rev_"+revision)[0])}`;
 		} else {
-			cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("_"+revision)[0])}`;
+			cvsCmd = `cvs -Q update -p -r${revision} ${basename(uri.fsPath.split("__rev_"+revision)[0])}`;
 		}
 		const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
 
