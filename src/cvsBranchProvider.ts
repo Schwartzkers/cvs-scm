@@ -121,7 +121,7 @@ export class BranchData extends TreeItem {
         this.id = this.branchName;
         this.resourceUri = uri;
 
-        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${this.resourceUri.fsPath}_${this.branchName}`);
+        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${this.resourceUri.fsPath}__rev_${this.branchName}`);
         const right = this.resourceUri;
 
         const command: Command =
