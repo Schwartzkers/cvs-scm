@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.7]
+- Pe-release version.
+- Fix bug where branches were not included in branch tree if the branch number was two digits or more.
 ## [v1.7.6]
 - Pe-release version.
 - Handle Branch names with `_` when comparing.
