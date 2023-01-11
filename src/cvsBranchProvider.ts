@@ -119,16 +119,15 @@ export class BranchData extends TreeItem {
         this.iconPath = new ThemeIcon("git-branch");
         this.contextValue = "branch";
         this.id = this.branchName;
-        this.resourceUri = uri;
 
-        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${this.resourceUri.fsPath}__rev_${this.branchName}`);
-        const right = this.resourceUri;
+        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.branchName})`);
+        const right = uri;
 
         const command: Command =
         {
             title: "File History",
             command: "vscode.diff",
-            arguments: [left, right, `${basename(this.resourceUri.fsPath)} (${this.branchName}) <-> (working})`],
+            arguments: [left, right, `${basename(uri.fsPath)} (${this.branchName}) <-> (working})`],
         };
         this.command = command;
     }
