@@ -400,6 +400,8 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
+
+	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
 }
 
 export function findSourceControl(resource: vscode.Uri): CvsSourceControl | undefined  {

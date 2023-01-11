@@ -66,11 +66,18 @@
 			"scm": [
 			  {
 				"id": "cvs-file-revisions",
-				"name": "FILE HISTORY"
+				"name": "File History",
+				"contextualTitle": "CVS",
+				"visibility": "collapsed",
+				"when": "cvs-scm.enabled == true"
+
 			  },
 			  {
 				"id": "cvs-file-branches",
-				"name": "BRANCHES"
+				"name": "Branches",
+				"contextualTitle": "CVS",
+				"visibility": "collapsed",
+				"when": "cvs-scm.enabled == true"
 			  }
 			]
 		},
@@ -211,6 +218,12 @@
 				"command": "cvs-scm.checkout-branch",
 				"title": "Switch Workspace to Branch",
 				"icon": "$(cloud-download)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.compare-revisions",
+				"title": "Compare to Revisions",
+				"icon": "$(compare-changes)",
 				"category": "cvs-scm"
 			}
 		],
