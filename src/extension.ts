@@ -442,4 +442,6 @@ function registerCvsSourceControl(cvsSourceControl: CvsSourceControl, context: v
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', false);
+}

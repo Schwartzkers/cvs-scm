@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.8]
+- Pe-release version.
+- Fix bug where CVS views registered with other SCM provders.
+- Change revision token used in diff editors (e.g. `file.log (1.4) <-> file.log (1.5)`).
 ## [v1.7.7]
 - Pe-release version.
 - Fix bug where branches were not included in branch tree if the branch number was two digits or more.
