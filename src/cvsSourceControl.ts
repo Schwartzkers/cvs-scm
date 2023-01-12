@@ -572,31 +572,32 @@ export class CvsSourceControl implements Disposable {
 
         let success = false;
 
-        // 1. remove temp CVS file (e.g. 'test.txt,t')
+        // 1. remove temp CVS file (e.g. 'test.txt,t') file may not exist on older cvs versions
         const files = await readDir(dirname(uri.fsPath) + '/CVS');
         if (files.length > 0) {
             for (const file of files) {
                 if (file.includes(basename(uri.fsPath))) {
-                    success = await deleteUri(Uri.parse(dirname(uri.fsPath) + '/CVS/' + file));
+                    if (!(await deleteUri(Uri.parse(dirname(uri.fsPath) + '/CVS/' + file)))) {
+                        console.warn('Failed to delete temp cvs file');
+                    }
                     break;
                 }
             }
 
             // 2. get lines from Entries to add to the new Entries file
             let newEntries = '';
-            if (success) {
-                success = false; // reset for next block of logic
-                
-                const lines = await readFile(dirname(uri.fsPath) + '/CVS/Entries');
-                if (lines && lines.length > 0) {
-                    for (const line of lines.split(EOL)) {
-                        // do not include the line in Entries to be discarded
-                        if (line.includes(basename(uri.fsPath)) === false) {
-                            newEntries = newEntries.concat(line + EOL);
-                        }
+            const lines = await readFile(dirname(uri.fsPath) + '/CVS/Entries');
+            if (lines && lines.length > 0) {
+                for (const line of lines.split(EOL)) {
+                    // do not include the line in Entries to be discarded
+                    if (line.includes(basename(uri.fsPath)) === false) {
+                        newEntries = newEntries.concat(line + EOL);
                     }
-                    success = true;
                 }
+                success = true;
+            }
+            else {
+                console.warn('Failed to read CVS/Entires');
             }
 
             // 3. create new Entries file and remove old Entires
@@ -613,6 +614,10 @@ export class CvsSourceControl implements Disposable {
                         // attempt to revert to old Entries
                         await fsPromises.rename(dirname(uri.fsPath) + '/CVS/Entries.bak', dirname(uri.fsPath) + '/CVS/Entries');
                     }
+                }
+
+                if (!success) {
+                    console.warn('Failed to update CVS/Entires');
                 }
             }
         }

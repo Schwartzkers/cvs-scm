@@ -33,7 +33,7 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
 export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResult>  {
     const { spawn } = require("child_process");
 
-    //console.log(cvsCommand);
+    console.log(cvsCommand);
 
     let stdout = '';
     let stderr = '';
