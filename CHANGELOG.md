@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.7.9]
+- Pe-release version.
+- Fix bug where unable to undo the add of file on older CVS versions.
 ## [v1.7.8]
 - Pe-release version.
 - Fix bug where CVS views registered with other SCM provders.
