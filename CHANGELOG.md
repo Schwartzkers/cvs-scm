@@ -1,39 +1,41 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.8.0]
+- Official release of 1.7 pre-release.
 ## [v1.7.9]
-- Pe-release version.
+- Pre-release version.
 - Fix bug where unable to undo the add of file on older CVS versions.
 ## [v1.7.8]
-- Pe-release version.
+- Pre-release version.
 - Fix bug where CVS views registered with other SCM provders.
 - Change revision token used in diff editors (e.g. `file.log (1.4) <-> file.log (1.5)`).
 ## [v1.7.7]
-- Pe-release version.
+- Pre-release version.
 - Fix bug where branches were not included in branch tree if the branch number was two digits or more.
 ## [v1.7.6]
-- Pe-release version.
+- Pre-release version.
 - Handle Branch names with `_` when comparing.
 ## [v1.7.5]
-- Pe-release version.
+- Pre-release version.
 - Add `BRANCHES` tree to list the branches available for the file opened in the active editor.
 - Refactor code to reduce cvs server calls.
 - Cache cvs data for unchanged files.
 ## [v1.7.4]
-- Pe-release version.
+- Pre-release version.
 - Fix issue where editor gutter diffs not updated after a commit.
 - Add debounce for `FILE HISTORY` events for a better UI experience.
 ## [v1.7.3]
-- Pe-release version.
+- Pre-release version.
 - Handle nested branches (branch of branch) in `FILE HISTORY` view.
 ## [v1.7.2]
-- Pe-release version.
+- Pre-release version.
 - Handle branch numbers greater than 1 digit in cvs log (e.g. 1.3.20.2).
 ## [v1.7.1]
-- Pe-release version.
+- Pre-release version.
 - Change delimiter for cvs log parsing.
 ## [v1.7.0]
-- Pe-release version.
+- Pre-release version.
 - Added the `FILE HISTORY` tree view to list the file revisions for the current branch.
 - Fix bug where diff editor was not updated after commiting a file included in diff editor.
 ## [v1.6.2]
