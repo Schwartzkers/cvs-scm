@@ -459,11 +459,14 @@ export class CvsSourceControl implements Disposable {
             changes.push(element.resourceUri);
         });
 
-        if ( await this.cvsRepository.commit(this.cvsScm.inputBox.value, changes)) {
+        const response = await this.cvsRepository.commit(this.cvsScm.inputBox.value, changes);
+        if (response.result) {
             this.stagedFiles = [];
             this.cvsScm.inputBox.value = '';
+        } else if (response.stderr.includes("Up-to-date check failed")) {
+            window.showWarningMessage(`Unable to commit changes. Refresh of repository required. CVS ERROR "${response.stderr}"`);
         } else {
-            window.showErrorMessage('Failed to commit changes to repository.');
+            window.showErrorMessage(`Failed to commit changes to repository. CVS ERROR "${response.stderr}"`);
         };
     }
 
@@ -528,42 +531,49 @@ export class CvsSourceControl implements Disposable {
     }
 
     async addResource(uri: Uri): Promise<void>  {
-        if ( ! await this.cvsRepository.add(uri)) {
-            window.showErrorMessage(`Failed to schedule file for addition: ${basename(uri.fsPath)}`);
+        const response = await this.cvsRepository.add(uri);
+        if (!response.result) {
+            window.showErrorMessage(`Failed to schedule file for addition: ${basename(uri.fsPath)}. CVS ERROR: "${response.stderr}"`);
         }
     }
 
     async removeResource(uri: Uri): Promise<void>  {
-        if (! await this.cvsRepository.remove(uri)) {
-            window.showErrorMessage(`Failed to schedule file for removal: ${basename(uri.fsPath)}`);
+        const response = await this.cvsRepository.remove(uri);
+        if (!response.result) {
+            window.showErrorMessage(`Failed to schedule file for removal: ${basename(uri.fsPath)}. CVS ERROR: "${response.stderr}"`);
         }
     }
 
     async recoverResource(uri: Uri): Promise<void>  {
         this.unstageFile(uri, false); // in case staged
 
-        if (! await this.cvsRepository.update(uri)) {
-            window.showErrorMessage(`Failed to recover deleted file: ${basename(uri.fsPath)}`);
+        const response = await this.cvsRepository.update(uri);
+        if (!response.result) {
+            window.showErrorMessage(`Failed to recover deleted file: ${basename(uri.fsPath)}. CVS ERROR: "${response.stderr}"`);
         }
     }
 
     async revertFile(uri: Uri): Promise<void> {
         this.unstageFile(uri, false); // in case staged
 
-        if(! await this.cvsRepository.revert(uri)) {
-            window.showErrorMessage(`Failed to revert file to HEAD: ${basename(uri.fsPath)}`);
+        const response = await this.cvsRepository.revert(uri);
+        if(!response.result ) {
+            window.showErrorMessage(`Failed to revert file to HEAD: ${basename(uri.fsPath)}. CVS ERROR: "${response.stderr}"`);
         }
     }
 
     async mergeLatest(uri: Uri): Promise<void>  {
-        // TODO how to handle errors
-        // cvs update will report errors if merge results in conflicts
-        //   csmerge: warning: conflicts during merge
+        // cvs update will report output to stderr if merge results in conflicts
+        // but will return pass (0 return code)
+        //   rcsmerge: warning: conflicts during merge
         //   cvs update: conflicts found in newfile3.cpp
         // no errors with patching
         // no errors on checkout new file
         // stderr on removal "cvs update: `nov17.cpp' is no longer in the repository"
-        await this.cvsRepository.update(uri);
+        const response = await this.cvsRepository.update(uri);
+        if(!response.result) {
+            window.showErrorMessage(`Failed to merge repository changes for file: ${basename(uri.fsPath)}. CVS ERROR: "${response.stderr}"`);
+        }
     }
 
     // can only do this if file was untracked by repository
@@ -640,12 +650,12 @@ export class CvsSourceControl implements Disposable {
     async checkoutFolder(uri: Uri, isRecursive: boolean=true): Promise<void>  {
         let success = false;
         if ((await createDir(uri)) &&  // 1. make folder
-            (await this.cvsRepository.add(uri))) { // 2. cvs add folder
+            ((await this.cvsRepository.add(uri)).result)) { // 2. cvs add folder
                 // 3. cvs update folder
                 if (isRecursive){
-                    success = await this.cvsRepository.updateBuildDirs(uri);
+                    success = (await this.cvsRepository.updateBuildDirs(uri)).result;
                 } else {
-                    success = await this.cvsRepository.update(uri);
+                    success = (await this.cvsRepository.update(uri)).result;
                 }
         }
         
@@ -670,13 +680,13 @@ export class CvsSourceControl implements Disposable {
     }
 
     async switchFileToBranch(branchData: BranchData): Promise<void> {
-        let result = await this.cvsRepository.revert(branchData.uri);
+        let result = (await this.cvsRepository.revert(branchData.uri)).result;
 
         if (result) {
             if (branchData.branchName === 'main') {
-                result = await this.cvsRepository.removeSticky(branchData.uri);
+                result = (await this.cvsRepository.removeSticky(branchData.uri)).result;
             } else {
-                result = await this.cvsRepository.updateToRevision(branchData.uri, branchData.branchName);
+                result = (await this.cvsRepository.updateToRevision(branchData.uri, branchData.branchName)).result;
             }
         }
 
@@ -686,13 +696,13 @@ export class CvsSourceControl implements Disposable {
     }
 
     async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
-        let result = await this.cvsRepository.revert(undefined);
+        let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result) {
             if (branchData.branchName === 'main') {
-                result = await this.cvsRepository.removeSticky(undefined);
+                result = (await this.cvsRepository.removeSticky(undefined)).result;
             } else {
-                result = await this.cvsRepository.updateToRevision(undefined, branchData.branchName);
+                result = (await this.cvsRepository.updateToRevision(undefined, branchData.branchName)).result;
             }
         }
 

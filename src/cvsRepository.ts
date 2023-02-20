@@ -1,6 +1,6 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
-import { execCmd, spawnCmd } from './utility';
+import { execCmd, spawnCmd, CmdResult } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 import { EOL } from 'os';
@@ -11,7 +11,6 @@ export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
 export class CvsRepository implements QuickDiffProvider {
     private _sourceFiles: SourceFile[];
     private _configManager: ConfigManager;
-    private _sourceFilesCache = new Map</*relative workspace path*/ string, SourceFile>;
 
     constructor(private workspaceUri: Uri, configManager: ConfigManager) {
         this._sourceFiles = [];
@@ -153,53 +152,53 @@ export class CvsRepository implements QuickDiffProvider {
         return (await spawnCmd(cvsCmd, this.workspaceUri.fsPath)).output;
     }
 
-    async commit(message: string, changes: Uri[]): Promise<boolean> {
+    async commit(message: string, changes: Uri[]): Promise<CmdResult> {
         // need sting of changed files relative to the workspace root
         let files= '';
         changes.forEach(uri => {
             files = files.concat(workspace.asRelativePath(uri, false) + ' ');
         });
 
-        return (await spawnCmd(`cvs commit -m "${message}" ${files}`, this.workspaceUri.fsPath)).result;
+        return await spawnCmd(`cvs commit -m "${message}" ${files}`, this.workspaceUri.fsPath);
     }
 
-    async add(uri: Uri): Promise<boolean> {
-        return (await spawnCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+    async add(uri: Uri): Promise<CmdResult> {
+        return (await spawnCmd(`cvs add ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
     }
 
-    async remove(uri: Uri): Promise<boolean> {
-        return (await spawnCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+    async remove(uri: Uri): Promise<CmdResult> {
+        return (await spawnCmd(`cvs remove -f ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
     }
 
-    async update(uri: Uri): Promise<boolean> {
-        return (await spawnCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+    async update(uri: Uri): Promise<CmdResult> {
+        return (await spawnCmd(`cvs update ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
     }
 
-    async updateToRevision(uri: Uri | undefined, revision: string): Promise<boolean> {
+    async updateToRevision(uri: Uri | undefined, revision: string): Promise<CmdResult> {
         if (uri) {
-            return (await spawnCmd(`cvs update -r ${revision} ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+            return (await spawnCmd(`cvs update -r ${revision} ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -r ${revision}`, this.workspaceUri.fsPath)).result;
+            return (await spawnCmd(`cvs update -r ${revision}`, this.workspaceUri.fsPath));
         }
     }
 
-    async revert(uri: Uri | undefined): Promise<boolean> {
+    async revert(uri: Uri | undefined): Promise<CmdResult> {
         if (uri) {
-            return (await spawnCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+            return (await spawnCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -C`, this.workspaceUri.fsPath)).result;
+            return (await spawnCmd(`cvs update -C`, this.workspaceUri.fsPath));
         }
     }
 
-    async updateBuildDirs(uri: Uri): Promise<boolean> {
-        return (await spawnCmd(`cvs update -d ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+    async updateBuildDirs(uri: Uri): Promise<CmdResult> {
+        return (await spawnCmd(`cvs update -d ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
     }
 
-    async removeSticky(uri: Uri | undefined): Promise<boolean> {
+    async removeSticky(uri: Uri | undefined): Promise<CmdResult> {
         if (uri) {
-            return (await spawnCmd(`cvs update -A ${basename(uri.fsPath)}`, dirname(uri.fsPath))).result;
+            return (await spawnCmd(`cvs update -A ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -A`, this.workspaceUri.fsPath)).result;
+            return (await spawnCmd(`cvs update -A`, this.workspaceUri.fsPath));
         }
     }
 

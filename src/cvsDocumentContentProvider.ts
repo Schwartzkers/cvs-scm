@@ -4,6 +4,7 @@ import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
 import { CVS_SCHEME } from './cvsRepository';
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
+import { cvsCommandLog } from './extension';
 
 export class CvsFile {
 	constructor(public cvsUri: Uri, public originalText: string="", public originalTextUpdated: boolean=false, ) { }
@@ -74,7 +75,7 @@ export class CvsDocumentContentProvider implements TextDocumentContentProvider, 
 		const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
 
 		if (!result.result) {
-			window.showErrorMessage(`Failed to obtain HEAD revision from repository: ${basename(uri.fsPath)}`);
+			cvsCommandLog.warn(`Quick Diff failure. Unable to obtain HEAD revision from repository for file: ${basename(uri.fsPath)} (e.g. merge conflicts)`);
 			return "";
 		}
 
