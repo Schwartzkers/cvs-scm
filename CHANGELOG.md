@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.9.0]
+- Pre-release version.
+- Added LogOutputChannel.
+- Enhanced the extension error messages.
 ## [v1.8.0]
 - Official release of 1.7 pre-release.
 ## [v1.7.9]
