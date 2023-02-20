@@ -21,12 +21,15 @@ let branchesController: BranchesController;
 let cvsCompareProvider: CvsCompareContentProvider;
 let statusBarItem: vscode.StatusBarItem;
 let statusBarController: StatusBarController;
+export let cvsCommandLog: vscode.LogOutputChannel;
 
 export const cvsSourceControlRegister = new Map<vscode.Uri, CvsSourceControl>();
 
 export function activate(context: vscode.ExtensionContext) {
 	
 	console.log('"cvs-scm" is now active');
+
+	cvsCommandLog = vscode.window.createOutputChannel('CVS', {log: true});
 
 	//vscode.window.showInformationMessage(`Ensure CVS client can connect/login to CVS Server before using CVS extension`);
 
@@ -234,12 +237,13 @@ export function activate(context: vscode.ExtensionContext) {
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(resourceStates[0].resourceUri);
 			if (sourceControl) {
+				// TODO lock resources until updates are done?
 				for (const resource of resourceStates) {
 					// can only merge the following
 					if (resource.contextValue === 'removedFromRepo' ||
 						resource.contextValue === 'checkout' ||
 						resource.contextValue === 'patch' ||
-						resource.contextValue === 'merge') {							
+						resource.contextValue === 'merge') {
 						await sourceControl.mergeLatest(resource.resourceUri);
 					}					
 				}

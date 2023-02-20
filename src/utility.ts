@@ -1,18 +1,25 @@
 import { Uri } from 'vscode';
+import { cvsCommandLog } from './extension';
 
 export class CmdResult {
-    constructor(public result: boolean, public output: string) {
+    constructor(public result: boolean, public output: string, public stderr: string = "") {
         this.result = result;
         this.output = output;
+        this.stderr = stderr;
 	}
 }
 
 export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolean = false): Promise<CmdResult>  {
     const { exec } = require("child_process");
 
+    cvsCommandLog.info(cvsCommand);
+
     let output = "";
     const result = await new Promise<boolean>((resolve) => {
         exec(cvsCommand, {cwd: dir}, (error: any, stdout: string, stderr: string) => {
+            cvsCommandLog.debug(stdout);
+            cvsCommandLog.debug(stderr);
+
             if (getStdErr) {
                 output = (stdout + stderr);
             } else {
@@ -20,8 +27,9 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
             }
 
             if (error) {
+                cvsCommandLog.error(error.message);
                 resolve(false);
-            } else {             
+            } else {
                 resolve(true);
             }
         });
@@ -33,7 +41,7 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
 export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResult>  {
     const { spawn } = require("child_process");
 
-    console.log(cvsCommand);
+    cvsCommandLog.info(cvsCommand);
 
     let stdout = '';
     let stderr = '';
@@ -51,26 +59,32 @@ export async function spawnCmd(cvsCommand: string, dir: string): Promise<CmdResu
         cmd.stderr.setEncoding('utf8');
 
         cmd.stdout.on("data", (data: any) => {
+            cvsCommandLog.debug(data);
             stdout += data;
         });
 
         cmd.stderr.on("data", (data: any) => {
-            console.log(`stderr: ${data}`);
+            cvsCommandLog.debug(data);
             stderr += data;
         });
 
         cmd.on('error', (error: any) => {
-            console.log(`error: ${error.message}`);
+            cvsCommandLog.error(error.message);
             resolve(false);
         });
 
         cmd.on("close", (code: any) => {
-            //console.log(`child process (spawn) exited with code ${code}`);
-            resolve(true);
+            if (code === 0) {
+                resolve(true);
+            }
+            else {
+                cvsCommandLog.warn(`cvs command '${cvsCommand}' exited with code ${code}`);
+                resolve(false);
+            }
         });
     });
 
-    return new CmdResult(result, stdout);
+    return new CmdResult(result, stdout, stderr);
 }
 
 export async function readDir(path: string): Promise<string[]> {
@@ -137,5 +151,5 @@ export async function createDir(uri: Uri): Promise<boolean> {
         result = true;
     }
 
-    return result;        
+    return result;
 }
