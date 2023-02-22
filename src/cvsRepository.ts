@@ -190,6 +190,10 @@ export class CvsRepository implements QuickDiffProvider {
         }
     }
 
+    async revertToRevision(uri: Uri, revision: string): Promise<CmdResult> {
+        return (await spawnCmd(`cvs -Q update -p -r ${revision} ${basename(uri.fsPath)} > ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
+    }
+
     async updateBuildDirs(uri: Uri): Promise<CmdResult> {
         return (await spawnCmd(`cvs update -d ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
     }

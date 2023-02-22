@@ -3,7 +3,7 @@ import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
 import { CVS_SCHEME_COMPARE } from './cvsRepository';
-import { SourceFileState } from './sourceFile';
+import { SourceFile, SourceFileState } from './sourceFile';
 import { findSourceControl } from "./extension";
 
 export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
@@ -60,6 +60,13 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
             }
             else {
                 if (sourceFile.repoRevision) {
+                    if (sourceFile.uri) {
+                        const head = await this.getHeadRevison(sourceFile.uri);
+                        if (sourceFile.workingRevision !== head) {
+                            commits = commits.concat(new CommitData(`Head Revision: ${head}`, uri, '', head, '', '', true));
+                        }
+                    }
+
                     let revision = sourceFile.repoRevision;
                     let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
                     while (true) { // must handle nested branches
@@ -138,11 +145,31 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                     commitMsg += line  + EOL;
                 }
             }
-            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date));
+
+            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date, false));
             shortMsg = '';
             commitMsg = '';
         }
         return commits;
+    }
+
+    async getHeadRevison(uri: Uri): Promise<string> {
+        let head = '';
+        const cvsCmd = `cvs log -h ${basename(uri.fsPath)}`;
+        const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
+        
+        if (!result.result || result.output.length === 0) {
+            window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);
+        } else {
+            for (const line of result.output.split(EOL)) {
+                if (line.includes('head:')) {
+                    head = line.slice(line.indexOf(':')+2);
+                    break;
+                }
+            }
+        }
+
+        return head;
     }
 }
 
@@ -154,45 +181,61 @@ export class CommitData extends TreeItem {
         public readonly revision: string,
         private author: string,
         private date: string,
+        private isHead: boolean
     ) {
-        super(revision + "  " + shortMsg.slice(0, 50), TreeItemCollapsibleState.None);
-        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.revision})`);
-        this.tooltip = this.commitMsg;
-        this.description = this.author + ", " + this.date;
-        this.iconPath = new ThemeIcon("git-commit");
-        this.contextValue = "revision";
-        this.id = revision;
-
-        // 1.51 or 1.51.2.3
-        const revIndex = this.revision.lastIndexOf('.') + 1;
-        let revNum = parseInt(this.revision.substring(revIndex));
-
-        let shouldDiff = false;
-        let previousRevision = "";
-        if (revNum > 1) {
-            previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
-            shouldDiff = true;
+        let label: any;
+        if (isHead) {
+            label = shortMsg;
+        } else {
+            label = revision + "  " + shortMsg.slice(0, 50);
         }
-        else if (revNum === 1) {
-            if (revision.search(/^(\d+\.\d+){1}$/) === -1) { // check if at root revision (1.3)
-                // get parent revision
-                const parentRevIndex = this.revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
-                previousRevision = this.revision.substring(0, parentRevIndex);
+
+        super(label, TreeItemCollapsibleState.None);
+        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.revision})`);
+
+        if (isHead) {
+            this.contextValue = "head";
+            this.id = revision;
+            this.iconPath = new ThemeIcon("cloud");
+            this.tooltip = '';
+        } else {
+            this.tooltip = this.commitMsg;
+            this.description = this.author + ", " + this.date;
+            this.iconPath = new ThemeIcon("git-commit");
+            this.contextValue = "revision";
+            this.id = revision;
+
+            // 1.51 or 1.51.2.3
+            const revIndex = this.revision.lastIndexOf('.') + 1;
+            let revNum = parseInt(this.revision.substring(revIndex));
+
+            let shouldDiff = false;
+            let previousRevision = "";
+            if (revNum > 1) {
+                previousRevision = this.revision.slice(0, revIndex) + (--revNum).toString();
                 shouldDiff = true;
             }
-        }
+            else if (revNum === 1) {
+                if (revision.search(/^(\d+\.\d+){1}$/) === -1) { // check if at root revision (1.3)
+                    // get parent revision
+                    const parentRevIndex = this.revision.substring(0, revision.lastIndexOf('.')).lastIndexOf('.');
+                    previousRevision = this.revision.substring(0, parentRevIndex);
+                    shouldDiff = true;
+                }
+            }
 
-        if (shouldDiff) {
-            const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${previousRevision})`);
-            const right = this.resourceUri;
-    
-            const command: Command =
-            {
-                title: "File History",
-                command: "vscode.diff",
-                arguments: [left, right, `${basename(uri.fsPath)} (${previousRevision}) <-> (${this.revision})`],
-            };
-            this.command = command;
-        }
+            if (shouldDiff) {
+                const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${previousRevision})`);
+                const right = this.resourceUri;
+        
+                const command: Command =
+                {
+                    title: "File History",
+                    command: "vscode.diff",
+                    arguments: [left, right, `${basename(uri.fsPath)} (${previousRevision}) <-> (${this.revision})`],
+                };
+                this.command = command;
+            }
+    }
     }
 }

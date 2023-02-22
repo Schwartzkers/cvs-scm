@@ -211,7 +211,7 @@
 			{
 				"command": "cvs-scm.switch-file-to-branch",
 				"title": "Switch File to Branch",
-				"icon": "$(arrow-circle-down)",
+				"icon": "$(arrow-down)",
 				"category": "cvs-scm"
 			},
 			{
@@ -224,6 +224,24 @@
 				"command": "cvs-scm.compare-revisions",
 				"title": "Compare to Revisions",
 				"icon": "$(compare-changes)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.switch-file-to-revision",
+				"title": "Switch file to Revision",
+				"icon": "$(arrow-down)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.revert-working-to-revision",
+				"title": "Revert Working File to Revision",
+				"icon": "$(discard)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.revert-working-to-head",
+				"title": "Revert Working File to Head Revision",
+				"icon": "$(discard)",
 				"category": "cvs-scm"
 			}
 		],
@@ -408,6 +426,21 @@
 				{
 					"command": "cvs-scm.open-revision",
 					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.switch-file-to-revision",
+					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.revert-working-to-revision",
+					"when": "view == cvs-file-revisions && viewItem == revision",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.revert-working-to-head",
+					"when": "view == cvs-file-revisions && viewItem == head",
 					"group": "inline"
 				},
 				{

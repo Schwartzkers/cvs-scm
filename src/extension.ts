@@ -405,6 +405,40 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-revision', async (commitData: CommitData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch working file to revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(commitData.uri);
+			
+			if (sourceControl) {
+				sourceControl.switchFileToRevision(commitData);
+			}
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.revert-working-to-revision', async (commitData: CommitData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to revert working file to revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(commitData.uri);
+			
+			if (sourceControl) {
+				sourceControl.revertFileToRevision(commitData);
+			}
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.revert-working-to-head', async (commitData: CommitData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to revert working file to head revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(commitData.uri);
+			
+			if (sourceControl) {
+				sourceControl.revertFileToHead(commitData);
+			}
+		}
+	}));
+
+
 	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
 }
 
