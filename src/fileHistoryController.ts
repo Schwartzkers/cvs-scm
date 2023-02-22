@@ -37,13 +37,13 @@ export class FileHistoryController extends Controller {
                     
                 if (sourceControl) {
                     // FIX ME: don't update again if already displayed
-                    const resource = workspace.asRelativePath(editor.document.uri, false); 
-                    this._fileHistoryTree.message = '';
+                    const resource = workspace.asRelativePath(editor.document.uri, false);
+                    this._fileHistoryTree.message = undefined;
                     this._fileHistoryTree.description = resource;
                     this._fileHistoryProvider.refresh();
                 } else {
                     this._fileHistoryProvider.refresh();
-                    this._fileHistoryTree.description = '';
+                    this._fileHistoryTree.description = undefined;
                     this._fileHistoryTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide file history information.';
                 }
             }

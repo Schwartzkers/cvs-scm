@@ -711,6 +711,42 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
+    async switchFileToRevision(commitData: CommitData): Promise<void> {
+        let result = (await this.cvsRepository.revert(commitData.uri)).result;
+
+        if (result) {
+            result = (await this.cvsRepository.updateToRevision(commitData.uri, commitData.revision)).result;
+        }
+
+        if(!result) {
+            window.showErrorMessage(`Failed to switch file to revision: ${commitData.revision}`);
+        }
+    }
+
+    async revertFileToRevision(commitData: CommitData): Promise<void> {
+        let result = (await this.cvsRepository.revert(commitData.uri)).result;
+
+        if (result) {
+            result = (await this.cvsRepository.revertToRevision(commitData.uri, commitData.revision)).result;
+        }
+
+        if(!result) {
+            window.showErrorMessage(`Failed to revert working file to revision: ${commitData.revision}`);
+        }
+    }
+
+    async revertFileToHead(commitData: CommitData): Promise<void> {
+        let result = (await this.cvsRepository.revert(commitData.uri)).result;
+
+        if (result) {
+            result = (await this.cvsRepository.removeSticky(commitData.uri)).result;
+        }
+
+        if(!result) {
+            window.showErrorMessage(`Failed to revert working file to head revision: ${commitData.revision}`);
+        }
+    }
+
     async getSourceFile(uri: Uri): Promise<SourceFile> {
         let sourceFile = this.cvsRepository.findSourceFile(uri);
 
