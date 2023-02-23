@@ -1,6 +1,11 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.9.1]
+- Pre-release version.
+- Added new options to `FILE HISTORY` view:
+  - Switch file to revision
+  - Update file to revision
 ## [v1.9.0]
 - Pre-release version.
 - Added LogOutputChannel.
