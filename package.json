@@ -222,26 +222,26 @@
 			},
 			{
 				"command": "cvs-scm.compare-revisions",
-				"title": "Compare to Revisions",
+				"title": "Compare Revisions",
 				"icon": "$(compare-changes)",
 				"category": "cvs-scm"
 			},
 			{
 				"command": "cvs-scm.switch-file-to-revision",
-				"title": "Switch file to Revision",
+				"title": "Switch File to Revision",
 				"icon": "$(arrow-down)",
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.revert-working-to-revision",
-				"title": "Revert Working File to Revision",
+				"command": "cvs-scm.update-file-to-revision",
+				"title": "Update File to Revision",
 				"icon": "$(discard)",
 				"category": "cvs-scm"
 			},
 			{
-				"command": "cvs-scm.revert-working-to-head",
-				"title": "Revert Working File to Head Revision",
-				"icon": "$(discard)",
+				"command": "cvs-scm.switch-file-to-head",
+				"title": "Switch File to Head",
+				"icon": "$(arrow-down)",
 				"category": "cvs-scm"
 			}
 		],
@@ -414,13 +414,13 @@
 				{
 					"command": "cvs-scm.checkout-folder",
 					"group": "inline@3",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
-				}					
+					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"
+				}
 			],
 			"view/item/context": [
 				{
 				  "command": "cvs-scm.compare-to-working",
-				  "when": "view == cvs-file-revisions && viewItem == revision",
+				  "when": "view == cvs-file-revisions",
 				  "group": "inline"
 				},
 				{
@@ -429,17 +429,27 @@
 					"group": "inline"
 				},
 				{
+					"command": "cvs-scm.open-revision",
+					"when": "view == cvs-file-revisions && viewItem == head",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.switch-file-to-head",
+					"when": "view == cvs-file-revisions && viewItem == head",
+					"group": "inline"
+				},
+				{
 					"command": "cvs-scm.switch-file-to-revision",
 					"when": "view == cvs-file-revisions && viewItem == revision",
 					"group": "inline"
 				},
 				{
-					"command": "cvs-scm.revert-working-to-revision",
+					"command": "cvs-scm.update-file-to-revision",
 					"when": "view == cvs-file-revisions && viewItem == revision",
 					"group": "inline"
 				},
 				{
-					"command": "cvs-scm.revert-working-to-head",
+					"command": "cvs-scm.update-file-to-revision",
 					"when": "view == cvs-file-revisions && viewItem == head",
 					"group": "inline"
 				},

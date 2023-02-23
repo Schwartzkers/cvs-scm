@@ -63,7 +63,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                     if (sourceFile.uri) {
                         const head = await this.getHeadRevison(sourceFile.uri);
                         if (sourceFile.workingRevision !== head) {
-                            commits = commits.concat(new CommitData(`Head Revision: ${head}`, uri, '', head, '', '', true));
+                            commits = commits.concat(new CommitData(`Head Revision: ${head}`, uri, '', head, '', '', true, false));
                         }
                     }
 
@@ -71,7 +71,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                     let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
                     while (true) { // must handle nested branches
                         const log = await this.readCvsLog(uri, revision);
-                        commits = commits.concat(this.parseCvsLog(log, uri));
+                        commits = commits.concat(this.parseCvsLog(log, uri, sourceFile));
         
                         if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (e.g. 1.3)
                             break;
@@ -109,7 +109,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         return result.output;
     }
 
-    parseCvsLog(log: string, uri: Uri): CommitData[] {
+    parseCvsLog(log: string, uri: Uri, sourceFile: SourceFile): CommitData[] {
         // remove last line "=======""
         let revs = log.split(/\r?\n[=]+\r?\n/)[0].split(/\r?\n-{10,}\r?\nrevision\s/);
 
@@ -146,7 +146,7 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
                 }
             }
 
-            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date, false));
+            commits.push(new CommitData(shortMsg, uri, commitMsg, revision, author, date, false, sourceFile.workingRevision === revision));
             shortMsg = '';
             commitMsg = '';
         }
@@ -181,13 +181,20 @@ export class CommitData extends TreeItem {
         public readonly revision: string,
         private author: string,
         private date: string,
-        private isHead: boolean
+        private isHead: boolean,
+        private isActive: boolean,
     ) {
         let label: any;
         if (isHead) {
             label = shortMsg;
         } else {
-            label = revision + "  " + shortMsg.slice(0, 50);
+            let labelText = revision + "  " + shortMsg.slice(0, 50);
+
+            if (isActive) {
+                label = {label: labelText, highlights: [[0,labelText.length]]};
+            } else {
+                label = labelText;
+            }
         }
 
         super(label, TreeItemCollapsibleState.None);
@@ -202,7 +209,12 @@ export class CommitData extends TreeItem {
             this.tooltip = this.commitMsg;
             this.description = this.author + ", " + this.date;
             this.iconPath = new ThemeIcon("git-commit");
-            this.contextValue = "revision";
+            if (isActive) {
+                this.contextValue = "active_revision";
+            } else {
+                this.contextValue = "revision";
+            }
+
             this.id = revision;
 
             // 1.51 or 1.51.2.3
