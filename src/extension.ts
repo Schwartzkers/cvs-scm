@@ -384,7 +384,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-branch', async (branchData: BranchData) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch branches? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the file to branch ${branchData.branchName}? All uncommited changes will be lost`, { modal: true }, `Yes`);
 			if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
@@ -395,7 +395,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-branch', async (branchData: BranchData) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch branches? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the workspace to branch ${branchData.branchName}? All uncommited changes will be lost`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
@@ -406,7 +406,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-revision', async (commitData: CommitData) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch working file to revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the working file to revision ${commitData.revision}? All uncommited changes will be lost`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(commitData.uri);
 			
@@ -416,8 +416,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.revert-working-to-revision', async (commitData: CommitData) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to revert working file to revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.update-file-to-revision', async (commitData: CommitData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to replace the contents of the working file with the contents from revision ${commitData.revision}? All uncommited changes will be lost`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(commitData.uri);
 			
@@ -427,8 +427,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.revert-working-to-head', async (commitData: CommitData) => {
-		const option = await vscode.window.showWarningMessage(`Are you sure you want to revert working file to head revision? All uncommited changes will be lost`, { modal: true }, `Yes`);
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-head', async (commitData: CommitData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the working file to the head revision? This action will remove all sticky tags and all uncommited changes will be lost`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(commitData.uri);
 			
