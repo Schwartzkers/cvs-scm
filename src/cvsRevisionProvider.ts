@@ -202,7 +202,7 @@ export class CommitData extends TreeItem {
 
         if (isHead) {
             this.contextValue = "head";
-            this.id = revision;
+            this.id = "head";
             this.iconPath = new ThemeIcon("cloud");
             this.tooltip = '';
         } else {
@@ -248,6 +248,6 @@ export class CommitData extends TreeItem {
                 };
                 this.command = command;
             }
-    }
+        }
     }
 }
