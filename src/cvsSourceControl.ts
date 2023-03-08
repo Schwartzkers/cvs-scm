@@ -747,6 +747,23 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
+    async mergeBranch(branchData: BranchData): Promise<void> {
+        let result = (await this.cvsRepository.revert(undefined)).result;
+
+        if (result) {
+            if (branchData.branchName === 'main'){
+                result = (await this.cvsRepository.merge('HEAD')).result;
+            } else {
+                result = (await this.cvsRepository.merge(branchData.branchName)).result;
+            }
+            
+        }
+
+        if(!result) {
+            window.showErrorMessage(`Failed to merge workspace with branch: ${branchData.branchName}`);
+        }
+    }
+
     async getSourceFile(uri: Uri): Promise<SourceFile> {
         let sourceFile = this.cvsRepository.findSourceFile(uri);
 

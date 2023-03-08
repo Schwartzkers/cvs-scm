@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
+## [v1.9.3]
+- Pre-release version.
+- Add command in `BRANCHES` view to merge a branch into the working branch.
 ## [v1.9.2]
 - Pre-release version.
 - Make tree id for Head Revision in `FILE HISTORY` unique.

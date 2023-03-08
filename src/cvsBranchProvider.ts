@@ -117,8 +117,13 @@ export class BranchData extends TreeItem {
         super(label, TreeItemCollapsibleState.None);
         this.tooltip = branchName;
         this.iconPath = new ThemeIcon("git-branch");
-        this.contextValue = "branch";
         this.id = this.branchName;
+
+        if (isActive) {
+            this.contextValue = "active_branch";
+        } else {
+            this.contextValue = "branch";
+        }
 
         const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.branchName})`);
         const right = uri;
