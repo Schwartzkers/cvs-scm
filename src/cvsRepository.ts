@@ -206,8 +206,8 @@ export class CvsRepository implements QuickDiffProvider {
         }
     }
 
-    async merge(branchName: string): Promise<CmdResult> {
-        return (await spawnCmd(`cvs update -j ${branchName}`, this.workspaceUri.fsPath));
+    async merge(currentBranch: string, fromBranch: string): Promise<CmdResult> {
+        return (await spawnCmd(`cvs update -j ${currentBranch} -j ${fromBranch}`, this.workspaceUri.fsPath));
     }
 
     getChangesSourceFiles(): SourceFile[] {
