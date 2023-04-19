@@ -2,7 +2,7 @@
   "name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
-	"version": "1.9.4",
+	"version": "1.9.5",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -249,6 +249,12 @@
 				"title": "Merge Branch into Workspace",
 				"icon": "$(git-pull-request)",
 				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.merge-branch-to-working-file",
+				"title": "Merge Branch into File",
+				"icon": "$(git-merge)",
+				"category": "cvs-scm"
 			}
 		],
 		"menus": {
@@ -471,6 +477,11 @@
 				},
 				{
 					"command": "cvs-scm.merge-branch-to-working",
+					"when": "view == cvs-file-branches && viewItem == branch",
+					"group": "inline"
+				},
+				{
+					"command": "cvs-scm.merge-branch-to-working-file",
 					"when": "view == cvs-file-branches && viewItem == branch",
 					"group": "inline"
 				}

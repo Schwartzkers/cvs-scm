@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { basename } from 'path';
 import { CvsSourceControl, onResouresLocked, onResouresUnlocked } from './cvsSourceControl';
 import { CvsDocumentContentProvider } from './cvsDocumentContentProvider';
 import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
@@ -450,6 +451,17 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working-file', async (branchData: BranchData) => {
+		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge branch ${branchData.branchName} into ${basename(branchData.uri.fsPath)}? If previously merged the action may have undesired effects. All uncommited changes will be lost.`, { modal: true }, `Yes`);
+		if (option === `Yes`) {
+			const sourceControl = findSourceControl(branchData.uri);
+			
+			if (sourceControl) {
+				const sourceFile = await sourceControl.getSourceFile(branchData.uri);
+				sourceControl.mergeBranchToFile(sourceFile, branchData);
+			}
+		}
+	}));
 
 	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
 }

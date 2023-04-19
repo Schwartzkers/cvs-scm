@@ -2,6 +2,9 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
+## [v1.9.5]
+- Pre-release version.
+- Add command in `BRANCHES` view to merge a branch to a individual file.
 ## [v1.9.4]
 - Pre-release version.
 - Fix race condition bug in `Discard All Changes` causing failure.

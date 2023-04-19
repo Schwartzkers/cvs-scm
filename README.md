@@ -71,11 +71,34 @@ Both the regular diff (when the user clicks on the changed resource in the sourc
 
 The File History tree view is `defaulted to disabled` (off). The view displays the revisions, for the current branch, assocaited with the file in the active editor. 
 
+<img src="resources/images/fileHistory.png" alt="CVS Settings" width="300"/>
+
 The view is designed with the expectation that the CVS repository has managed all cvs revison numbers for trunk (1.1, 1.2, 1.3, ...) and branches (1.3.2.1, 1.3.2.2, ...). If the cvs revision numbers have been manualy manipulated (e.g. `cvs commit -r 3.0`) the view will have undefined behaviour.
+
+The view provides the following commands:
+ - Compare the working revision with an older revision.
+ - Switch a file to a previous revision.
+ - Compare changes between contiguous revisions.
+ - Revert a file's contents with a a older revision.
 
 ### Branches
 
-The Branches tree view is `defaulted to disabled` (off). The view displays the bracnhes assocaited with the file in teh active editor.
+The Branches tree view is `defaulted to disabled` (off). The view displays the branches associated with the file in the active editor. 
+
+<img src="resources/images/fileBranches.png" alt="CVS Settings" width="300"/>
+
+The view provides the following commands:
+ - Compare the file in the active editor with a branch.
+ - Switch the workspace to a branch.
+ - Switch a file to a branch.
+ - Merge the workspace with a branch.
+ - Merge a file with a branch.
+
+### Logging
+
+The extension provides a log OUTPUT channel called `CVS` where the cvs client interactions can be viewed.
+
+<img src="resources/images/logOutputChannel.png" alt="CVS Settings" width="500"/>
 
 ## Supported CVS Version
 
