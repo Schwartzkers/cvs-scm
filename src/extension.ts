@@ -331,13 +331,13 @@ export function activate(context: vscode.ExtensionContext) {
 				if (sourceControl) {
 					for (const resource of sourceControlResourceGroup.resourceStates) {
 						if (resource.contextValue === 'modified') {
-							sourceControl.revertFile(resource.resourceUri);
+							await sourceControl.revertFile(resource.resourceUri);
 						} else if (resource.contextValue === 'added') {
-							sourceControl.undoAdd(resource.resourceUri);
+							await sourceControl.undoAdd(resource.resourceUri);
 						} else if (resource.contextValue === 'removed') {
-							sourceControl.addResource(resource.resourceUri);
+							await sourceControl.addResource(resource.resourceUri);
 						} else if (resource.contextValue === 'deleted') {
-							sourceControl.recoverResource(resource.resourceUri);
+							await sourceControl.recoverResource(resource.resourceUri);
 						}
 					}
 				}
@@ -354,12 +354,12 @@ export function activate(context: vscode.ExtensionContext) {
 				if (sourceControl) {
 					for (const resource of sourceControlResourceGroup.resourceStates) {
 						if (resource.contextValue === 'directory') {
-							sourceControl.checkoutFolder(resource.resourceUri);
+							await sourceControl.checkoutFolder(resource.resourceUri);
 						} else if (resource.contextValue === 'removedFromRepo' ||
 								   resource.contextValue === 'checkout' ||
 								   resource.contextValue === 'patch' ||
 								   resource.contextValue === 'merge') {
-							sourceControl.mergeLatest(resource.resourceUri);
+							await sourceControl.mergeLatest(resource.resourceUri);
 						}
 					}
 				}
@@ -444,7 +444,8 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
-				sourceControl.mergeBranch(branchData);
+				const sourceFile = await sourceControl.getSourceFile(branchData.uri);
+				sourceControl.mergeBranch(sourceFile, branchData);
 			}
 		}
 	}));
