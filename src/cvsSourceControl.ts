@@ -752,14 +752,38 @@ export class CvsSourceControl implements Disposable {
 
         if (result && sourceFile.branch) {
             if (branchData.branchName === 'main') {
-                result = (await this.cvsRepository.merge(sourceFile.branch,'HEAD')).result;
+                result = (await this.cvsRepository.merge(undefined, sourceFile.branch, 'HEAD')).result;
             } else {
-                result = (await this.cvsRepository.merge(sourceFile.branch, branchData.branchName)).result;
+                let currentBranch = sourceFile.branch;
+                if (sourceFile.branch === 'main') {
+                    currentBranch = 'HEAD';
+                }
+                result = (await this.cvsRepository.merge(undefined, currentBranch, branchData.branchName)).result;
             }
         }
 
         if(!result) {
             window.showErrorMessage(`Failed to merge workspace with branch: ${branchData.branchName}`);
+        }
+    }
+
+    async mergeBranchToFile(sourceFile: SourceFile ,branchData: BranchData): Promise<void> {
+        let result = (await this.cvsRepository.revert(undefined)).result;
+
+        if (result && sourceFile.branch) {
+            if (branchData.branchName === 'main') {
+                result = (await this.cvsRepository.merge(sourceFile.uri, sourceFile.branch, 'HEAD')).result;
+            } else {
+                let currentBranch = sourceFile.branch;
+                if (sourceFile.branch === 'main') {
+                    currentBranch = 'HEAD';
+                }
+                result = (await this.cvsRepository.merge(sourceFile.uri, currentBranch, branchData.branchName)).result;
+            }
+        }
+
+        if(!result) {
+            window.showErrorMessage(`Failed to merge file with branch: ${branchData.branchName}`);
         }
     }
 
