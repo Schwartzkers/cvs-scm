@@ -2,6 +2,8 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
+## [v1.10.0]
+- Official release of the 1.9 pre-release.
 ## [v1.9.5]
 - Pre-release version.
 - Add command in `BRANCHES` view to merge a branch to a individual file.
