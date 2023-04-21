@@ -1,6 +1,5 @@
-import { workspace, TreeView, window, WorkspaceFolder, Uri } from "vscode";
+import { workspace, TreeView, window, Uri } from "vscode";
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
-import { findSourceControl } from './extension';
 import { Controller } from './contoller';
 import { basename } from "path";
 
@@ -24,6 +23,10 @@ export class BranchesController extends Controller {
 
     public setItchy() {
         this._itchy = true;
+    }
+
+    public getWorkspace(): Uri | undefined {
+       return this._currentWorkspace;
     }
 
     protected async update(): Promise<void> {

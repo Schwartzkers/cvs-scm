@@ -91,7 +91,7 @@
 		"commands": [
 			{
 				"command": "cvs-scm.refresh",
-				"title": "Refresh Repository",
+				"title": "Refresh",
 				"icon": "$(refresh)",
 				"category": "cvs-scm"
 			},
@@ -261,6 +261,12 @@
 				"command": "cvs-scm.merge-branch-to-working-file",
 				"title": "Merge Branch into File",
 				"icon": "$(git-merge)",
+				"category": "cvs-scm"
+			},
+			{
+				"command": "cvs-scm.add-branch",
+				"title": "Add Branch to Workspace",
+				"icon": "$(add)",
 				"category": "cvs-scm"
 			}
 		],
@@ -491,6 +497,18 @@
 					"command": "cvs-scm.merge-branch-to-working-file",
 					"when": "view == cvs-file-branches && viewItem == branch",
 					"group": "inline"
+				}
+			],
+			"view/title": [
+				{
+					"command": "cvs-scm.refresh",
+					"when": "view == cvs-branches",
+					"group": "navigation@2"
+				},
+				{
+					"command": "cvs-scm.add-branch",
+					"when": "view == cvs-branches",
+					"group": "navigation@1"
 				}
 			]
 		}
