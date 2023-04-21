@@ -1,9 +1,7 @@
-import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command, workspace, TreeItemLabel } from 'vscode';
+import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event } from 'vscode';
 import { basename, dirname } from 'path';
 import { spawnCmd, readFile } from './utility';
 import { EOL } from 'os';
-import { SourceFileState } from './sourceFile';
-import { findSourceControl } from "./extension";
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();

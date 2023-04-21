@@ -786,6 +786,14 @@ export class CvsSourceControl implements Disposable {
             window.showErrorMessage(`Failed to merge file with branch: ${branchData.branchName}`);
         }
     }
+    
+    async createBranch(branchName: string): Promise<void> {
+        let result = (await this.cvsRepository.addBranch(branchName)).result;
+
+        if(!result) {
+            window.showErrorMessage(`Failed to create branch: ${branchName}`);
+        }
+    }
 
     async getSourceFile(uri: Uri): Promise<SourceFile> {
         let sourceFile = this.cvsRepository.findSourceFile(uri);

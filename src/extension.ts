@@ -87,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
 		// check CVS repository for local and remote changes
+		branchesController.setItchy();
 		const sourceControl = await pickSourceControl(sourceControlPane);
 		if (sourceControl) { sourceControl.getCvsState(); }
 		else { 
@@ -477,6 +478,25 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add-branch', async () => {
+		const name = await vscode.window.showInputBox({prompt: `Branch Name`});
+		if (name) {
+			console.log(name);
+			console.log(branchesController.getWorkspace()?.fsPath);
+
+			const ws = branchesController.getWorkspace();
+			if (ws) {
+				const sourceControl = findSourceControl(ws);
+
+				if (sourceControl) {
+					await sourceControl.createBranch(name);
+					branchesController.setItchy();
+					vscode.commands.executeCommand<vscode.Uri>("cvs-scm.refresh", undefined);
+				}
+			}
+		}
+	}));
+
 	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
 }
 
@@ -484,7 +504,7 @@ export function findSourceControl(resource: vscode.Uri): CvsSourceControl | unde
 	for (const uri of cvsSourceControlRegister.keys()) {
 		if (resource.fsPath.includes(uri.fsPath)) {
 			return cvsSourceControlRegister.get(uri);
-		}	
+		}
 	}
 
 	return undefined;
