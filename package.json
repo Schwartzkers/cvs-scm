@@ -2,7 +2,7 @@
   "name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
-	"version": "1.10.0",
+	"version": "1.11.0",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -74,7 +74,14 @@
 			  },
 			  {
 				"id": "cvs-file-branches",
-				"name": "Branches",
+				"name": "File Branches",
+				"contextualTitle": "CVS",
+				"visibility": "collapsed",
+				"when": "cvs-scm.enabled == true"
+			  },
+			  {
+				"id": "cvs-branches",
+				"name": "Workspace Branches",
 				"contextualTitle": "CVS",
 				"visibility": "collapsed",
 				"when": "cvs-scm.enabled == true"
@@ -472,12 +479,12 @@
 				},
 				{
 					"command": "cvs-scm.checkout-branch",
-					"when": "view == cvs-file-branches && viewItem == branch",
+					"when": "view == cvs-branches && viewItem == branch",
 					"group": "inline"
 				},
 				{
 					"command": "cvs-scm.merge-branch-to-working",
-					"when": "view == cvs-file-branches && viewItem == branch",
+					"when": "view == cvs-branches && viewItem == branch",
 					"group": "inline"
 				},
 				{
