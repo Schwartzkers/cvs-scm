@@ -1,6 +1,4 @@
-import { Uri, workspace, TreeView, window, TextEditor } from "vscode";
-import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
-import { findSourceControl } from './extension';
+import { Uri } from "vscode";
 
 
 export class Controller {

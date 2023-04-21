@@ -2,6 +2,9 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
+## [v1.11.0]
+- Pre-release version.
+- Separate workspace branches and commands into new `WORKSPACE BRANCHES` view.
 ## [v1.10.0]
 - Official release of the 1.9 pre-release.
 ## [v1.9.5]

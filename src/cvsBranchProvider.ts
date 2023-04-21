@@ -1,9 +1,8 @@
 import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command, workspace, TreeItemLabel } from 'vscode';
 import { basename, dirname } from 'path';
-import { spawnCmd } from './utility';
+import { spawnCmd, readFile } from './utility';
 import { EOL } from 'os';
-import { CVS_SCHEME_COMPARE } from './cvsRepository';
-import { SourceFile, SourceFileState } from './sourceFile';
+import { SourceFileState } from './sourceFile';
 import { findSourceControl } from "./extension";
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
@@ -11,12 +10,14 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     readonly onDidChangeTreeData: Event<BranchData | undefined | null | void> = this._onDidChangeTreeData.event;
     private _enabled: boolean = false;
     private _startup: boolean = true;
+    private _workspace: Uri | undefined = undefined;
     
     constructor(enabled: boolean) { 
         this._enabled = enabled;
     }
 
-    refresh(): any {
+    refresh(workspaceUri: Uri | undefined): any {
+        this._workspace = workspaceUri;
         this._onDidChangeTreeData.fire(undefined);
       }
 
@@ -29,11 +30,10 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
             this._startup = false; // ignore on startup because it will be refreshed by seperate event on boot
             return Promise.resolve([]);
         }
-        const textEditor = window.activeTextEditor;
 
-        if (textEditor) {
-            if (workspace.getWorkspaceFolder(textEditor.document.uri)) {
-                return Promise.resolve(this.getDeps(textEditor.document.uri));
+        if (this._workspace) {
+            if (this._workspace) {
+                return Promise.resolve(this.getDeps(this._workspace));
             } else {
                 return Promise.resolve([]);
             }
@@ -43,40 +43,36 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     }
 
     async getDeps(uri: Uri): Promise<BranchData[]> {
-        const sourceFile = await findSourceControl(uri)?.getSourceFile(uri);
-
         let branchData: BranchData[] = [];
 
-        if (sourceFile) {
-            // no logs for added or untracked
-            if (sourceFile.state === SourceFileState.untracked ||
-                sourceFile.state === SourceFileState.added) {
-                    return branchData;
-            }
+        const tag = await this.readCvsTagFile(uri);
+        const log = await this.readCvsLog(uri);
+        const branches = await this.getBranches(log);
 
-            if (sourceFile.branches) {
-                return sourceFile.branches;
-            }
-            else {
-                const log = await this.readCvsLog(uri);
-                const branches = await this.getBranches(log);
-        
-                branchData.push(new BranchData('main', uri, sourceFile.branch === 'main'));
-        
-                branches.forEach(element => {
-                    branchData.push(new BranchData(element, uri, sourceFile.branch === element));
-                });
+        // manually add main branch (e.g. trunk)
+        branchData.push(new BranchData('main', uri, tag === 'main'));
 
-                sourceFile.branches = branchData;
-            }
-        }
+        branches.forEach(element => {
+            branchData.push(new BranchData(element, uri, tag === element));
+        });
 
         return branchData;
     }
 
+    async readCvsTagFile(uri: Uri): Promise<string> {
+        const file = Uri.joinPath(uri, 'CVS/Tag');
+        let tag = await readFile(file.fsPath);
+
+        if (tag) {
+            return tag.substring(1).trim();
+        } else{
+            return 'main';
+        }
+    }
+
     async readCvsLog(uri: Uri): Promise<string> {
-        const cvsCmd = `cvs log -h ${basename(uri.fsPath)}`;
-        const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
+        const cvsCmd = `cvs log -h`;
+        const result = await spawnCmd(cvsCmd, uri.fsPath);
         
         if (!result.result || result.output.length === 0) {
             window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);
@@ -95,6 +91,8 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
             }
         });
         await Promise.all(branchPromises);
+
+        branches = branches.filter(function(elem, index, self) { return index === self.indexOf(elem); });
         
         return branches;
     }
@@ -124,16 +122,5 @@ export class BranchData extends TreeItem {
         } else {
             this.contextValue = "branch";
         }
-
-        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.branchName})`);
-        const right = uri;
-
-        const command: Command =
-        {
-            title: "File History",
-            command: "vscode.diff",
-            arguments: [left, right, `${basename(uri.fsPath)} (${this.branchName}) <-> (working})`],
-        };
-        this.command = command;
     }
 }

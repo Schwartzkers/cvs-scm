@@ -1,20 +1,29 @@
-import { workspace, TreeView, window } from "vscode";
+import { workspace, TreeView, window, WorkspaceFolder, Uri } from "vscode";
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 import { findSourceControl } from './extension';
 import { Controller } from './contoller';
+import { basename } from "path";
 
 
 export class BranchesController extends Controller {
     private _branchesProvider: CvsBranchProvider;
     private _branchesTree: TreeView<BranchData>;
+    private _currentWorkspace: Uri | undefined;
+    private _itchy: boolean;
 
     constructor(branchesProvider: CvsBranchProvider, branchesTree: TreeView<BranchData>, isEnabled: boolean) {
         super(isEnabled);
         this._branchesProvider = branchesProvider;
         this._branchesTree = branchesTree;
+        this._currentWorkspace = undefined;
+        this._itchy = true;
         if (!isEnabled) {
             this._branchesTree.message = 'Enable view in CVS settings.';
         }
+    }
+
+    public setItchy() {
+        this._itchy = true;
     }
 
     protected async update(): Promise<void> {
@@ -22,35 +31,55 @@ export class BranchesController extends Controller {
             this._branchesTree.description = '';
             return;
         }
-    
+
+        // 1. get active workspace
         const editor = window.activeTextEditor;
+        let newWorkspace: Uri | undefined = undefined;
         if (editor) {
-            // check if workspace is locked
-            const workspaceFolder = workspace.getWorkspaceFolder(editor.document.uri);
-            if (workspaceFolder && this._lockedWorkspaces.findIndex(uri => uri.fsPath  === workspaceFolder.uri.fsPath) !== -1) {
-                //console.log('workspace is currently locked');
-                return;
-            } else if (editor.document.uri.scheme !== 'file') {
-                return;
+            newWorkspace = workspace.getWorkspaceFolder(editor.document.uri)?.uri;
+        // no active editor
+        } else if (workspace.workspaceFolders) { 
+            if (this._currentWorkspace === undefined) {
+                // get first workspace on boot
+                newWorkspace = workspace.workspaceFolders.at(0)?.uri;
             } else {
-                const sourceControl = findSourceControl(editor.document.uri);
-                    
-                if (sourceControl) {
-                    // don't update again if already displayed
-                    const resource = workspace.asRelativePath(editor.document.uri, false); 
-                    this._branchesProvider.refresh();
-                    this._branchesTree.description = resource;
-                    this._branchesTree.message = '';
-                } else {
-                    this._branchesProvider.refresh();
-                    this._branchesTree.description = '';
-                    this._branchesTree.message = 'The active editor is not part of any of the workspace folders. Unable to provide branch information.';
-                }
+                // use last known workspace (e.g. all active editors closed)
+                newWorkspace = this._currentWorkspace;
+            }
+        }
+
+        // 2. check if the newWorkspace branches are currently displayed
+        if (newWorkspace) {
+            if (newWorkspace.fsPath === this._currentWorkspace?.fsPath && this._itchy === false) {
+                console.log('workspace has not changed');
+                return;
             }
         } else {
-            this._branchesProvider.refresh();
+            this._itchy = false;
+            this._currentWorkspace = undefined;
+
+            this._branchesProvider.refresh(undefined);
             this._branchesTree.description = '';
-            this._branchesTree.message = 'There are no editors open that can provide branch information.';
+            this._branchesTree.message = 'There are no workspaces available to provide branch information.';
+
+            return;
+        }
+
+        // 3. get branches for newWorkspace
+        if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === newWorkspace?.fsPath) !== -1) {
+            // check if workspace is locked
+            console.log('workspace is currently locked');
+            return;
+        } else {
+            this._itchy = false;
+            this._currentWorkspace = newWorkspace;
+
+            const name = basename(newWorkspace.fsPath);
+
+            this._branchesProvider.refresh(newWorkspace);
+            this._branchesTree.description = name;
+            this._branchesTree.message = '';
+            
         }
     }
 }

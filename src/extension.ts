@@ -6,8 +6,10 @@ import { CVS_SCHEME, CVS_SCHEME_COMPARE } from './cvsRepository';
 import { ConfigManager} from './configManager';
 import { CvsRevisionProvider, CommitData } from './cvsRevisionProvider';
 import { CvsCompareContentProvider } from './cvsCompareContentProvider';
+import { CvsFileBranchesProvider, FileBranchData } from './cvsFileBranchesProvider';
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 import { FileHistoryController } from './fileHistoryController';
+import { FileBranchesController } from './fileBranchesController';
 import { BranchesController } from './branchesController';
 import { StatusBarController } from './statusBarController';
 
@@ -16,8 +18,11 @@ export let configManager: ConfigManager;
 let fileHistoryProvider: CvsRevisionProvider;
 let fileHistoryTree: vscode.TreeView<CommitData>;
 let fileHistoryController: FileHistoryController;
+let fileBranchesProvider: CvsFileBranchesProvider;
 let branchesProvider: CvsBranchProvider;
+let fileBranchesTree:  vscode.TreeView<FileBranchData>;
 let branchesTree:  vscode.TreeView<BranchData>;
+let fileBranchesController: FileBranchesController;
 let branchesController: BranchesController;
 let cvsCompareProvider: CvsCompareContentProvider;
 let statusBarItem: vscode.StatusBarItem;
@@ -58,8 +63,16 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
 	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
 
+	fileBranchesProvider = new CvsFileBranchesProvider(configManager.getBranchesEnableFlag());
+	fileBranchesTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: fileBranchesProvider, canSelectMany: false} );
+	fileBranchesController = new FileBranchesController(fileBranchesProvider, fileBranchesTree, configManager.getBranchesEnableFlag());
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileBranchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(fileBranchesTree.onDidChangeVisibility(() => fileBranchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => fileBranchesController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => fileBranchesController.unlockEvent(uri), context.subscriptions));
+
 	branchesProvider = new CvsBranchProvider(configManager.getBranchesEnableFlag());
-	branchesTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: branchesProvider, canSelectMany: false} );
+	branchesTree = vscode.window.createTreeView('cvs-branches', { treeDataProvider: branchesProvider, canSelectMany: false} );
 	branchesController = new BranchesController(branchesProvider, branchesTree, configManager.getBranchesEnableFlag());
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => branchesController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateRequest(), context.subscriptions));
@@ -384,7 +397,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-branch', async (branchData: BranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.switch-file-to-branch', async (branchData: FileBranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the file to branch ${branchData.branchName}? All uncommited changes will be lost.`, { modal: true }, `Yes`);
 			if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
@@ -395,12 +408,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-branch', async (branchData: BranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-branch', async (branchData: FileBranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the workspace to branch ${branchData.branchName}? All uncommited changes will be lost.`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
+				branchesController.setItchy();
 				sourceControl.switchWorkspaceToBranch(branchData);
 			}
 		}
@@ -439,7 +453,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working', async (branchData: BranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working', async (branchData: FileBranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge branch ${branchData.branchName} into the workspace branch? If previously merged the action may have undesired effects. All uncommited changes will be lost.`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
@@ -451,7 +465,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working-file', async (branchData: BranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working-file', async (branchData: FileBranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge branch ${branchData.branchName} into ${basename(branchData.uri.fsPath)}? If previously merged the action may have undesired effects. All uncommited changes will be lost.`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);

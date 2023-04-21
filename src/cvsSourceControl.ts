@@ -10,7 +10,7 @@ import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
-import { BranchData } from './cvsBranchProvider';
+import { FileBranchData } from './cvsFileBranchesProvider';
 
 
 export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
@@ -679,7 +679,7 @@ export class CvsSourceControl implements Disposable {
                                       );
     }
 
-    async switchFileToBranch(branchData: BranchData): Promise<void> {
+    async switchFileToBranch(branchData: FileBranchData): Promise<void> {
         let result = (await this.cvsRepository.revert(branchData.uri)).result;
 
         if (result) {
@@ -695,7 +695,7 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
+    async switchWorkspaceToBranch(branchData: FileBranchData): Promise<void> {
         let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result) {
@@ -747,7 +747,7 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async mergeBranch(sourceFile: SourceFile ,branchData: BranchData): Promise<void> {
+    async mergeBranch(sourceFile: SourceFile ,branchData: FileBranchData): Promise<void> {
         let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result && sourceFile.branch) {
@@ -767,7 +767,7 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async mergeBranchToFile(sourceFile: SourceFile ,branchData: BranchData): Promise<void> {
+    async mergeBranchToFile(sourceFile: SourceFile ,branchData: FileBranchData): Promise<void> {
         let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result && sourceFile.branch) {
