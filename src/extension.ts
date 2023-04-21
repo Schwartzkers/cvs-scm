@@ -497,6 +497,14 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.compare-branches', async (branchData: BranchData) => {
+		const sourceControl = findSourceControl(branchData.uri);
+
+		if (sourceControl) {
+			sourceControl.diffBranch(branchData.branchName);
+		}
+	}));
+
 	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
 }
 
