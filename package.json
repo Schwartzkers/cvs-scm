@@ -85,6 +85,13 @@
 				"contextualTitle": "CVS",
 				"visibility": "collapsed",
 				"when": "cvs-scm.enabled == true"
+			  } ,
+			  {
+				"id": "cvs-compare",
+				"name": "Compare",
+				"contextualTitle": "CVS",
+				"visibility": "collapsed",
+				"when": "cvs-scm.enabled == true"
 			  }
 			]
 		},

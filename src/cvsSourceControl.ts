@@ -795,12 +795,10 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async diffBranch(branchName: string): Promise<void> {
-        let result = await this.cvsRepository.diffBranch(branchName);
-
-        console.log(result.output);
+    async diffBranch(branchName: string, repository: string): Promise<SourceFile[]> {
+        return await this.cvsRepository.diffBranch(branchName, repository);
     }
-    
+
 
     async getSourceFile(uri: Uri): Promise<SourceFile> {
         let sourceFile = this.cvsRepository.findSourceFile(uri);

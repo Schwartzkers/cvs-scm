@@ -12,6 +12,8 @@ import { FileHistoryController } from './fileHistoryController';
 import { FileBranchesController } from './fileBranchesController';
 import { BranchesController } from './branchesController';
 import { StatusBarController } from './statusBarController';
+import { SourceFile } from './sourceFile';
+import { CvsCompareProvider, SourceFileItem } from './cvsCompareProvider';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
@@ -24,6 +26,8 @@ let fileBranchesTree:  vscode.TreeView<FileBranchData>;
 let branchesTree:  vscode.TreeView<BranchData>;
 let fileBranchesController: FileBranchesController;
 let branchesController: BranchesController;
+let compareProvider: CvsCompareProvider;
+let compareTree: vscode.TreeView<SourceFileItem>;
 let cvsCompareProvider: CvsCompareContentProvider;
 let statusBarItem: vscode.StatusBarItem;
 let statusBarController: StatusBarController;
@@ -78,6 +82,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(onResouresLocked.event(uri => branchesController.lockEvent(uri), context.subscriptions));
 	context.subscriptions.push(onResouresUnlocked.event(uri => branchesController.unlockEvent(uri), context.subscriptions));
+
+	compareProvider = new CvsCompareProvider(configManager.getBranchesEnableFlag());
+	compareTree = vscode.window.createTreeView('cvs-compare', { treeDataProvider: compareProvider, canSelectMany: false} );
 
 	initializeWorkspaceFolders(context);
 
@@ -501,7 +508,10 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(branchData.uri);
 
 		if (sourceControl) {
-			sourceControl.diffBranch(branchData.branchName);
+			const sourceFiles = await sourceControl.diffBranch(branchData.branchName, branchData.repository);
+
+			compareProvider.refresh(sourceFiles);
+			compareTree.description = `test`;
 		}
 	}));
 

@@ -43,18 +43,30 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     async getDeps(uri: Uri): Promise<BranchData[]> {
         let branchData: BranchData[] = [];
 
+        const repo = await this.readCvsRepoFile(uri); 
         const tag = await this.readCvsTagFile(uri);
         const log = await this.readCvsLog(uri);
         const branches = await this.getBranches(log);
 
         // manually add main branch (e.g. trunk)
-        branchData.push(new BranchData('main', uri, tag === 'main'));
+        branchData.push(new BranchData('main', uri, tag === 'main', repo));
 
         branches.forEach(element => {
-            branchData.push(new BranchData(element, uri, tag === element));
+            branchData.push(new BranchData(element, uri, tag === element, repo));
         });
 
         return branchData;
+    }
+
+    async readCvsRepoFile(uri: Uri): Promise<string> {
+        const file = Uri.joinPath(uri, 'CVS/Repository');
+        let repo = await readFile(file.fsPath);
+
+        if (repo) {
+            return repo.trim();
+        } else{
+            return '?';
+        }
     }
 
     async readCvsTagFile(uri: Uri): Promise<string> {
@@ -101,7 +113,8 @@ export class BranchData extends TreeItem {
     constructor(
         public readonly branchName: string,
         public readonly uri: Uri,
-        public readonly isActive: boolean
+        public readonly isActive: boolean,
+        public readonly repository: string
     ) {
         let label: any;
         if (isActive) {
