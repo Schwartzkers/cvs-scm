@@ -14,6 +14,7 @@ import { BranchesController } from './branchesController';
 import { StatusBarController } from './statusBarController';
 import { SourceFile } from './sourceFile';
 import { CvsCompareProvider, SourceFileItem } from './cvsCompareProvider';
+import { readCvsTagFile } from './cvsHelpers';
 
 export let cvsDocumentContentProvider: CvsDocumentContentProvider;
 export let configManager: ConfigManager;
@@ -488,9 +489,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.add-branch', async () => {
 		const name = await vscode.window.showInputBox({prompt: `Branch Name`});
 		if (name) {
-			console.log(name);
-			console.log(branchesController.getWorkspace()?.fsPath);
-
 			const ws = branchesController.getWorkspace();
 			if (ws) {
 				const sourceControl = findSourceControl(ws);
@@ -508,15 +506,16 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(branchData.uri);
 
 		if (sourceControl) {
-			const compareData = await sourceControl.diffBranch(branchData.branchName, branchData.repository);
+			const currentBranch = await readCvsTagFile(sourceControl.getWorkspaceFolder());
+			const compareData = await sourceControl.diffBranch(currentBranch, branchData.branchName, branchData.repository);
 
 			if (compareData.length > 0) {
 				compareProvider.refresh(compareData, sourceControl.getWorkspaceFolder());
-				compareTree.description = `${branchData.repository}`;
-				compareTree.message = `Working tree compared to branch: ${branchData.branchName}`;
+				compareTree.description = `${branchData.repository}\t(${branchData.branchName} -> ${currentBranch})`;
+				compareTree.message = `Changes if branch ${branchData.branchName} is merged into ${currentBranch}. Local changes are not included in comparison.`;
 			} else {
 				compareTree.description = '';
-				compareTree.message = `No diffs found between working tree and branch ${branchData.branchName}.`;
+				compareTree.message = `No diffs found between branches ${currentBranch} and ${branchData.branchName}.`;
 			}
 		}
 	}));

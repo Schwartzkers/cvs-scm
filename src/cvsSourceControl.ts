@@ -796,8 +796,8 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async diffBranch(branchName: string, repository: string): Promise<CompareData[]> {
-        return await this.cvsRepository.diffBranch(branchName, repository);
+    async diffBranch(currentBranch: string, incomingBranch: string, repository: string): Promise<CompareData[]> {
+        return await this.cvsRepository.diffBranch(currentBranch, incomingBranch, repository);
     }
 
 

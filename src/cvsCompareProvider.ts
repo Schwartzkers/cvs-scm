@@ -1,8 +1,7 @@
-import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event } from 'vscode';
+import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, Command, EventEmitter, Event } from 'vscode';
 import { basename, dirname } from 'path';
-import { spawnCmd, readFile } from './utility';
-import { SourceFile, SourceFileState } from './sourceFile';
-import { EOL } from 'os';
+import { SourceFileState } from './sourceFile';
+import { CVS_SCHEME_COMPARE } from './cvsRepository';
 
 export class CvsCompareProvider implements TreeDataProvider<SourceFileItem> {
     private _onDidChangeTreeData: EventEmitter<SourceFileItem | undefined | null | void> = new EventEmitter<SourceFileItem | undefined | null | void>();
@@ -53,20 +52,27 @@ export class CvsCompareProvider implements TreeDataProvider<SourceFileItem> {
 export class CompareData {
     public compareBranch: string = '';
 
-	constructor(public uri: Uri,
+    constructor(public uri: Uri,
                 public state: SourceFileState,
-                public repository: string) {}
+                public repository: string,
+                public currentBranch: string,
+                public incomingBranch: string) {}
 }
 
 export class SourceFileItem extends TreeItem {
+    public currentBranch: string = '';
+    public incomingBranch: string = '';
+
     constructor(
         public readonly sourceFile: CompareData,
         public readonly workspace: Uri
     ) {
         if (sourceFile.uri === undefined) { return; }
-
         super(basename(sourceFile.uri.fsPath), TreeItemCollapsibleState.None);
-        //this.tooltip = sourceFileName;
+
+        this.currentBranch = sourceFile.currentBranch;
+        this.incomingBranch = sourceFile.incomingBranch;
+
         this.description = dirname(sourceFile.uri.fsPath).split(this.workspace.fsPath).at(1)?.substring(1);
         this.id = sourceFile.uri.fsPath;
 
@@ -80,5 +86,16 @@ export class SourceFileItem extends TreeItem {
             this.iconPath = { dark: __dirname + "/../resources/icons/dark/modified.svg",
                               light: __dirname + "/../resources/icons/light/modified.svg"};
         }
+
+        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${sourceFile.uri.fsPath}%20(${this.currentBranch})`);
+        const right = Uri.parse(`${CVS_SCHEME_COMPARE}:${sourceFile.uri.fsPath}%20(${this.incomingBranch})`);
+
+        const command: Command =
+        {
+            title: "Branch Diff",
+            command: "vscode.diff",
+            arguments: [left, right, `${basename(sourceFile.uri.fsPath)} (${this.currentBranch}) <-> (${this.incomingBranch})`],
+        };
+        this.command = command;
     }
 }

@@ -2,6 +2,7 @@ import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, Them
 import { basename, dirname } from 'path';
 import { spawnCmd, readFile } from './utility';
 import { EOL } from 'os';
+import { readCvsRepoFile, readCvsTagFile } from './cvsHelpers'; './cvsHelpers';
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();
@@ -43,8 +44,8 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     async getDeps(uri: Uri): Promise<BranchData[]> {
         let branchData: BranchData[] = [];
 
-        const repo = await this.readCvsRepoFile(uri); 
-        const tag = await this.readCvsTagFile(uri);
+        const repo = await readCvsRepoFile(uri); 
+        const tag = await readCvsTagFile(uri);
         const log = await this.readCvsLog(uri);
         const branches = await this.getBranches(log);
 
@@ -56,28 +57,6 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         });
 
         return branchData;
-    }
-
-    async readCvsRepoFile(uri: Uri): Promise<string> {
-        const file = Uri.joinPath(uri, 'CVS/Repository');
-        let repo = await readFile(file.fsPath);
-
-        if (repo) {
-            return repo.trim();
-        } else{
-            return '?';
-        }
-    }
-
-    async readCvsTagFile(uri: Uri): Promise<string> {
-        const file = Uri.joinPath(uri, 'CVS/Tag');
-        let tag = await readFile(file.fsPath);
-
-        if (tag) {
-            return tag.substring(1).trim();
-        } else{
-            return 'main';
-        }
     }
 
     async readCvsLog(uri: Uri): Promise<string> {
