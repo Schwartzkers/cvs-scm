@@ -508,10 +508,16 @@ export function activate(context: vscode.ExtensionContext) {
 		const sourceControl = findSourceControl(branchData.uri);
 
 		if (sourceControl) {
-			const sourceFiles = await sourceControl.diffBranch(branchData.branchName, branchData.repository);
+			const compareData = await sourceControl.diffBranch(branchData.branchName, branchData.repository);
 
-			compareProvider.refresh(sourceFiles);
-			compareTree.description = `test`;
+			if (compareData.length > 0) {
+				compareProvider.refresh(compareData, sourceControl.getWorkspaceFolder());
+				compareTree.description = `${branchData.repository}`;
+				compareTree.message = `Working tree compared to branch: ${branchData.branchName}`;
+			} else {
+				compareTree.description = '';
+				compareTree.message = `No diffs found between working tree and branch ${branchData.branchName}.`;
+			}
 		}
 	}));
 

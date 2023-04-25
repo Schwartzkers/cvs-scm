@@ -8,14 +8,16 @@ export class CvsCompareProvider implements TreeDataProvider<SourceFileItem> {
     private _onDidChangeTreeData: EventEmitter<SourceFileItem | undefined | null | void> = new EventEmitter<SourceFileItem | undefined | null | void>();
     readonly onDidChangeTreeData: Event<SourceFileItem | undefined | null | void> = this._onDidChangeTreeData.event;
     private _enabled: boolean = false;
-    private _sourceFiles: SourceFile[] = [];
+    private _sourceFiles: CompareData[] = [];
+    private _workspace: Uri | undefined;
     
     constructor(enabled: boolean) { 
         this._enabled = enabled;
     }
 
-    refresh(sourceFiles: SourceFile[] ): any {
+    refresh(sourceFiles: CompareData[], workspace: Uri): any {
         this._sourceFiles = sourceFiles;
+        this._workspace = workspace;
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -39,24 +41,33 @@ export class CvsCompareProvider implements TreeDataProvider<SourceFileItem> {
         let sourceFileItems: SourceFileItem[] = [];
 
         this._sourceFiles.forEach(element => {
-            if (element.uri) {
-                sourceFileItems.push(new SourceFileItem(element));
+            if (element.uri && this._workspace) {
+                sourceFileItems.push(new SourceFileItem(element, this._workspace));
             }
         });
 
         return sourceFileItems;
-    } 
+    }
+}
+
+export class CompareData {
+    public compareBranch: string = '';
+
+	constructor(public uri: Uri,
+                public state: SourceFileState,
+                public repository: string) {}
 }
 
 export class SourceFileItem extends TreeItem {
     constructor(
-        public readonly sourceFile: SourceFile
+        public readonly sourceFile: CompareData,
+        public readonly workspace: Uri
     ) {
         if (sourceFile.uri === undefined) { return; }
 
         super(basename(sourceFile.uri.fsPath), TreeItemCollapsibleState.None);
         //this.tooltip = sourceFileName;
-        this.description = dirname(sourceFile.uri.fsPath);
+        this.description = dirname(sourceFile.uri.fsPath).split(this.workspace.fsPath).at(1)?.substring(1);
         this.id = sourceFile.uri.fsPath;
 
         if (sourceFile.state === SourceFileState.added) {

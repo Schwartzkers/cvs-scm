@@ -4,6 +4,7 @@ import { execCmd, spawnCmd, CmdResult } from './utility';
 import { ConfigManager} from './configManager';
 import { basename, dirname } from 'path';
 import { EOL } from 'os';
+import { CompareData } from "./cvsCompareProvider";
 
 export const CVS_SCHEME = 'cvs-scm';
 export const CVS_SCHEME_COMPARE = 'cvs-scm-compare';
@@ -218,8 +219,8 @@ export class CvsRepository implements QuickDiffProvider {
         return (await spawnCmd(`cvs tag -b ${branchName}`, this.workspaceUri.fsPath));
     }
 
-    async diffBranch(branchName: string, repository: string): Promise<SourceFile[]> {
-        const result = await spawnCmd(`cvs -q rdiff -s -r ${branchName} ${repository}`, this.workspaceUri.fsPath)
+    async diffBranch(branchName: string, repository: string): Promise<CompareData[]> {
+        const result = await spawnCmd(`cvs -q rdiff -s -r ${branchName} ${repository}`, this.workspaceUri.fsPath);
         return this.parseCvsBranchDiffOutput(result.output, repository);
     }
 
@@ -281,7 +282,7 @@ export class CvsRepository implements QuickDiffProvider {
         }
     }
 
-    parseCvsBranchDiffOutput(output: string, repo: string): SourceFile[] {
+    parseCvsBranchDiffOutput(output: string, repo: string): CompareData[] {
         // File code/LICENSE.md is new; current revision 1.1
         // File code/dec18.log is removed; branch1 revision 1.1.2.1
         // File code/.cvsignore changed from revision 1.1 to 1.2
@@ -290,7 +291,7 @@ export class CvsRepository implements QuickDiffProvider {
         // "is removed"
         // "is changed"
             // from revision x.y to u.v
-        let sourceFiles: SourceFile[] = [];
+        let compareData: CompareData[] = [];
         for (const line of output.split(EOL)) {
             // 1. make URI
             // 2. make source file
@@ -298,27 +299,24 @@ export class CvsRepository implements QuickDiffProvider {
             if (line.includes('is new;')) {
                 const file = line.trim().split('is new;')[0].trim().split(`File ${repo}/`)[1].trim();
                 const uri = Uri.joinPath(this.workspaceUri, file);
-                let sourceFile = new SourceFile(uri);
-                sourceFile.state = SourceFileState.added;
-                sourceFiles.push(sourceFile);
+                let item = new CompareData(uri, SourceFileState.added, repo);
+                compareData.push(item);
                 console.log(uri.fsPath);
             } else if (line.includes('is removed;')) {
                 const file = line.trim().split('is removed;')[0].trim().split(`File ${repo}/`)[1].trim();
                 const uri = Uri.joinPath(this.workspaceUri, file);
-                let sourceFile = new SourceFile(uri);
-                sourceFile.state = SourceFileState.removed;
-                sourceFiles.push(sourceFile);
+                let item = new CompareData(uri, SourceFileState.removed, repo);
+                compareData.push(item);
                 console.log(uri.fsPath);
             } else if (line.includes('changed from revision')) {
                 const file = line.trim().split('changed from revision')[0].trim().split(`File ${repo}/`)[1].trim();
                 const uri = Uri.joinPath(this.workspaceUri, file);
-                let sourceFile = new SourceFile(uri);
-                sourceFile.state = SourceFileState.modified;
-                sourceFiles.push(sourceFile);
+                let item = new CompareData(uri, SourceFileState.modified, repo);
+                compareData.push(item);
                 console.log(uri.fsPath);
             }
         }
 
-        return sourceFiles;
+        return compareData;
     }
 }
