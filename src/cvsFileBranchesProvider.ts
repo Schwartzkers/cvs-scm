@@ -1,9 +1,9 @@
-import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command, workspace, TreeItemLabel } from 'vscode';
+import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event, Command, workspace } from 'vscode';
 import { basename, dirname } from 'path';
 import { spawnCmd } from './utility';
 import { EOL } from 'os';
 import { CVS_SCHEME_COMPARE } from './cvsRepository';
-import { SourceFile, SourceFileState } from './sourceFile';
+import { SourceFileState } from './sourceFile';
 import { findSourceControl } from "./extension";
 
 export class CvsFileBranchesProvider implements TreeDataProvider<FileBranchData> {
