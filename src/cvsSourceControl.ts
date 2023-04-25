@@ -769,7 +769,7 @@ export class CvsSourceControl implements Disposable {
     }
 
     async mergeBranchToFile(sourceFile: SourceFile ,branchData: FileBranchData): Promise<void> {
-        let result = (await this.cvsRepository.revert(undefined)).result;
+        let result = (await this.cvsRepository.revert(sourceFile.uri)).result;
 
         if (result && sourceFile.branch) {
             if (branchData.branchName === 'main') {
