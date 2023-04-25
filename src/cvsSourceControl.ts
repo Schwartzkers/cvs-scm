@@ -11,6 +11,7 @@ import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
 import { FileBranchData } from './cvsFileBranchesProvider';
+import { CompareData } from './cvsCompareProvider';
 
 
 export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
@@ -795,7 +796,7 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async diffBranch(branchName: string, repository: string): Promise<SourceFile[]> {
+    async diffBranch(branchName: string, repository: string): Promise<CompareData[]> {
         return await this.cvsRepository.diffBranch(branchName, repository);
     }
 
