@@ -5,8 +5,9 @@ ile.
 ## [v1.11.0]
 - Pre-release version.
 - Separate workspace branches and commands into new `WORKSPACE BRANCHES` view.
-- Add `Compare` view to display diffs between branches, selected via `WORKSPACE BRANCHES` view.
+- Add `Compare BRANCHES` view to display diffs between branches, selected via `WORKSPACE BRANCHES` view.
 - Fix bug with merge branch to file, where all changes in worksapce were undone.
+- Fix bug where the correct file type (e.g. .cpp) was lost during revision comparison.
 ## [v1.10.0]
 - Official release of the 1.9 pre-release.
 ## [v1.9.5]

@@ -511,7 +511,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			if (compareData.length > 0) {
 				compareProvider.refresh(compareData, sourceControl.getWorkspaceFolder());
-				compareTree.description = `${branchData.repository}\t(${branchData.branchName} -> ${currentBranch})`;
+				compareTree.description = `${basename(sourceControl.getWorkspaceFolder().fsPath)}\t(${branchData.branchName} -> ${currentBranch})`;
 				compareTree.message = `Local changes are not included in comparison.`;
 			} else {
 				compareTree.description = '';
