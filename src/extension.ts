@@ -86,6 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	compareProvider = new CvsCompareProvider(configManager.getBranchesEnableFlag());
 	compareTree = vscode.window.createTreeView('cvs-compare', { treeDataProvider: compareProvider, canSelectMany: false} );
+	compareTree.message = `Select a Branch for comparison from the WORKSPACE BRANCHES view.`;
 
 	initializeWorkspaceFolders(context);
 
