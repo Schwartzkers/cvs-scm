@@ -512,7 +512,7 @@ export function activate(context: vscode.ExtensionContext) {
 			if (compareData.length > 0) {
 				compareProvider.refresh(compareData, sourceControl.getWorkspaceFolder());
 				compareTree.description = `${branchData.repository}\t(${branchData.branchName} -> ${currentBranch})`;
-				compareTree.message = `Changes if branch ${branchData.branchName} is merged into ${currentBranch}. Local changes are not included in comparison.`;
+				compareTree.message = `Local changes are not included in comparison.`;
 			} else {
 				compareTree.description = '';
 				compareTree.message = `No diffs found between branches ${currentBranch} and ${branchData.branchName}.`;

@@ -198,7 +198,7 @@ export class CommitData extends TreeItem {
         }
 
         super(label, TreeItemCollapsibleState.None);
-        this.resourceUri = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.revision})`);
+        this.resourceUri = Uri.from({scheme: CVS_SCHEME_COMPARE, path: uri.path, query: `${this.revision}`});
 
         if (isHead) {
             this.contextValue = "head";
@@ -237,7 +237,8 @@ export class CommitData extends TreeItem {
             }
 
             if (shouldDiff) {
-                const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${previousRevision})`);
+                const left = Uri.from({scheme: CVS_SCHEME_COMPARE, path: uri.path, query: `${previousRevision}`});
+                
                 const right = this.resourceUri;
         
                 const command: Command =

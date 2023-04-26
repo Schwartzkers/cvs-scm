@@ -23,8 +23,8 @@ export class CvsCompareContentProvider implements TextDocumentContentProvider, D
 			// currently it will timeout after 5 secs
 			return "Canceled";
 		}
-		
-		const revision = basename(uri.fsPath.slice(uri.fsPath.lastIndexOf(' (')+2, uri.fsPath.lastIndexOf(')')));
+
+		const revision=uri.query;
 
 		return new Promise((resolve) => {
 			resolve(this.getRepositoryRevision(uri, revision));

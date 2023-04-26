@@ -125,7 +125,7 @@ export class FileBranchData extends TreeItem {
             this.contextValue = "branch";
         }
 
-        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${uri.fsPath}%20(${this.branchName})`);
+        const left = Uri.from({scheme: CVS_SCHEME_COMPARE, path: uri.path, query: `${this.branchName}`});
         const right = uri;
 
         const command: Command =

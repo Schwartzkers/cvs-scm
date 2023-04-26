@@ -88,7 +88,7 @@
 			  } ,
 			  {
 				"id": "cvs-compare",
-				"name": "Compare",
+				"name": "Merge Preview",
 				"contextualTitle": "CVS",
 				"visibility": "collapsed",
 				"when": "cvs-scm.enabled == true"
@@ -278,7 +278,7 @@
 			},
 			{
 				"command": "cvs-scm.compare-branches",
-				"title": "Compare Branches",
+				"title": "Preview Branch Merge",
 				"icon": "$(compare-changes)",
 				"category": "cvs-scm"
 			}
