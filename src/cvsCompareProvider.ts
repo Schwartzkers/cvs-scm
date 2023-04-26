@@ -1,4 +1,4 @@
-import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, Command, EventEmitter, Event } from 'vscode';
+import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, Command, EventEmitter, Event, MarkdownString } from 'vscode';
 import { basename, dirname } from 'path';
 import { SourceFileState } from './sourceFile';
 import { CVS_SCHEME_COMPARE } from './cvsRepository';
@@ -76,26 +76,48 @@ export class SourceFileItem extends TreeItem {
         this.description = dirname(sourceFile.uri.fsPath).split(this.workspace.fsPath).at(1)?.substring(1);
         this.id = sourceFile.uri.fsPath;
 
+        const left = Uri.from({scheme: CVS_SCHEME_COMPARE, path: sourceFile.uri.path, query: `${this.currentBranch}`});
+        const right = Uri.from({scheme: CVS_SCHEME_COMPARE, path: sourceFile.uri.path, query: `${this.incomingBranch}`});
+
         if (sourceFile.state === SourceFileState.added) {
             this.iconPath = { dark: __dirname + "/../resources/icons/dark/added.svg",
                               light: __dirname + "/../resources/icons/light/added.svg"};
+
+            const command: Command =
+            {
+                title: "Open Branch Revision",
+                command: "vscode.open",
+                arguments: [right, [],`${basename(sourceFile.uri.fsPath)} (Compare) A`],
+            };
+            this.command = command;
         } else if (sourceFile.state === SourceFileState.removed) {
             this.iconPath = { dark: __dirname + "/../resources/icons/dark/removed.svg",
                               light: __dirname + "/../resources/icons/light/removed.svg"};
+
+            const command: Command =
+            {
+                title: "Open Branch Revision",
+                command: "vscode.open",
+                arguments: [left, [], `${basename(sourceFile.uri.fsPath)} (Compare) R`],
+            };
+            this.command = command;
         } else if (sourceFile.state === SourceFileState.modified) {
             this.iconPath = { dark: __dirname + "/../resources/icons/dark/modified.svg",
                               light: __dirname + "/../resources/icons/light/modified.svg"};
+
+            let branch1 = this.currentBranch;
+            let branch2 = this.incomingBranch;
+
+            if (branch1 === 'HEAD') { branch1 = 'main'; }
+            if (branch2 === 'HEAD') { branch1 = 'main'; }
+
+            const command: Command =
+            {
+                title: "Branch Diff",
+                command: "vscode.diff",
+                arguments: [left, right, `${basename(sourceFile.uri.fsPath)} (${branch1}) <-> (${branch2})`],
+            };
+            this.command = command;
         }
-
-        const left = Uri.parse(`${CVS_SCHEME_COMPARE}:${sourceFile.uri.fsPath}%20(${this.currentBranch})`);
-        const right = Uri.parse(`${CVS_SCHEME_COMPARE}:${sourceFile.uri.fsPath}%20(${this.incomingBranch})`);
-
-        const command: Command =
-        {
-            title: "Branch Diff",
-            command: "vscode.diff",
-            arguments: [left, right, `${basename(sourceFile.uri.fsPath)} (${this.currentBranch}) <-> (${this.incomingBranch})`],
-        };
-        this.command = command;
     }
 }

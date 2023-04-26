@@ -18,6 +18,8 @@ export class BranchesController extends Controller {
         this._itchy = true;
         if (!isEnabled) {
             this._branchesTree.message = 'Enable view in CVS settings.';
+        } else {
+            this._branchesTree.message = 'There are no workspaces available to provide branch information.';
         }
     }
 
@@ -39,11 +41,15 @@ export class BranchesController extends Controller {
         const editor = window.activeTextEditor;
         let newWorkspace: Uri | undefined = undefined;
         if (editor) {
+            if (editor.document.fileName === 'Schwartzkers.cvs-scm.CVS') {
+                // CVS log was selected
+                return;
+            }
             newWorkspace = workspace.getWorkspaceFolder(editor.document.uri)?.uri;
         // no active editor
         } else if (workspace.workspaceFolders) { 
             if (this._currentWorkspace === undefined) {
-                // get first workspace on boot
+                // get first workspace folder on boot
                 newWorkspace = workspace.workspaceFolders.at(0)?.uri;
             } else {
                 // use last known workspace (e.g. all active editors closed)
@@ -57,32 +63,23 @@ export class BranchesController extends Controller {
                 console.log('workspace has not changed');
                 return;
             }
-        } else {
-            this._itchy = false;
-            this._currentWorkspace = undefined;
 
-            this._branchesProvider.refresh(undefined);
-            this._branchesTree.description = '';
-            this._branchesTree.message = 'There are no workspaces available to provide branch information.';
+            // 3. get branches for newWorkspace
+            if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === newWorkspace?.fsPath) !== -1) {
+                // check if workspace is locked
+                console.log('workspace is currently locked');
+                return;
+            } else {
+                this._itchy = false;
+                this._currentWorkspace = newWorkspace;
 
-            return;
-        }
+                const name = basename(newWorkspace.fsPath);
 
-        // 3. get branches for newWorkspace
-        if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === newWorkspace?.fsPath) !== -1) {
-            // check if workspace is locked
-            console.log('workspace is currently locked');
-            return;
-        } else {
-            this._itchy = false;
-            this._currentWorkspace = newWorkspace;
-
-            const name = basename(newWorkspace.fsPath);
-
-            this._branchesProvider.refresh(newWorkspace);
-            this._branchesTree.description = name;
-            this._branchesTree.message = '';
-            
+                this._branchesProvider.refresh(newWorkspace);
+                this._branchesTree.description = name;
+                this._branchesTree.message = '';
+                
+            }
         }
     }
 }
