@@ -109,7 +109,7 @@ export class SourceFileItem extends TreeItem {
             let branch2 = this.incomingBranch;
 
             if (branch1 === 'HEAD') { branch1 = 'main'; }
-            if (branch2 === 'HEAD') { branch1 = 'main'; }
+            if (branch2 === 'HEAD') { branch2 = 'main'; }
 
             const command: Command =
             {

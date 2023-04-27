@@ -1,6 +1,6 @@
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
          CancellationTokenSource, Uri, ExtensionContext, Command, Disposable,
-         workspace, RelativePattern, window, commands, EventEmitter, Event } from 'vscode';
+         workspace, RelativePattern, window, commands, EventEmitter } from 'vscode';
 import { promises as fsPromises } from 'fs';
 import { CvsRepository } from './cvsRepository';
 import { SourceFileState, SourceFile } from './sourceFile';
@@ -10,8 +10,10 @@ import { dirname, basename } from 'path';
 import { ConfigManager} from './configManager';
 import { EOL } from 'os';
 import { CommitData } from './cvsRevisionProvider';
+import { BranchData } from './cvsBranchProvider';
 import { FileBranchData } from './cvsFileBranchesProvider';
 import { CompareData } from './cvsCompareProvider';
+import { readCvsTagFile } from './cvsHelpers';
 
 
 export let onResouresLocked: EventEmitter<Uri> = new EventEmitter<Uri>();
@@ -696,7 +698,7 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async switchWorkspaceToBranch(branchData: FileBranchData): Promise<void> {
+    async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
         let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result) {
@@ -748,18 +750,19 @@ export class CvsSourceControl implements Disposable {
         }
     }
 
-    async mergeBranch(sourceFile: SourceFile ,branchData: FileBranchData): Promise<void> {
-        let result = (await this.cvsRepository.revert(undefined)).result;
+    async mergeBranch(branchData: BranchData): Promise<void> {
+        const currentBranch = await readCvsTagFile(this.workspacefolder);
 
-        if (result && sourceFile.branch) {
-            if (branchData.branchName === 'main') {
-                result = (await this.cvsRepository.merge(undefined, sourceFile.branch, 'HEAD')).result;
-            } else {
-                let currentBranch = sourceFile.branch;
-                if (sourceFile.branch === 'main') {
-                    currentBranch = 'HEAD';
+        let result = false;
+        if (currentBranch !== branchData.branchName) {
+            result = (await this.cvsRepository.revert(undefined)).result;
+
+            if (result) {
+                if (branchData.branchName === 'main') {
+                    result = (await this.cvsRepository.merge(undefined, currentBranch, 'HEAD')).result;
+                } else {
+                    result = (await this.cvsRepository.merge(undefined, currentBranch, branchData.branchName)).result;
                 }
-                result = (await this.cvsRepository.merge(undefined, currentBranch, branchData.branchName)).result;
             }
         }
 

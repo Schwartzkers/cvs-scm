@@ -132,7 +132,7 @@ export class FileBranchData extends TreeItem {
         {
             title: "File History",
             command: "vscode.diff",
-            arguments: [left, right, `${basename(uri.fsPath)} (${this.branchName}) <-> (working})`],
+            arguments: [left, right, `${basename(uri.fsPath)} (${this.branchName}) <-> (working}`],
         };
         this.command = command;
     }
