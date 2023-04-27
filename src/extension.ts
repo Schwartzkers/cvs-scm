@@ -418,14 +418,14 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-branch', async (branchData: FileBranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.checkout-branch', async (branchData: BranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to switch the workspace to branch ${branchData.branchName}? All uncommited changes will be lost.`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
 				branchesController.setItchy();
-				sourceControl.switchWorkspaceToBranch(branchData);
+				await sourceControl.switchWorkspaceToBranch(branchData);
 			}
 		}
 	}));
@@ -463,14 +463,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working', async (branchData: FileBranchData) => {
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.merge-branch-to-working', async (branchData: BranchData) => {
 		const option = await vscode.window.showWarningMessage(`Are you sure you want to merge branch ${branchData.branchName} into the workspace branch? If previously merged the action may have undesired effects. All uncommited changes will be lost.`, { modal: true }, `Yes`);
 		if (option === `Yes`) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
-				const sourceFile = await sourceControl.getSourceFile(branchData.uri);
-				sourceControl.mergeBranch(sourceFile, branchData);
+				sourceControl.mergeBranch(branchData);
 			}
 		}
 	}));
