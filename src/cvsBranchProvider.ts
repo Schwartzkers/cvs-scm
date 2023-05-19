@@ -60,7 +60,7 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     }
 
     async readCvsLog(uri: Uri): Promise<string> {
-        const cvsCmd = `cvs log -h`;
+        const cvsCmd = `cvs -z5 log -l -h`;
         const result = await spawnCmd(cvsCmd, uri.fsPath);
         
         if (!result.result || result.output.length === 0) {

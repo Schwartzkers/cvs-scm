@@ -2,7 +2,7 @@
   "name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
-	"version": "1.11.1",
+	"version": "1.11.2",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -88,7 +88,7 @@
 			  } ,
 			  {
 				"id": "cvs-compare",
-				"name": "COMPARE BRANCHES",
+				"name": "Compare Branches",
 				"contextualTitle": "CVS",
 				"visibility": "collapsed",
 				"when": "cvs-scm.enabled == true"
