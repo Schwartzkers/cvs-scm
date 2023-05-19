@@ -34,6 +34,7 @@ export class CvsSourceControl implements Disposable {
     private configManager: ConfigManager;
     private _startup: boolean = true;
     private _resourcesDirty: boolean = false;
+    private _isLocked: boolean = false;
 
 
     constructor(context: ExtensionContext,
@@ -118,6 +119,8 @@ export class CvsSourceControl implements Disposable {
     }
 
     async getResourceChanges(uri: Uri): Promise<void> {
+        if (this._isLocked) { return; }
+
         // emmit event to stop update of trees, status bar
         onResouresLocked.fire(this.workspacefolder);
 
@@ -699,6 +702,10 @@ export class CvsSourceControl implements Disposable {
     }
 
     async switchWorkspaceToBranch(branchData: BranchData): Promise<void> {
+        // to prevent the extension from reacting to file changes during branch switch
+        onResouresLocked.fire(this.workspacefolder);
+        this._isLocked = true;
+
         let result = (await this.cvsRepository.revert(undefined)).result;
 
         if (result) {
@@ -712,6 +719,10 @@ export class CvsSourceControl implements Disposable {
         if(!result) {
             window.showErrorMessage(`Failed to switch workspace to branch: ${branchData.branchName}`);
         }
+
+        this._isLocked = false;
+
+        await this.getResourceChanges(this.workspacefolder);
     }
 
     async switchFileToRevision(commitData: CommitData): Promise<void> {

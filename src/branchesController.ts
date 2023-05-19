@@ -60,7 +60,7 @@ export class BranchesController extends Controller {
         // 2. check if the newWorkspace branches are currently displayed
         if (newWorkspace) {
             if (newWorkspace.fsPath === this._currentWorkspace?.fsPath && this._itchy === false) {
-                console.log('workspace has not changed');
+                //console.log('workspace has not changed');
                 return;
             }
 
