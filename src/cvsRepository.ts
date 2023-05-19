@@ -179,7 +179,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -r ${revision} ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -r ${revision}`, this.workspaceUri.fsPath));
+            return (await spawnCmd(`cvs -z5 update -r ${revision}`, this.workspaceUri.fsPath));
         }
     }
 
@@ -187,7 +187,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -C`, this.workspaceUri.fsPath));
+            return (await spawnCmd(`cvs -z5 update -C`, this.workspaceUri.fsPath));
         }
     }
 
@@ -203,7 +203,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -A ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -A`, this.workspaceUri.fsPath));
+            return (await spawnCmd(`cvs -z5 update -A`, this.workspaceUri.fsPath));
         }
     }
 
@@ -211,7 +211,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -j ${currentBranch} -j ${fromBranch} ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs update -j ${currentBranch} -j ${fromBranch}`, this.workspaceUri.fsPath));
+            return (await spawnCmd(`cvs -z5 update -j ${currentBranch} -j ${fromBranch}`, this.workspaceUri.fsPath));
         }
     }
 

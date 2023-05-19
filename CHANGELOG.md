@@ -2,6 +2,11 @@
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
+
+## [v1.11.2]
+- Pre-release version.
+- Add gzip-level of 5 to the `WORKSPACE BRANCHES` commands to improve performace.
+- Only look for `WORKSPACE BRANCHES` in the root directory of a workspace folder.
 ## [v1.11.1]
 - Pre-release version.
 - Fix merging of branches in `WORKSPACE BRANCHES` view.
