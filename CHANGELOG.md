@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.4]
+- Pre-release version.
+- Allow for more time when switching branches before reporting errors.
 ## [v1.11.3]
 - Pre-release version.
 - Wait for a workspace to switch to the new branch before updating the CVS SCM views.
