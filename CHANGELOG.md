@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.3]
+- Pre-release version.
+- Wait for a workspace to switch to the new branch before updating the CVS SCM views.
 ## [v1.11.2]
 - Pre-release version.
 - Add gzip-level of 5 to the `WORKSPACE BRANCHES` commands to improve performace.
