@@ -3,6 +3,10 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+
+## [v1.11.5]
+- Pre-release version.
+- Add progress indication on the status bar when switching or merging branches.
 ## [v1.11.4]
 - Pre-release version.
 - Allow for more time when switching branches before reporting errors.
