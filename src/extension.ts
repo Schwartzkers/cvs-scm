@@ -425,7 +425,15 @@ export function activate(context: vscode.ExtensionContext) {
 			
 			if (sourceControl) {
 				branchesController.setItchy();
-				await sourceControl.switchWorkspaceToBranch(branchData);
+				vscode.window.withProgress({
+					location: vscode.ProgressLocation.Window,
+					cancellable: false,
+					title: `Switching to branch: ${branchData.branchName}`
+				}, async (progess) => {
+					progess.report({ increment: 0});
+					await sourceControl.switchWorkspaceToBranch(branchData);
+					progess.report({ increment: 100});
+				});
 			}
 		}
 	}));
@@ -469,7 +477,15 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
-				sourceControl.mergeBranch(branchData);
+				vscode.window.withProgress({
+					location: vscode.ProgressLocation.Window,
+					cancellable: false,
+					title: `Merging branch: ${branchData.branchName}`
+				}, async (progess) => {
+					progess.report({ increment: 0});
+					await sourceControl.mergeBranch(branchData);
+					progess.report({ increment: 100});
+				});
 			}
 		}
 	}));
