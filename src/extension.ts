@@ -68,9 +68,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
 	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
 
-	fileBranchesProvider = new CvsFileBranchesProvider(configManager.getBranchesEnableFlag());
+	fileBranchesProvider = new CvsFileBranchesProvider(configManager.getFileBranchesEnableFlag());
 	fileBranchesTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: fileBranchesProvider, canSelectMany: false} );
-	fileBranchesController = new FileBranchesController(fileBranchesProvider, fileBranchesTree, configManager.getBranchesEnableFlag());
+	fileBranchesController = new FileBranchesController(fileBranchesProvider, fileBranchesTree, configManager.getFileBranchesEnableFlag());
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileBranchesController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(fileBranchesTree.onDidChangeVisibility(() => fileBranchesController.updateRequest(), context.subscriptions));
 	context.subscriptions.push(onResouresLocked.event(uri => fileBranchesController.lockEvent(uri), context.subscriptions));
@@ -86,7 +86,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	compareProvider = new CvsCompareProvider(configManager.getBranchesEnableFlag());
 	compareTree = vscode.window.createTreeView('cvs-compare', { treeDataProvider: compareProvider, canSelectMany: false} );
-	compareTree.message = `Select a Branch for comparison from the WORKSPACE BRANCHES view.`;
+	if (configManager.getBranchesEnableFlag()) {
+		compareTree.message = `Select a Branch for comparison from the WORKSPACE BRANCHES view.`;
+	} else {
+		compareTree.message = `Enable view in CVS settings.`;
+	}
+	
 
 	initializeWorkspaceFolders(context);
 

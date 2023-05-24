@@ -179,7 +179,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -r ${revision} ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs -z5 update -r ${revision}`, this.workspaceUri.fsPath, 60000));
+            return (await spawnCmd(`cvs -z5 update -r ${revision}`, this.workspaceUri.fsPath, this._configManager.getTimeoutValue()));
         }
     }
 
@@ -187,7 +187,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -C ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs -z5 update -C`, this.workspaceUri.fsPath, 10000));
+            return (await spawnCmd(`cvs -z5 update -C`, this.workspaceUri.fsPath, this._configManager.getTimeoutValue()));
         }
     }
 
@@ -203,7 +203,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -A ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs -z5 update -A`, this.workspaceUri.fsPath, 60000));
+            return (await spawnCmd(`cvs -z5 update -A`, this.workspaceUri.fsPath, this._configManager.getTimeoutValue()));
         }
     }
 
@@ -211,7 +211,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (uri) {
             return (await spawnCmd(`cvs update -j ${currentBranch} -j ${fromBranch} ${basename(uri.fsPath)}`, dirname(uri.fsPath)));
         } else {
-            return (await spawnCmd(`cvs -z5 update -j ${currentBranch} -j ${fromBranch}`, this.workspaceUri.fsPath, 30000));
+            return (await spawnCmd(`cvs -z5 update -j ${currentBranch} -j ${fromBranch}`, this.workspaceUri.fsPath, this._configManager.getTimeoutValue()));
         }
     }
 
@@ -225,7 +225,7 @@ export class CvsRepository implements QuickDiffProvider {
         if (currentBranch === 'main') { branch1 = 'HEAD'; }
         if (incomingBranch === 'main') { branch2 = 'HEAD'; }
 
-        const result = await spawnCmd(`cvs -q rdiff -s -r${branch1} -r${branch2} ${repository}`, this.workspaceUri.fsPath);
+        const result = await spawnCmd(`cvs -q rdiff -s -r${branch1} -r${branch2} ${repository}`, this.workspaceUri.fsPath, this._configManager.getTimeoutValue());
         return this.parseCvsBranchDiffOutput(result.output, branch1, branch2, repository);
     }
 
