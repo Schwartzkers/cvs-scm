@@ -23,7 +23,6 @@
 		"url": "https://github.com/Schwartzkers/cvs-scm"
 	  },
 	"activationEvents": [
-        "onCommand:cvs-scm.refresh",
 		"workspaceContains:CVS/Root"
 	],
 	"main": "./out/extension.js",
@@ -48,16 +47,28 @@
 					"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
 					"scope": "window"
 				},
-				"fileHistory.enable": {
+				"views.fileHistory.enable": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable or disable the FILE HISTORY` view (requires restart of VS Code).",
+					"markdownDescription": "Enable or disable the `FILE HISTORY` view (requires reload of VS Code).",
 					"scope": "window"
 				},
-				"branches.enable": {
+				"views.fileBranches.enable": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable or disable the `BRANCHES` view (requires restart of VS Code).",
+					"markdownDescription": "Enable or disable the `FILE BRANCHES` view (requires reload of VS Code).",
+					"scope": "window"
+				},
+				"views.branches.enable": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Enable or disable the `WORKSPACE BRANCHES` and `COMPARE` views (requires reload of VS Code).",
+					"scope": "window"
+				},
+				"server.timeout": {
+					"type": "integer",
+					"default": 60,
+					"markdownDescription": "Timeout in seconds to wait for the CVS Server to respond to commands from the `WORKSPACE BRANCHES` view.",
 					"scope": "window"
 				}
 			}

@@ -1,8 +1,9 @@
 import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event } from 'vscode';
-import { basename, dirname } from 'path';
-import { spawnCmd, readFile } from './utility';
+import { basename } from 'path';
+import { spawnCmd } from './utility';
 import { EOL } from 'os';
-import { readCvsRepoFile, readCvsTagFile } from './cvsHelpers'; './cvsHelpers';
+import { readCvsRepoFile, readCvsTagFile } from './cvsHelpers';
+import { configManager } from './extension';
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();
@@ -61,7 +62,7 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
 
     async readCvsLog(uri: Uri): Promise<string> {
         const cvsCmd = `cvs -z5 log -l -h`;
-        const result = await spawnCmd(cvsCmd, uri.fsPath);
+        const result = await spawnCmd(cvsCmd, uri.fsPath, configManager.getTimeoutValue());
         
         if (!result.result || result.output.length === 0) {
             window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);

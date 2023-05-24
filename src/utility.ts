@@ -38,14 +38,14 @@ export async function execCmd(cvsCommand: string, dir: string, getStdErr: boolea
     return new CmdResult(result, output);
 }
 
-export async function spawnCmd(cvsCommand: string, dir: string, timeoutInMsec?: number): Promise<CmdResult>  {
+export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: number): Promise<CmdResult>  {
     const { spawn } = require("child_process");
 
     cvsCommandLog.info(cvsCommand);
 
     let tOut: number = 5000; // 5 secs
-    if (typeof timeoutInMsec !== 'undefined') {
-        tOut = timeoutInMsec;
+    if (typeof timeoutInSec !== 'undefined') {
+        tOut = timeoutInSec * 1000;
     }
 
     let stdout = '';
