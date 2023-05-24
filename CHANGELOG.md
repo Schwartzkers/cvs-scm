@@ -3,7 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
-
+## [v1.11.6]
+- Pre-release version.
+- Add CVS server timeout value to settings. Only applies to commands from `WORKSPACE BRANCHES` view.
 ## [v1.11.5]
 - Pre-release version.
 - Add progress indication on the status bar when switching or merging branches.
