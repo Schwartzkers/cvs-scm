@@ -72,7 +72,7 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
             const options = {
                 cwd: uri.fsPath,
                 shell: true,
-                timeout: configManager.getTimeoutValue(),
+                timeout: configManager.getTimeoutValue() * 1000,
             };
 
             const cmd = spawn(cvsCommand, [""], options);

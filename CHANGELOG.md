@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.8]
+- Pre-release version.
+- Fix bug where timeout value was not multiplied by 1000.
 ## [v1.11.7]
 - Pre-release version.
 - Optimize cvs log parsing for the `WORKSPACE BRANCHES` view.
