@@ -1,9 +1,8 @@
 import { Uri, TreeItem, TreeDataProvider, TreeItemCollapsibleState, window, ThemeIcon, EventEmitter, Event } from 'vscode';
 import { basename } from 'path';
-import { spawnCmd } from './utility';
 import { EOL } from 'os';
 import { readCvsRepoFile, readCvsTagFile } from './cvsHelpers';
-import { configManager } from './extension';
+import { configManager, cvsCommandLog } from './extension';
 
 export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _onDidChangeTreeData: EventEmitter<BranchData | undefined | null | void> = new EventEmitter<BranchData | undefined | null | void>();
@@ -47,8 +46,9 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
 
         const repo = await readCvsRepoFile(uri); 
         const tag = await readCvsTagFile(uri);
-        const log = await this.readCvsLog(uri);
-        const branches = await this.getBranches(log);
+        let branches = await this.readCvsLog(uri);
+
+        branches = branches.filter(function(elem, index, self) { return index === self.indexOf(elem); });
 
         // manually add main branch (e.g. trunk)
         branchData.push(new BranchData('main', uri, tag === 'main', repo));
@@ -60,30 +60,59 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         return branchData;
     }
 
-    async readCvsLog(uri: Uri): Promise<string> {
-        const cvsCmd = `cvs -z5 log -l -h`;
-        const result = await spawnCmd(cvsCmd, uri.fsPath, configManager.getTimeoutValue());
-        
-        if (!result.result || result.output.length === 0) {
+    async readCvsLog(uri: Uri): Promise<string[]> {
+        let branches: string[] = [];
+
+        const cvsCommand = `cvs -z5 log -l -h`;
+        cvsCommandLog.info(cvsCommand);
+    
+        const { spawn } = require("child_process");
+        const result = await new Promise<boolean>((resolve) => {
+
+            const options = {
+                cwd: uri.fsPath,
+                shell: true,
+                timeout: configManager.getTimeoutValue(),
+            };
+
+            const cmd = spawn(cvsCommand, [""], options);
+            cmd.stdout.setEncoding('utf8');
+            cmd.stderr.setEncoding('utf8');
+    
+            cmd.stdout.on("data", (data: any) => {
+                data.split(EOL).map(async (line: string) => {
+                    let branch = line.match(/^\t.+:\s\d+\..*\.0\.\d+$/)?.[0];
+                    if (branch) {
+                        branches.push(branch.substring(0,branch.indexOf(':')).trim());
+                    }
+                });
+            });
+    
+            cmd.stderr.on("data", (data: any) => {
+                cvsCommandLog.debug(data);
+            });
+    
+            cmd.on('error', (error: any) => {
+                cvsCommandLog.error(error.message);
+                resolve(false);
+            });
+    
+            cmd.on("close", (code: any) => {
+                if (code === 0) {
+                    resolve(true);
+                }
+                else {
+                    cvsCommandLog.warn(`cvs command '${cvsCommand}' exited with code ${code}`);
+                    resolve(false);
+                }
+            });
+        });
+
+        if (!result) {
+            branches = [];
             window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);
-            return "";
         }
 
-        return result.output;
-    }
-
-    async getBranches(log: string): Promise<string[]> {
-        let branches: string[] = [];
-        const branchPromises = log.split(EOL).map(async (line) => {
-            let branch = line.match(/^\t.+:\s\d+\..*\.0\.\d+$/)?.[0]; //element.search(/^\t.*0.{2}$/) !== -1
-            if (branch) {
-                branches.push(branch.substring(0,branch.indexOf(':')).trim());
-            }
-        });
-        await Promise.all(branchPromises);
-
-        branches = branches.filter(function(elem, index, self) { return index === self.indexOf(elem); });
-        
         return branches;
     }
 }
