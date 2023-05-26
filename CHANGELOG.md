@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.9]
+- Pre-release version.
+- Cache the tree view data from the `WORKSPACE BRANCHES` view until a change or refresh event occurs.
 ## [v1.11.8]
 - Pre-release version.
 - Fix bug where timeout value was not multiplied by 1000.
