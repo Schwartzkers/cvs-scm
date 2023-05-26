@@ -10,9 +10,15 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
     private _enabled: boolean = false;
     private _startup: boolean = true;
     private _workspace: Uri | undefined = undefined;
+    private _cache: any;
     
     constructor(enabled: boolean) { 
         this._enabled = enabled;
+        this._cache = new Map<string, BranchData[]>();
+    }
+
+    reset(): void {
+        this._cache.clear();
     }
 
     refresh(workspaceUri: Uri | undefined): any {
@@ -32,6 +38,11 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
 
         if (this._workspace) {
             if (this._workspace) {
+                if (this._cache.has(this._workspace.fsPath)) {
+                    //console.log(`return cached branch tree data for ${this._workspace.fsPath}`);
+                    return Promise.resolve(this._cache.get(this._workspace.fsPath));
+                }
+
                 return Promise.resolve(this.getDeps(this._workspace));
             } else {
                 return Promise.resolve([]);
@@ -56,6 +67,11 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         branches.forEach(element => {
             branchData.push(new BranchData(element, uri, tag === element, repo));
         });
+        
+        if (!this._cache.has(uri.fsPath)) {
+            //console.log("add branch tree data to cache");
+            this._cache.set(uri.fsPath, branchData);
+        }
 
         return branchData;
     }

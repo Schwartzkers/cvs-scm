@@ -516,6 +516,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				if (sourceControl) {
 					await sourceControl.createBranch(name);
+					branchesProvider.reset();
 					branchesController.setItchy();
 					vscode.commands.executeCommand<vscode.Uri>("cvs-scm.refresh", undefined);
 				}
@@ -539,6 +540,12 @@ export function activate(context: vscode.ExtensionContext) {
 				compareTree.message = `No diffs found between branches ${currentBranch} and ${branchData.branchName}.`;
 			}
 		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh-branch', async (data: vscode.TreeView<BranchData>) => {
+		branchesProvider.reset();
+		branchesController.setItchy();
+		branchesController.updateRequest();
 	}));
 
 	vscode.commands.executeCommand('setContext', 'cvs-scm.enabled', true);
