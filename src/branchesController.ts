@@ -27,6 +27,13 @@ export class BranchesController extends Controller {
         this._itchy = true;
     }
 
+    public switchingBranches(branch: string): void {
+        this._itchy = true;
+        this._branchesProvider.reset();
+        this._branchesTree.message = `Please wait, switching to branch ${branch}.`;
+        this._branchesProvider.refresh(undefined);
+    }
+
     public getWorkspace(): Uri | undefined {
        return this._currentWorkspace;
     }

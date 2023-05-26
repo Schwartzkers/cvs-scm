@@ -429,7 +429,8 @@ export function activate(context: vscode.ExtensionContext) {
 			const sourceControl = findSourceControl(branchData.uri);
 			
 			if (sourceControl) {
-				branchesController.setItchy();
+				branchesController.switchingBranches(branchData.branchName);
+				
 				vscode.window.withProgress({
 					location: vscode.ProgressLocation.Window,
 					cancellable: false,
@@ -517,7 +518,6 @@ export function activate(context: vscode.ExtensionContext) {
 				if (sourceControl) {
 					await sourceControl.createBranch(name);
 					branchesProvider.reset();
-					branchesController.setItchy();
 					vscode.commands.executeCommand<vscode.Uri>("cvs-scm.refresh", undefined);
 				}
 			}
