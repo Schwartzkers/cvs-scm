@@ -37,19 +37,15 @@ export class CvsBranchProvider implements TreeDataProvider<BranchData> {
         }
 
         if (this._workspace) {
-            if (this._workspace) {
-                if (this._cache.has(this._workspace.fsPath)) {
-                    //console.log(`return cached branch tree data for ${this._workspace.fsPath}`);
-                    return Promise.resolve(this._cache.get(this._workspace.fsPath));
-                }
-
-                return Promise.resolve(this.getDeps(this._workspace));
-            } else {
-                return Promise.resolve([]);
+            if (this._cache.has(this._workspace.fsPath)) {
+                //console.log(`return cached branch tree data for ${this._workspace.fsPath}`);
+                return Promise.resolve(this._cache.get(this._workspace.fsPath));
             }
-        }
 
-        return Promise.reject();
+            return Promise.resolve(this.getDeps(this._workspace));
+        } else {
+            return Promise.resolve([]);
+        }
     }
 
     async getDeps(uri: Uri): Promise<BranchData[]> {
