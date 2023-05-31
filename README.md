@@ -17,6 +17,8 @@ The extension will automatically activate when it detects source code managed by
 - Discard local changes and revert to the repository revision.
 - View diffs between locally modified file and repository revision.
 - Display branch and revision number of file opened in active editor.
+- Display branches in workspace folders.
+- Merge Branches.
 
 ## Source Control States
 
@@ -81,18 +83,28 @@ The view provides the following commands:
  - Compare changes between contiguous revisions.
  - Revert a file's contents with a a older revision.
 
-### Branches
+### File Branches
 
-The Branches tree view is `defaulted to disabled` (off). The view displays the branches associated with the file in the active editor. 
+The File Branches tree view is `defaulted to disabled` (off). The view displays the branches associated with the file in the active editor. 
 
 <img src="resources/images/fileBranches.png" alt="CVS Settings" width="300"/>
 
 The view provides the following commands:
- - Compare the file in the active editor with a branch.
+ - Compare the file with the branch version.
+ - Switch file to the branch version.
+ - Merge file with the branch version.
+
+### Workspace Branches
+
+The Workspace Branches tree view is `defaulted to disabled` (off). The view displays the branches associated with the active workspace folder. 
+
+<img src="resources/images/fileBranches.png" alt="CVS Settings" width="300"/>
+
+The view provides the following commands:
+ - Add a new branch.
+ - Compare the active branch with a branch. Results displayed in the `COMPARE BRANCHES` view.
  - Switch the workspace to a branch.
- - Switch a file to a branch.
  - Merge the workspace with a branch.
- - Merge a file with a branch.
 
 ### Logging
 

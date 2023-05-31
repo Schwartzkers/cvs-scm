@@ -432,7 +432,7 @@ export function activate(context: vscode.ExtensionContext) {
 				branchesController.switchingBranches(branchData.branchName);
 				
 				vscode.window.withProgress({
-					location: vscode.ProgressLocation.Window,
+					location: vscode.ProgressLocation.SourceControl,
 					cancellable: false,
 					title: `Switching to branch: ${branchData.branchName}`
 				}, async (progess) => {

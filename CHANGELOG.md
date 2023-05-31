@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.11]
+- Pre-release version.
+- Clear the `WORKSPACE BRANCHES` view when changing workspace folders.
 ## [v1.11.10]
 - Pre-release version.
 - Update `WORKSPACE BRANCHES` view after switching branches.

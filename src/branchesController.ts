@@ -82,6 +82,10 @@ export class BranchesController extends Controller {
 
                 const name = basename(newWorkspace.fsPath);
 
+                // first clear contents
+                this._branchesProvider.refresh(undefined);
+
+                // now update view
                 this._branchesProvider.refresh(newWorkspace);
                 this._branchesTree.description = name;
                 this._branchesTree.message = '';
