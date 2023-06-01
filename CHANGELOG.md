@@ -3,6 +3,11 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.11.12]
+- Pre-release version.
+- Remove extra cvs log -h request from the `FILE HISTORY` view when getting the head revision.
+- Optimize startup by reducing cvs status requests.
+- Display cached tree message in `WORKSPACE BRANCHES` if user cycles workspace folders.
 ## [v1.11.11]
 - Pre-release version.
 - Clear the `WORKSPACE BRANCHES` view when changing workspace folders.

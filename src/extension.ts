@@ -45,44 +45,25 @@ export function activate(context: vscode.ExtensionContext) {
 	//vscode.window.showInformationMessage(`Ensure CVS client can connect/login to CVS Server before using CVS extension`);
 
 	cvsDocumentContentProvider = new CvsDocumentContentProvider();
-	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
 
 	configManager = new ConfigManager();
-	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions));
 	
 	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	statusBarController = new StatusBarController(statusBarItem, true);
-	context.subscriptions.push(statusBarItem);
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => statusBarController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(onResouresLocked.event(uri => statusBarController.lockEvent(uri), context.subscriptions));
-	context.subscriptions.push(onResouresUnlocked.event(uri => statusBarController.unlockEvent(uri), context.subscriptions));
 
 	cvsCompareProvider = new CvsCompareContentProvider();
-	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
 
 	fileHistoryProvider = new CvsRevisionProvider(configManager.getFileHistoryEnableFlag());
 	fileHistoryTree = vscode.window.createTreeView('cvs-file-revisions', { treeDataProvider: fileHistoryProvider, canSelectMany: false} );
 	fileHistoryController =  new FileHistoryController(fileHistoryProvider, fileHistoryTree, configManager.getFileHistoryEnableFlag());
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileHistoryController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => fileHistoryController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
-	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
 
 	fileBranchesProvider = new CvsFileBranchesProvider(configManager.getFileBranchesEnableFlag());
 	fileBranchesTree = vscode.window.createTreeView('cvs-file-branches', { treeDataProvider: fileBranchesProvider, canSelectMany: false} );
 	fileBranchesController = new FileBranchesController(fileBranchesProvider, fileBranchesTree, configManager.getFileBranchesEnableFlag());
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileBranchesController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(fileBranchesTree.onDidChangeVisibility(() => fileBranchesController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(onResouresLocked.event(uri => fileBranchesController.lockEvent(uri), context.subscriptions));
-	context.subscriptions.push(onResouresUnlocked.event(uri => fileBranchesController.unlockEvent(uri), context.subscriptions));
 
 	branchesProvider = new CvsBranchProvider(configManager.getBranchesEnableFlag());
 	branchesTree = vscode.window.createTreeView('cvs-branches', { treeDataProvider: branchesProvider, canSelectMany: false} );
 	branchesController = new BranchesController(branchesProvider, branchesTree, configManager.getBranchesEnableFlag());
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => branchesController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateRequest(), context.subscriptions));
-	context.subscriptions.push(onResouresLocked.event(uri => branchesController.lockEvent(uri), context.subscriptions));
-	context.subscriptions.push(onResouresUnlocked.event(uri => branchesController.unlockEvent(uri), context.subscriptions));
 
 	compareProvider = new CvsCompareProvider(configManager.getBranchesEnableFlag());
 	compareTree = vscode.window.createTreeView('cvs-compare', { treeDataProvider: compareProvider, canSelectMany: false} );
@@ -91,13 +72,32 @@ export function activate(context: vscode.ExtensionContext) {
 	} else {
 		compareTree.message = `Enable view in CVS settings.`;
 	}
-	
 
 	initializeWorkspaceFolders(context);
 
 	cvsSourceControlRegister.forEach(sourceControl => {
 		sourceControl.getCvsState();
 	});
+
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME, cvsDocumentContentProvider));
+	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => configManager.configurationChange(event), context.subscriptions));
+	context.subscriptions.push(statusBarItem);
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => statusBarController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => statusBarController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => statusBarController.unlockEvent(uri), context.subscriptions));
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(CVS_SCHEME_COMPARE, cvsCompareProvider));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileHistoryController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(fileHistoryTree.onDidChangeVisibility(() => fileHistoryController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => fileHistoryController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => fileHistoryController.unlockEvent(uri), context.subscriptions));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => fileBranchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(fileBranchesTree.onDidChangeVisibility(() => fileBranchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => fileBranchesController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => fileBranchesController.unlockEvent(uri), context.subscriptions));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => branchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(branchesTree.onDidChangeVisibility(() => branchesController.updateRequest(), context.subscriptions));
+	context.subscriptions.push(onResouresLocked.event(uri => branchesController.lockEvent(uri), context.subscriptions));
+	context.subscriptions.push(onResouresUnlocked.event(uri => branchesController.unlockEvent(uri), context.subscriptions));
 
 	context.subscriptions.push(vscode.commands.registerCommand('cvs-scm.refresh', async (sourceControlPane: vscode.SourceControl) => {
 		// check CVS repository for local and remote changes
