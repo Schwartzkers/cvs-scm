@@ -60,17 +60,21 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
             }
             else {
                 if (sourceFile.repoRevision) {
-                    if (sourceFile.uri) {
-                        const head = await this.getHeadRevison(sourceFile.uri);
-                        if (sourceFile.workingRevision !== head) {
-                            commits = commits.concat(new CommitData(`Head Revision: ${head}`, uri, '', head, '', '', true, false));
-                        }
-                    }
 
                     let revision = sourceFile.repoRevision;
                     let loops = 1; // add protection, after 10 loops exit and warn user to avoid infinte loop
+                    let gotHeadRev = false;
                     while (true) { // must handle nested branches
                         const log = await this.readCvsLog(uri, revision);
+
+                        if (gotHeadRev === false) {
+                            const head = this.getHeadRevison(log);
+                            if (sourceFile.workingRevision !== head) {
+                                commits = commits.concat(new CommitData(`Head Revision: ${head}`, uri, '', head, '', '', true, false));
+                            }
+                            gotHeadRev = true;
+                        }
+
                         commits = commits.concat(this.parseCvsLog(log, uri, sourceFile));
         
                         if (revision.search(/^(\d+\.\d+){1}$/) !== -1) { // exit after finding root revision (e.g. 1.3)
@@ -153,19 +157,13 @@ export class CvsRevisionProvider implements TreeDataProvider<CommitData> {
         return commits;
     }
 
-    async getHeadRevison(uri: Uri): Promise<string> {
+    private getHeadRevison(log: string) {
         let head = '';
-        const cvsCmd = `cvs log -h ${basename(uri.fsPath)}`;
-        const result = await spawnCmd(cvsCmd, dirname(uri.fsPath));
-        
-        if (!result.result || result.output.length === 0) {
-            window.showErrorMessage(`Failed to obtain cvs log for resource: ${basename(uri.fsPath)}`);
-        } else {
-            for (const line of result.output.split(EOL)) {
-                if (line.includes('head:')) {
-                    head = line.slice(line.indexOf(':')+2);
-                    break;
-                }
+
+        for (const line of log.split(EOL)) {
+            if (line.includes('head:')) {
+                head = line.slice(line.indexOf(':')+2);
+                break;
             }
         }
 

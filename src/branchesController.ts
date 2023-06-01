@@ -9,6 +9,7 @@ export class BranchesController extends Controller {
     private _branchesTree: TreeView<BranchData>;
     private _currentWorkspace: Uri | undefined;
     private _itchy: boolean;
+    private _treeMessage: string;
 
     constructor(branchesProvider: CvsBranchProvider, branchesTree: TreeView<BranchData>, isEnabled: boolean) {
         super(isEnabled);
@@ -16,11 +17,12 @@ export class BranchesController extends Controller {
         this._branchesTree = branchesTree;
         this._currentWorkspace = undefined;
         this._itchy = true;
-        if (!isEnabled) {
-            this._branchesTree.message = 'Enable view in CVS settings.';
-        } else {
-            this._branchesTree.message = 'There are no workspaces available to provide branch information.';
+        this._treeMessage = 'Enable view in CVS settings.';
+        if (isEnabled) {
+            this._treeMessage = 'There are no workspaces available to provide branch information.';
         }
+
+        this.displayMessage(undefined);
     }
 
     public setItchy() {
@@ -30,7 +32,7 @@ export class BranchesController extends Controller {
     public switchingBranches(branch: string): void {
         this._itchy = true;
         this._branchesProvider.reset();
-        this._branchesTree.message = `Please wait, switching to branch ${branch}.`;
+        this.displayMessage(`Please wait, switching to branch ${branch}.`);
         this._branchesProvider.refresh(undefined);
     }
 
@@ -75,6 +77,10 @@ export class BranchesController extends Controller {
             if (this._lockedWorkspaces.findIndex(uri => uri.fsPath  === newWorkspace?.fsPath) !== -1) {
                 // check if workspace is locked
                 console.log('workspace is currently locked');
+                //window.showWarningMessage(`Workspace folder "${basename(newWorkspace.fsPath)}" is currently busy`);
+                this.displayMessage(undefined);
+                this._branchesTree.description = basename(newWorkspace.fsPath);
+                this._branchesProvider.refresh(undefined);
                 return;
             } else {
                 this._itchy = false;
@@ -88,9 +94,16 @@ export class BranchesController extends Controller {
                 // now update view
                 this._branchesProvider.refresh(newWorkspace);
                 this._branchesTree.description = name;
-                this._branchesTree.message = '';
-                
+                this.displayMessage('');
             }
         }
+    }
+
+    private displayMessage(message: string | undefined) {
+        if (message !== undefined) {
+            this._treeMessage = message;
+        }
+
+        this._branchesTree.message = this._treeMessage;
     }
 }
