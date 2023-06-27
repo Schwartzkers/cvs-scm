@@ -3,6 +3,8 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.12.0]
+- Official release of the 1.11 pre-release.
 ## [v1.11.12]
 - Pre-release version.
 - Remove extra cvs log -h request from the `FILE HISTORY` view when getting the head revision.

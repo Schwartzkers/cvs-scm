@@ -119,3 +119,6 @@ The extension was developed using version 1.12.13-MirDebian-28 (client/server) o
 ## Known Issues
 
 - The extension has been tested with Ubuntu 16.04 & 22.04 LTS. Issues encountered with Windows or macOS may not be resolved in a timely fashion.
+
+## Recommendations
+- For a better experience with the extension it is recommended to keep the workspace folders "reasonably" sized. Efforts have been made to reduce the requests to the CVS server, but to use many of the features provided by the extension some requests cannot be eliminated. For the best performance, it is recommended to avoid importing very large workspace folders. The preferred workspace folder size is ultimately determined by the size, connection speed and performance of the CVS server. Some experimentation may be required to determined the optimal workspace folder size for your set-up.
