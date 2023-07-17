@@ -831,7 +831,7 @@ export class CvsSourceControl implements Disposable {
 
     lockEvent(workspaceUri: Uri): void {
         if (this.workspacefolder.fsPath === workspaceUri.fsPath) { 
-            console.log('locking workspace ' + this.workspacefolder.fsPath);
+            //console.log('locking workspace ' + this.workspacefolder.fsPath);
             this._isLocked = true;
         }
     }
@@ -839,7 +839,7 @@ export class CvsSourceControl implements Disposable {
     unlockEvent(workspaceUri: Uri): void {
         if (this.workspacefolder.fsPath === workspaceUri.fsPath) {
             this._isLocked = false;
-            console.log('unlocking workspace ' + this.workspacefolder.fsPath);
+            //console.log('unlocking workspace ' + this.workspacefolder.fsPath);
         }
     }
 
