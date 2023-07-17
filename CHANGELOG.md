@@ -3,6 +3,10 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+
+## [v1.12.1]
+- Fix bug preventing the merge of a branch to 'main' (e.g. trunk).
+- Lock CVS SCM until discarding all changes completes.
 ## [v1.12.0]
 - Official release of the 1.11 pre-release.
 ## [v1.11.12]
