@@ -762,11 +762,15 @@ export class CvsSourceControl implements Disposable {
     }
 
     async mergeBranch(branchData: BranchData): Promise<void> {
-        const currentBranch = await readCvsTagFile(this.workspacefolder);
+        let currentBranch = await readCvsTagFile(this.workspacefolder);
 
         let result = false;
         if (currentBranch !== branchData.branchName) {
             result = (await this.cvsRepository.revert(undefined)).result;
+
+            if (currentBranch === 'main') {
+                currentBranch = 'HEAD';
+            }
 
             if (result) {
                 if (branchData.branchName === 'main') {
@@ -823,6 +827,20 @@ export class CvsSourceControl implements Disposable {
         }
 
         return sourceFile;
+    }
+
+    lockEvent(workspaceUri: Uri): void {
+        if (this.workspacefolder.fsPath === workspaceUri.fsPath) { 
+            console.log('locking workspace ' + this.workspacefolder.fsPath);
+            this._isLocked = true;
+        }
+    }
+
+    unlockEvent(workspaceUri: Uri): void {
+        if (this.workspacefolder.fsPath === workspaceUri.fsPath) {
+            this._isLocked = false;
+            console.log('unlocking workspace ' + this.workspacefolder.fsPath);
+        }
     }
 
     dispose() {

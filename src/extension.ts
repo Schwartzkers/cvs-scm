@@ -76,6 +76,8 @@ export function activate(context: vscode.ExtensionContext) {
 	initializeWorkspaceFolders(context);
 
 	cvsSourceControlRegister.forEach(sourceControl => {
+		context.subscriptions.push(onResouresLocked.event(uri => sourceControl.lockEvent(uri), context.subscriptions));
+		context.subscriptions.push(onResouresUnlocked.event(uri => sourceControl.unlockEvent(uri), context.subscriptions));
 		sourceControl.getCvsState();
 	});
 
@@ -358,17 +360,31 @@ export function activate(context: vscode.ExtensionContext) {
 				const sourceControl = findSourceControl(sourceControlResourceGroup.resourceStates[0].resourceUri);
 				
 				if (sourceControl) {
-					for (const resource of sourceControlResourceGroup.resourceStates) {
-						if (resource.contextValue === 'modified') {
-							await sourceControl.revertFile(resource.resourceUri);
-						} else if (resource.contextValue === 'added') {
-							await sourceControl.undoAdd(resource.resourceUri);
-						} else if (resource.contextValue === 'removed') {
-							await sourceControl.addResource(resource.resourceUri);
-						} else if (resource.contextValue === 'deleted') {
-							await sourceControl.recoverResource(resource.resourceUri);
+					onResouresLocked.fire(sourceControl.getWorkspaceFolder());
+
+					await vscode.window.withProgress({
+						location: vscode.ProgressLocation.SourceControl,
+						cancellable: false,
+						title: `Discarding All Changes`
+					}, async (progess) => {
+						progess.report({ increment: 0});
+						
+						for (const resource of sourceControlResourceGroup.resourceStates) {
+							if (resource.contextValue === 'modified') {
+								await sourceControl.revertFile(resource.resourceUri);
+							} else if (resource.contextValue === 'added') {
+								await sourceControl.undoAdd(resource.resourceUri);
+							} else if (resource.contextValue === 'removed') {
+								await sourceControl.addResource(resource.resourceUri);
+							} else if (resource.contextValue === 'deleted') {
+								await sourceControl.recoverResource(resource.resourceUri);
+							}
 						}
-					}
+
+						progess.report({ increment: 100});
+					});
+
+					onResouresUnlocked.fire(sourceControl.getWorkspaceFolder());
 				}
 			}
 		}
