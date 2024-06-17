@@ -3,7 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
-
+## [v1.13.0]
+- Pre-release version.
+- Set the "cvs diff" buffer encoding value to 'latin1' for workspaces set to ISO-8859-1 encoding.
 ## [v1.12.1]
 - Fix bug preventing the merge of a branch to 'main' (e.g. trunk).
 - Lock CVS SCM until discarding all changes completes.
