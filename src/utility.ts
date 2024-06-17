@@ -59,7 +59,7 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
         };
         
         const cmd = spawn(cvsCommand, [""], options);
-        
+
         let config = workspace.getConfiguration('files').get<string>('encoding');
         let defaultEncoding = 'utf8';
 
@@ -71,7 +71,7 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
 
         cmd.stdout.setEncoding(defaultEncoding);
         cmd.stderr.setEncoding(defaultEncoding);
-      
+
         cmd.stdout.on("data", (data: any) => {
             cvsCommandLog.debug(data);
             stdout += data;
