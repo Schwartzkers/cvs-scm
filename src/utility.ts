@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import { Uri, workspace } from 'vscode';
 import { cvsCommandLog } from './extension';
 
 export class CmdResult {
@@ -60,8 +60,17 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
         
         const cmd = spawn(cvsCommand, [""], options);
 
-        cmd.stdout.setEncoding('utf8');
-        cmd.stderr.setEncoding('utf8');
+        let config = workspace.getConfiguration('files').get<string>('encoding');
+        let defaultEncoding = 'utf8';
+
+        // latin1 is an alias for ISO-8859-1 (e.g. iso88591)
+        // refer to https://nodejs.org/docs/latest/api/buffer.html#buffers-and-character-encodings
+        if (config?.includes('iso88591')) {
+            defaultEncoding = 'latin1';
+        }
+
+        cmd.stdout.setEncoding(defaultEncoding);
+        cmd.stderr.setEncoding(defaultEncoding);
 
         cmd.stdout.on("data", (data: any) => {
             cvsCommandLog.debug(data);
