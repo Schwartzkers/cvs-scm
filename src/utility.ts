@@ -1,5 +1,5 @@
 import { Uri } from 'vscode';
-import { cvsCommandLog } from './extension';
+import { configManager, cvsCommandLog } from './extension';
 
 export class CmdResult {
     constructor(public result: boolean, public output: string, public stderr: string = "") {
@@ -59,10 +59,13 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
         };
         
         const cmd = spawn(cvsCommand, [""], options);
+        
+        
+        const cmdEncoding = configManager.getCmdEncodingValue()
 
-        cmd.stdout.setEncoding('utf8');
-        cmd.stderr.setEncoding('utf8');
-
+        cmd.stdout.setEncoding(cmdEncoding);
+        cmd.stderr.setEncoding(cmdEncoding);
+        
         cmd.stdout.on("data", (data: any) => {
             cvsCommandLog.debug(data);
             stdout += data;

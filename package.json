@@ -1,572 +1,584 @@
 {
-  "name": "cvs-scm",
+	"name": "cvs-scm",
 	"displayName": "CVS",
 	"description": "Integrates CVS support into VS Code's SCM interface",
 	"version": "1.12.1",
 	"engines": {
-		"vscode": "^1.74.0"
+	  "vscode": "^1.74.0"
 	},
 	"categories": [
-		"Other",
-		"SCM Providers"
+	  "Other",
+	  "SCM Providers"
 	],
 	"keywords": [
-        "multi-root ready",
-        "scm",
-        "cvs"
-    ],
+	  "multi-root ready",
+	  "scm",
+	  "cvs"
+	],
 	"publisher": "Schwartzkers",
 	"license": "MIT",
 	"icon": "resources/icons/cvs-scm.png",
 	"repository": {
-		"type": "git",
-		"url": "https://github.com/Schwartzkers/cvs-scm"
-	  },
+	  "type": "git",
+	  "url": "https://github.com/Schwartzkers/cvs-scm"
+	},
 	"activationEvents": [
-		"workspaceContains:CVS/Root"
+	  "workspaceContains:CVS/Root"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"configuration": {
-			"title": "CVS",
-			"properties": {
-				"explorer.excludeFolders": {
-					"markdownDescription": "To exclude CVS folders from the File Explorer, add glob pattern **/CVS to '#files.exclude#'.",
-					"scope": "window"
-				},
-				"explorer.excludeFiles": {
-					"markdownDescription": "To exclude CVS revision files (e.g. .#file.revision) from the File Explorer, add glob pattern **/.#* to `#files.exclude#`.",
-					"scope": "window"
-				},
-				"update.ignoreFolders": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [],
-					"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
-					"scope": "window"
-				},
-				"views.fileHistory.enable": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "Enable or disable the `FILE HISTORY` view (requires reload of VS Code).",
-					"scope": "window"
-				},
-				"views.fileBranches.enable": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "Enable or disable the `FILE BRANCHES` view (requires reload of VS Code).",
-					"scope": "window"
-				},
-				"views.branches.enable": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "Enable or disable the `WORKSPACE BRANCHES` and `COMPARE` views (requires reload of VS Code).",
-					"scope": "window"
-				},
-				"server.timeout": {
-					"type": "integer",
-					"default": 60,
-					"markdownDescription": "Timeout in seconds to wait for the CVS Server to respond to commands from the `WORKSPACE BRANCHES` view.",
-					"scope": "window"
-				}
-			}
-		},
-		"views": {
-			"scm": [
-			  {
-				"id": "cvs-file-revisions",
-				"name": "File History",
-				"contextualTitle": "CVS",
-				"visibility": "collapsed",
-				"when": "cvs-scm.enabled == true"
-
-			  },
-			  {
-				"id": "cvs-file-branches",
-				"name": "File Branches",
-				"contextualTitle": "CVS",
-				"visibility": "collapsed",
-				"when": "cvs-scm.enabled == true"
-			  },
-			  {
-				"id": "cvs-branches",
-				"name": "Workspace Branches",
-				"contextualTitle": "CVS",
-				"visibility": "collapsed",
-				"when": "cvs-scm.enabled == true"
-			  } ,
-			  {
-				"id": "cvs-compare",
-				"name": "Compare Branches",
-				"contextualTitle": "CVS",
-				"visibility": "collapsed",
-				"when": "cvs-scm.enabled == true"
-			  }
-			]
-		},
-		"commands": [
-			{
-				"command": "cvs-scm.refresh",
-				"title": "Refresh",
-				"icon": "$(refresh)",
-				"category": "cvs-scm"
+	  "configuration": {
+		"title": "CVS",
+		"properties": {
+		  "explorer.excludeFolders": {
+			"markdownDescription": "To exclude CVS folders from the File Explorer, add glob pattern **/CVS to '#files.exclude#'.",
+			"scope": "window"
+		  },
+		  "explorer.excludeFiles": {
+			"markdownDescription": "To exclude CVS revision files (e.g. .#file.revision) from the File Explorer, add glob pattern **/.#* to `#files.exclude#`.",
+			"scope": "window"
+		  },
+		  "update.ignoreFolders": {
+			"type": "array",
+			"items": {
+			  "type": "string"
 			},
-			{
-				"command": "cvs-scm.commit",
-				"title": "Commit Changes",
-				"icon": "$(check)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.discard",
-				"title": "Discard Changes",
-				"icon": "$(discard)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.add",
-				"title": "Add",
-				"icon": "$(add)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.add-folder",
-				"title": "Add Folder to Repo",
-				"icon": "$(cloud-upload)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.stage",
-				"title": "Stage Changes",
-				"icon": "$(add)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.unstage",
-				"title": "Unstage Changes",
-				"icon": "$(remove)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.stage-all",
-				"title": "Stage all Changes",
-				"icon": "$(add)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.unstage-all",
-				"title": "Unstage all Changes",
-				"icon": "$(remove)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.delete",
-				"title": "Delete",
-				"icon": "$(remove)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.remove",
-				"title": "Remove file",
-				"icon": "$(remove)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.merge-latest",
-				"title": "Merge with HEAD",
-				"icon": "$(cloud-download)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.force-revert",
-				"title": "Revert to HEAD",
-				"icon": "$(discard)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.openFile",
-				"title": "Open File",
-				"icon": "$(go-to-file)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.ignore-folder",
-				"title": "Ignore folder",
-				"icon": "$(x)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.checkout-folder-recursive",
-				"title": "Checkout folder (Recursive)",
-				"icon": "$(cloud-download)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.checkout-folder",
-				"title": "Checkout folder",
-				"icon": "$(arrow-down)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.discard-all",
-				"title": "Discard All Changes",
-				"icon": "$(discard)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.merge-all",
-				"title": "Merge All Changes",
-				"icon": "$(cloud-download)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.compare-to-working",
-				"title": "Compare to Working File",
-				"icon": "$(compare-changes)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.open-revision",
-				"title": "Open File at Revision",
-				"icon": "$(go-to-file)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.switch-file-to-branch",
-				"title": "Switch File to Branch",
-				"icon": "$(arrow-down)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.checkout-branch",
-				"title": "Switch Workspace to Branch",
-				"icon": "$(cloud-download)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.compare-revisions",
-				"title": "Compare Revisions",
-				"icon": "$(compare-changes)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.switch-file-to-revision",
-				"title": "Switch File to Revision",
-				"icon": "$(arrow-down)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.update-file-to-revision",
-				"title": "Update File to Revision",
-				"icon": "$(discard)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.switch-file-to-head",
-				"title": "Switch File to Head",
-				"icon": "$(arrow-down)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.merge-branch-to-working",
-				"title": "Merge Branch into Workspace",
-				"icon": "$(git-pull-request)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.merge-branch-to-working-file",
-				"title": "Merge Branch into File",
-				"icon": "$(git-merge)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.add-branch",
-				"title": "Add Branch to Workspace",
-				"icon": "$(add)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.compare-branches",
-				"title": "Compare to Workspace Branch",
-				"icon": "$(compare-changes)",
-				"category": "cvs-scm"
-			},
-			{
-				"command": "cvs-scm.refresh-branch",
-				"title": "Refresh Branches",
-				"icon": "$(refresh)",
-				"category": "cvs-scm"
-			}
-		],
-		"menus": {
-			"scm/title":[
-				{
-					"command": "cvs-scm.refresh",
-					"group": "navigation@3",
-					"when": "scmProvider == cvs"
-				},
-				{
-					"command": "cvs-scm.commit",
-					"group": "navigation@1",
-					"when": "scmProvider == cvs"
-				}
+			"default": [],
+			"markdownDescription": "Folders discovered in the repository that will be ignored by `cvs update`. *Folder path is relative to the workspace folder (e.g. src/test)*",
+			"scope": "window"
+		  },
+		  "views.fileHistory.enable": {
+			"type": "boolean",
+			"default": false,
+			"markdownDescription": "Enable or disable the `FILE HISTORY` view (requires reload of VS Code).",
+			"scope": "window"
+		  },
+		  "views.fileBranches.enable": {
+			"type": "boolean",
+			"default": false,
+			"markdownDescription": "Enable or disable the `FILE BRANCHES` view (requires reload of VS Code).",
+			"scope": "window"
+		  },
+		  "views.branches.enable": {
+			"type": "boolean",
+			"default": false,
+			"markdownDescription": "Enable or disable the `WORKSPACE BRANCHES` and `COMPARE` views (requires reload of VS Code).",
+			"scope": "window"
+		  },
+		  "server.timeout": {
+			"type": "integer",
+			"default": 60,
+			"markdownDescription": "Timeout in seconds to wait for the CVS Server to respond to commands from the `WORKSPACE BRANCHES` view.",
+			"scope": "window"
+		  },
+		  "cmd.encoding": {
+			"type": "string",
+			"enum": [
+			  "utf8",
+			  "binary",
+			  "latin1"
 			],
-			"scm/resourceGroup/context":[
-				{
-					"command": "cvs-scm.stage-all",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
-				},
-				{
-					"command": "cvs-scm.stage-all",
-					"group": "navigation",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
-				},
-				{
-					"command": "cvs-scm.unstage-all",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
-				},
-				{
-					"command": "cvs-scm.unstage-all",
-					"group": "navigation",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
-				},
-				{
-					"command": "cvs-scm.discard-all",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
-				},
-				{
-					"command": "cvs-scm.discard-all",
-					"group": "navigation",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree"
-				},
-				{
-					"command": "cvs-scm.merge-all",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
-				},
-				{
-					"command": "cvs-scm.merge-all",
-					"group": "navigation",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
-				}
-			],
-			"scm/resourceState/context": [
-				{
-					"command": "cvs-scm.openFile",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
-				},
-				{
-					"command": "cvs-scm.openFile",
-					"group": "navigation",
-					"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == modified"
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == modified"
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == added"
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == added"
-				},
-				{
-					"command": "cvs-scm.add",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_file"
-				},
-				{
-					"command": "cvs-scm.add-folder",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_folder"
-				},
-				{
-					"command": "cvs-scm.delete",
-					"group": "inline@3",
-					"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
-				},
-				{
-					"command": "cvs-scm.remove",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"					
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == removed"					
-				},
-				{
-					"command": "cvs-scm.discard",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == removed"					
-				},
-				{
-					"command": "cvs-scm.merge-latest",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == merge"
-				},
-				{
-					"command": "cvs-scm.merge-latest",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == patch"					
-				},
-				{
-					"command": "cvs-scm.merge-latest",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == checkout"					
-				},
-				{
-					"command": "cvs-scm.merge-latest",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == removedFromRepo"					
-				},
-				{
-					"command": "cvs-scm.force-revert",
-					"group": "inline",
-					"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == conflict"				
-				},
-				{
-					"command": "cvs-scm.stage",
-					"group": "inline@3",
-					"when": "scmProvider == cvs && scmResourceGroup == changeTree"				
-				},
-				{
-					"command": "cvs-scm.unstage",
-					"group": "inline@3",
-					"when": "scmProvider == cvs && scmResourceGroup == stagingTree"				
-				},
-				{
-					"command": "cvs-scm.ignore-folder",
-					"group": "inline@1",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
-				},
-				{
-					"command": "cvs-scm.checkout-folder-recursive",
-					"group": "inline@2",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"				
-				},
-				{
-					"command": "cvs-scm.checkout-folder",
-					"group": "inline@3",
-					"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"
-				}
-			],
-			"view/item/context": [
-				{
-				  "command": "cvs-scm.compare-to-working",
-				  "when": "view == cvs-file-revisions",
-				  "group": "inline"
-				},
-				{
-					"command": "cvs-scm.open-revision",
-					"when": "view == cvs-file-revisions && viewItem == revision",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.open-revision",
-					"when": "view == cvs-file-revisions && viewItem == head",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.switch-file-to-head",
-					"when": "view == cvs-file-revisions && viewItem == head",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.switch-file-to-revision",
-					"when": "view == cvs-file-revisions && viewItem == revision",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.update-file-to-revision",
-					"when": "view == cvs-file-revisions && viewItem == revision",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.update-file-to-revision",
-					"when": "view == cvs-file-revisions && viewItem == head",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.switch-file-to-branch",
-					"when": "view == cvs-file-branches && viewItem == branch",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.checkout-branch",
-					"when": "view == cvs-branches && viewItem == branch",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.merge-branch-to-working",
-					"when": "view == cvs-branches && viewItem == branch",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.merge-branch-to-working-file",
-					"when": "view == cvs-file-branches && viewItem == branch",
-					"group": "inline"
-				},
-				{
-					"command": "cvs-scm.compare-branches",
-					"when": "view == cvs-branches && viewItem == branch",
-					"group": "inline"
-				}
-			],
-			"view/title": [
-				{
-					"command": "cvs-scm.refresh-branch",
-					"when": "view == cvs-branches",
-					"group": "navigation@2"
-				},
-				{
-					"command": "cvs-scm.add-branch",
-					"when": "view == cvs-branches",
-					"group": "navigation@1"
-				}
-			]
+			"default": "utf8",
+			"markdownDescription": "The default character set encoding on cvs cmd commands.",
+			"scope": "window"
+		  }
 		}
+	  },
+	  "views": {
+		"scm": [
+		  {
+			"id": "cvs-file-revisions",
+			"name": "File History",
+			"contextualTitle": "CVS",
+			"visibility": "collapsed",
+			"when": "cvs-scm.enabled == true"
+  
+		  },
+		  {
+			"id": "cvs-file-branches",
+			"name": "File Branches",
+			"contextualTitle": "CVS",
+			"visibility": "collapsed",
+			"when": "cvs-scm.enabled == true"
+		  },
+		  {
+			"id": "cvs-branches",
+			"name": "Workspace Branches",
+			"contextualTitle": "CVS",
+			"visibility": "collapsed",
+			"when": "cvs-scm.enabled == true"
+		  } ,
+		  {
+			"id": "cvs-compare",
+			"name": "Compare Branches",
+			"contextualTitle": "CVS",
+			"visibility": "collapsed",
+			"when": "cvs-scm.enabled == true"
+		  }
+		]
+	  },
+	  "commands": [
+		{
+		  "command": "cvs-scm.refresh",
+		  "title": "Refresh",
+		  "icon": "$(refresh)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.commit",
+		  "title": "Commit Changes",
+		  "icon": "$(check)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.discard",
+		  "title": "Discard Changes",
+		  "icon": "$(discard)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.add",
+		  "title": "Add",
+		  "icon": "$(add)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.add-folder",
+		  "title": "Add Folder to Repo",
+		  "icon": "$(cloud-upload)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.stage",
+		  "title": "Stage Changes",
+		  "icon": "$(add)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.unstage",
+		  "title": "Unstage Changes",
+		  "icon": "$(remove)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.stage-all",
+		  "title": "Stage all Changes",
+		  "icon": "$(add)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.unstage-all",
+		  "title": "Unstage all Changes",
+		  "icon": "$(remove)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.delete",
+		  "title": "Delete",
+		  "icon": "$(remove)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.remove",
+		  "title": "Remove file",
+		  "icon": "$(remove)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.merge-latest",
+		  "title": "Merge with HEAD",
+		  "icon": "$(cloud-download)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.force-revert",
+		  "title": "Revert to HEAD",
+		  "icon": "$(discard)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.openFile",
+		  "title": "Open File",
+		  "icon": "$(go-to-file)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.ignore-folder",
+		  "title": "Ignore folder",
+		  "icon": "$(x)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.checkout-folder-recursive",
+		  "title": "Checkout folder (Recursive)",
+		  "icon": "$(cloud-download)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.checkout-folder",
+		  "title": "Checkout folder",
+		  "icon": "$(arrow-down)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.discard-all",
+		  "title": "Discard All Changes",
+		  "icon": "$(discard)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.merge-all",
+		  "title": "Merge All Changes",
+		  "icon": "$(cloud-download)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.compare-to-working",
+		  "title": "Compare to Working File",
+		  "icon": "$(compare-changes)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.open-revision",
+		  "title": "Open File at Revision",
+		  "icon": "$(go-to-file)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.switch-file-to-branch",
+		  "title": "Switch File to Branch",
+		  "icon": "$(arrow-down)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.checkout-branch",
+		  "title": "Switch Workspace to Branch",
+		  "icon": "$(cloud-download)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.compare-revisions",
+		  "title": "Compare Revisions",
+		  "icon": "$(compare-changes)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.switch-file-to-revision",
+		  "title": "Switch File to Revision",
+		  "icon": "$(arrow-down)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.update-file-to-revision",
+		  "title": "Update File to Revision",
+		  "icon": "$(discard)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.switch-file-to-head",
+		  "title": "Switch File to Head",
+		  "icon": "$(arrow-down)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.merge-branch-to-working",
+		  "title": "Merge Branch into Workspace",
+		  "icon": "$(git-pull-request)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.merge-branch-to-working-file",
+		  "title": "Merge Branch into File",
+		  "icon": "$(git-merge)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.add-branch",
+		  "title": "Add Branch to Workspace",
+		  "icon": "$(add)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.compare-branches",
+		  "title": "Compare to Workspace Branch",
+		  "icon": "$(compare-changes)",
+		  "category": "cvs-scm"
+		},
+		{
+		  "command": "cvs-scm.refresh-branch",
+		  "title": "Refresh Branches",
+		  "icon": "$(refresh)",
+		  "category": "cvs-scm"
+		}
+	  ],
+	  "menus": {
+		"scm/title":[
+		  {
+			"command": "cvs-scm.refresh",
+			"group": "navigation@3",
+			"when": "scmProvider == cvs"
+		  },
+		  {
+			"command": "cvs-scm.commit",
+			"group": "navigation@1",
+			"when": "scmProvider == cvs"
+		  }
+		],
+		"scm/resourceGroup/context":[
+		  {
+			"command": "cvs-scm.stage-all",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+		  },
+		  {
+			"command": "cvs-scm.stage-all",
+			"group": "navigation",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+		  },
+		  {
+			"command": "cvs-scm.unstage-all",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+		  },
+		  {
+			"command": "cvs-scm.unstage-all",
+			"group": "navigation",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+		  },
+		  {
+			"command": "cvs-scm.discard-all",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+		  },
+		  {
+			"command": "cvs-scm.discard-all",
+			"group": "navigation",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+		  },
+		  {
+			"command": "cvs-scm.merge-all",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
+		  },
+		  {
+			"command": "cvs-scm.merge-all",
+			"group": "navigation",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree"
+		  }
+		],
+		"scm/resourceState/context": [
+		  {
+			"command": "cvs-scm.openFile",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
+		  },
+		  {
+			"command": "cvs-scm.openFile",
+			"group": "navigation",
+			"when": "scmProvider == cvs && scmResourceState != checkout && scmResourceState != deleted && scmResourceState != removed && scmResourceState != untracked_folder && scmResourceState != directory"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == modified"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == modified"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == added"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == added"
+		  },
+		  {
+			"command": "cvs-scm.add",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_file"
+		  },
+		  {
+			"command": "cvs-scm.add-folder",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == untrackedTree && scmResourceState == untracked_folder"
+		  },
+		  {
+			"command": "cvs-scm.delete",
+			"group": "inline@3",
+			"when": "scmProvider == cvs && scmResourceGroup == untrackedTree"
+		  },
+		  {
+			"command": "cvs-scm.remove",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == deleted"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree && scmResourceState == removed"
+		  },
+		  {
+			"command": "cvs-scm.discard",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree && scmResourceState == removed"
+		  },
+		  {
+			"command": "cvs-scm.merge-latest",
+			"group": "inline",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == merge"
+		  },
+		  {
+			"command": "cvs-scm.merge-latest",
+			"group": "inline",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == patch"
+		  },
+		  {
+			"command": "cvs-scm.merge-latest",
+			"group": "inline",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == checkout"
+		  },
+		  {
+			"command": "cvs-scm.merge-latest",
+			"group": "inline",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == removedFromRepo"
+		  },
+		  {
+			"command": "cvs-scm.force-revert",
+			"group": "inline",
+			"when": "scmProvider == cvs && scmResourceGroup == conflictTree && scmResourceState == conflict"
+		  },
+		  {
+			"command": "cvs-scm.stage",
+			"group": "inline@3",
+			"when": "scmProvider == cvs && scmResourceGroup == changeTree"
+		  },
+		  {
+			"command": "cvs-scm.unstage",
+			"group": "inline@3",
+			"when": "scmProvider == cvs && scmResourceGroup == stagingTree"
+		  },
+		  {
+			"command": "cvs-scm.ignore-folder",
+			"group": "inline@1",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"
+		  },
+		  {
+			"command": "cvs-scm.checkout-folder-recursive",
+			"group": "inline@2",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"
+		  },
+		  {
+			"command": "cvs-scm.checkout-folder",
+			"group": "inline@3",
+			"when": "scmProvider == cvs && scmResourceGroup == repositoryTree && scmResourceState == directory"
+		  }
+		],
+		"view/item/context": [
+		  {
+			"command": "cvs-scm.compare-to-working",
+			"when": "view == cvs-file-revisions",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.open-revision",
+			"when": "view == cvs-file-revisions && viewItem == revision",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.open-revision",
+			"when": "view == cvs-file-revisions && viewItem == head",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.switch-file-to-head",
+			"when": "view == cvs-file-revisions && viewItem == head",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.switch-file-to-revision",
+			"when": "view == cvs-file-revisions && viewItem == revision",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.update-file-to-revision",
+			"when": "view == cvs-file-revisions && viewItem == revision",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.update-file-to-revision",
+			"when": "view == cvs-file-revisions && viewItem == head",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.switch-file-to-branch",
+			"when": "view == cvs-file-branches && viewItem == branch",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.checkout-branch",
+			"when": "view == cvs-branches && viewItem == branch",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.merge-branch-to-working",
+			"when": "view == cvs-branches && viewItem == branch",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.merge-branch-to-working-file",
+			"when": "view == cvs-file-branches && viewItem == branch",
+			"group": "inline"
+		  },
+		  {
+			"command": "cvs-scm.compare-branches",
+			"when": "view == cvs-branches && viewItem == branch",
+			"group": "inline"
+		  }
+		],
+		"view/title": [
+		  {
+			"command": "cvs-scm.refresh-branch",
+			"when": "view == cvs-branches",
+			"group": "navigation@2"
+		  },
+		  {
+			"command": "cvs-scm.add-branch",
+			"when": "view == cvs-branches",
+			"group": "navigation@1"
+		  }
+		]
+	  }
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+	  "vscode:prepublish": "npm run compile",
+	  "compile": "tsc -p ./",
+	  "watch": "tsc -watch -p ./",
+	  "pretest": "npm run compile && npm run lint",
+	  "lint": "eslint src --ext ts",
+	  "test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.74.0",
-		"@types/glob": "^8.0.0",
-		"@types/mocha": "^10.0.1",
-		"@types/node": "18.x",
-		"@typescript-eslint/eslint-plugin": "^5.48.2",
-		"@typescript-eslint/parser": "^5.48.2",
-		"eslint": "^8.32.0",
-		"glob": "^8.1.0",
-		"mocha": "^10.2.0",
-		"typescript": "^4.9.4",
-		"@vscode/test-electron": "^2.2.2"
+	  "@types/vscode": "^1.74.0",
+	  "@types/glob": "^8.0.0",
+	  "@types/mocha": "^10.0.1",
+	  "@types/node": "18.x",
+	  "@typescript-eslint/eslint-plugin": "^5.48.2",
+	  "@typescript-eslint/parser": "^5.48.2",
+	  "eslint": "^8.32.0",
+	  "glob": "^8.1.0",
+	  "mocha": "^10.2.0",
+	  "typescript": "^4.9.4",
+	  "@vscode/test-electron": "^2.2.2"
 	}
-}
+  }
+  
