@@ -9,7 +9,6 @@ export class ConfigManager {
     private _enableFileBranches: boolean;
     private _enableBranches: boolean;
     private _timeout: number;
-    private _cmdEncoding: string;
 
     constructor() {
         this._ignoreFolders = [];
@@ -17,7 +16,6 @@ export class ConfigManager {
         this._enableFileBranches = false;
         this._enableBranches = false;
         this._timeout = 60;
-        this._cmdEncoding = 'utf8'
 
         this.loadConfiguration();
 
@@ -30,7 +28,6 @@ export class ConfigManager {
         this.readFileBranchesSetting();
         this.readBranchesSetting();
         this.readTimeoutSetting();
-        this.readCmdEncodingSetting();
     }
 
     async configurationChange(event: ConfigurationChangeEvent): Promise<void> {
@@ -48,9 +45,6 @@ export class ConfigManager {
             return;
         } else if (event.affectsConfiguration("server.timeout")) {
             this.readTimeoutSetting();
-            return;
-        } else if (event.affectsConfiguration("cmd.encoding")) {
-            this.readCmdEncodingSetting();
             return;
         }
     }
@@ -73,10 +67,6 @@ export class ConfigManager {
 
     getTimeoutValue(): number {
         return this._timeout;
-    }
-
-    getCmdEncodingValue(): string {
-        return this._cmdEncoding;
     }
 
     async updateIgnoreFolders(folderRelativePath: string): Promise<void> {
@@ -117,13 +107,6 @@ export class ConfigManager {
         let config = workspace.getConfiguration("server").get("timeout");
         if (config !== undefined) {
             this._timeout = config as number;
-        }
-    }
-
-    private readCmdEncodingSetting(): void {
-        let config = workspace.getConfiguration("cmd").get("encoding");
-        if (config !== undefined) {
-            this._cmdEncoding = config as string;
         }
     }
 }
