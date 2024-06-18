@@ -1,5 +1,7 @@
 import { Uri, workspace } from 'vscode';
 import { cvsCommandLog } from './extension';
+import * as iconv from '@vscode/iconv-lite-umd';
+import { detectEncoding } from './encoding';
 
 export class CmdResult {
     constructor(public result: boolean, public output: string, public stderr: string = "") {
@@ -48,7 +50,7 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
         tOut = timeoutInSec * 1000;
     }
 
-    let stdout = '';
+    let stdoutBuffers: Buffer[] = [];
     let stderr = '';
     const result = await new Promise<boolean>((resolve) => {
 
@@ -56,25 +58,16 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
             cwd: dir,
             shell: true,
             timeout: tOut,
+            encoding: 'buffer'
         };
         
         const cmd = spawn(cvsCommand, [""], options);
 
-        let config = workspace.getConfiguration('files').get<string>('encoding');
-        let defaultEncoding = 'utf8';
+        cmd.stderr.setEncoding('utf8');
 
-        // latin1 is an alias for ISO-8859-1 (e.g. iso88591)
-        // refer to https://nodejs.org/docs/latest/api/buffer.html#buffers-and-character-encodings
-        if (config?.includes('iso88591')) {
-            defaultEncoding = 'latin1';
-        }
-
-        cmd.stdout.setEncoding(defaultEncoding);
-        cmd.stderr.setEncoding(defaultEncoding);
-
-        cmd.stdout.on("data", (data: any) => {
-            cvsCommandLog.debug(data);
-            stdout += data;
+        cmd.stdout.on("data", (data: Buffer) => {
+            cvsCommandLog.debug(data.toString());
+            stdoutBuffers.push(data);
         });
 
         cmd.stderr.on("data", (data: any) => {
@@ -97,8 +90,24 @@ export async function spawnCmd(cvsCommand: string, dir: string, timeoutInSec?: n
             }
         });
     });
+    const configFiles = workspace.getConfiguration('files');
+	const defaultEncoding = configFiles.get<string>('encoding');
+    const autoGuessEncoding = configFiles.get<boolean>('autoGuessEncoding');
+    const candidateGuessEncodings = configFiles.get<string[]>('candidateGuessEncodings');
+
+    const stdout = await bufferString(Buffer.concat(stdoutBuffers), defaultEncoding, autoGuessEncoding, candidateGuessEncodings);
 
     return new CmdResult(result, stdout, stderr);
+}
+
+async function bufferString(stdout: Buffer, encoding: string = 'utf8', autoGuessEncoding = false, candidateGuessEncodings: string[] = []): Promise<string> {
+    if (autoGuessEncoding) {
+        encoding = detectEncoding(stdout, candidateGuessEncodings) || encoding;
+    }
+
+    encoding = iconv.encodingExists(encoding) ? encoding : 'utf8';
+
+    return iconv.decode(stdout, encoding);
 }
 
 export async function readDir(path: string): Promise<string[]> {
