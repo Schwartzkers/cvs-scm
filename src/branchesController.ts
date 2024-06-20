@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { workspace, TreeView, window, Uri } from "vscode";
 import { CvsBranchProvider, BranchData } from './cvsBranchProvider';
 import { Controller } from './contoller';

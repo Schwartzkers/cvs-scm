@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event,
 		 Uri, EventEmitter, Disposable, window, } from "vscode";
 import { basename, dirname } from 'path';

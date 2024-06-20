@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { workspace, TreeView, window } from "vscode";
 import { CvsFileBranchesProvider, FileBranchData } from './cvsFileBranchesProvider';
 import { findSourceControl } from './extension';

@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import * as vscode from 'vscode';
 import { basename } from 'path';
 import { CvsSourceControl, onResouresLocked, onResouresUnlocked } from './cvsSourceControl';

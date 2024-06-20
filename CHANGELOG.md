@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.13.1]
+- Pre-release version.
+- Use similar implementation used by vscode git extension to handle file encoding on diffs.
 ## [v1.13.0]
 - Pre-release version.
 - Set the "cvs diff" buffer encoding value to 'latin1' for workspaces set to ISO-8859-1 encoding.

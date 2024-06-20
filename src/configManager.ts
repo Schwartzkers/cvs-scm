@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { Uri, workspace, ConfigurationChangeEvent, ExtensionContext, Disposable, commands, Event } from "vscode";
 
 const GLOB_IGNORE_CVS_FOLDER = '**/CVS';

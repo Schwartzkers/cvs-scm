@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, workspace } from "vscode";
 import { SourceFile, SourceFileState } from './sourceFile';
 import { execCmd, spawnCmd, CmdResult } from './utility';

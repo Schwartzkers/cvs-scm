@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { scm, SourceControl, SourceControlResourceGroup, SourceControlResourceState,
          CancellationTokenSource, Uri, ExtensionContext, Command, Disposable,
          workspace, RelativePattern, window, commands, EventEmitter } from 'vscode';

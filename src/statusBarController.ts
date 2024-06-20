@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Schwartzkers. All rights reserved.
+ *  Licensed under the MIT License. See License.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import { workspace, window, StatusBarItem } from "vscode";
 import { findSourceControl } from './extension';
 import { Controller } from './contoller';
