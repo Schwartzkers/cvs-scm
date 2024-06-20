@@ -3,6 +3,9 @@
 All notable changes to the `cvs-scm` extension will be documented in this file.
 ile.
 
+## [v1.13.2]
+- Pre-release version.
+- Fix extension activation by adding run-time dependencies.
 ## [v1.13.1]
 - Pre-release version.
 - Use similar implementation used by vscode git extension to handle file encoding on diffs.

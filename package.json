@@ -2,7 +2,7 @@
   "name": "cvs-scm",
   "displayName": "CVS",
   "description": "Integrates CVS support into VS Code's SCM interface",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -555,6 +555,10 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
+  "dependencies": {
+    "@vscode/iconv-lite-umd": "0.7.0",
+    "jschardet": "3.1.2"
+},
   "devDependencies": {
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
@@ -562,11 +566,9 @@
     "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
-    "@vscode/iconv-lite-umd": "^0.7.0",
     "@vscode/test-electron": "^2.2.2",
     "eslint": "^8.32.0",
     "glob": "^8.1.0",
-    "jschardet": "^3.1.2",
     "mocha": "^10.2.0",
     "typescript": "^4.9.4"
   }
