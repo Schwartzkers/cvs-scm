@@ -2,7 +2,7 @@
   "name": "cvs-scm",
   "displayName": "CVS",
   "description": "Integrates CVS support into VS Code's SCM interface",
-  "version": "1.13.2",
+  "version": "1.14.0",
   "engines": {
     "vscode": "^1.74.0"
   },

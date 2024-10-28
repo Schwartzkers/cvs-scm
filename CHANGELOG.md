@@ -1,8 +1,9 @@
 # Change Log
 
 All notable changes to the `cvs-scm` extension will be documented in this file.
-ile.
 
+## [v1.14.0]
+- Official release of the 1.13 pre-release.
 ## [v1.13.2]
 - Pre-release version.
 - Fix extension activation by adding run-time dependencies.
